@@ -434,7 +434,7 @@ public final class MetadataToolHelper {
      * 
      * 
      */
-    private static String mapSpecialChar(String columnName) {
+    public static String mapSpecialChar(String columnName) {
         if (GlobalServiceRegister.getDefault().isServiceRegistered(IRoutinesService.class)) {
             IRoutinesService service = (IRoutinesService) GlobalServiceRegister.getDefault().getService(IRoutinesService.class);
             if (service != null) {
@@ -1382,6 +1382,8 @@ public final class MetadataToolHelper {
             sourceName = old.getLabel();
         }
         result.setTableName(sourceName);
+        int columnIndex = 0;
+        List<String> columnLabels = new ArrayList<String>();
         List<IMetadataColumn> columns = new ArrayList<IMetadataColumn>(old.getColumns().size());
         for (TaggedValue tv : old.getTaggedValue()) {
             if (DiSchemaConstants.TALEND6_IS_READ_ONLY.equals(tv.getTag())) {
@@ -1403,8 +1405,10 @@ public final class MetadataToolHelper {
                     label2 = "_" + label2; //$NON-NLS-1$
                 }
             }
+            label2 = MetadataToolHelper.validateColumnName(label2, columnIndex, columnLabels);
             newColumn.setLabel(label2);
             newColumn.setPattern(column.getPattern());
+            
             if (column.getLength() < 0) {
                 newColumn.setLength(null);
             } else {
@@ -1427,12 +1431,15 @@ public final class MetadataToolHelper {
                         newColumn.setCustom(Boolean.valueOf(tv.getValue()));
                     } else if (DiSchemaConstants.TALEND6_IS_READ_ONLY.equals(additionalTag)) {
                         newColumn.setReadOnly(Boolean.valueOf(tv.getValue()));
-                    } else {
+                    }else if(DiSchemaConstants.AVRO_TECHNICAL_KEY.equals(additionalTag)){
+                        String tec_key = MetadataToolAvroHelper.validateAvroColumnName(tv.getValue(), columnIndex, columnLabels);
+                        newColumn.getAdditionalField().put(additionalTag, tec_key);
+                    }else {
                         newColumn.getAdditionalField().put(additionalTag, tv.getValue());
                     }
                 }
             }
-
+            
             newColumn.setNullable(column.isNullable());
             if (column.getPrecision() < 0) {
                 newColumn.setPrecision(null);
@@ -1456,6 +1463,8 @@ public final class MetadataToolHelper {
                 newColumn.setOriginalDbColumnName(column.getName());
             }
             // columns.add(convertToIMetaDataColumn(column));
+            columnIndex++;
+            columnLabels.add(newColumn.getLabel());
         }
         result.setListColumns(columns);
         Map<String, String> newProperties = result.getAdditionalProperties();

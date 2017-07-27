@@ -23,6 +23,8 @@ import java.util.Set;
 import org.eclipse.emf.common.util.EMap;
 import org.talend.commons.runtime.model.components.IComponentConstants;
 import org.talend.commons.utils.resource.FileExtensions;
+import org.talend.core.GlobalServiceRegister;
+import org.talend.core.ICoreService;
 import org.talend.core.IRepositoryContextService;
 import org.talend.core.database.EDatabase4DriverClassName;
 import org.talend.core.database.EDatabaseTypeName;
@@ -34,6 +36,7 @@ import org.talend.core.model.metadata.IMetadataColumn;
 import org.talend.core.model.metadata.IMetadataConnection;
 import org.talend.core.model.metadata.IMetadataTable;
 import org.talend.core.model.metadata.MetadataTalendType;
+import org.talend.core.model.metadata.MetadataToolAvroHelper;
 import org.talend.core.model.metadata.MetadataToolHelper;
 import org.talend.core.model.metadata.builder.connection.AbstractMetadataObject;
 import org.talend.core.model.metadata.builder.connection.Connection;
@@ -376,6 +379,8 @@ public final class ConvertionHelper {
             sourceName = old.getLabel();
         }
         result.setTableName(sourceName);
+        int columnIndex = 0;
+        List<String> columnLabels = new ArrayList<String>();
         List<IMetadataColumn> columns = new ArrayList<IMetadataColumn>(old.getColumns().size());
         for (Object o : old.getColumns()) {
             MetadataColumn column = (MetadataColumn) o;
@@ -388,6 +393,7 @@ public final class ConvertionHelper {
             if (!MetadataToolHelper.isValidColumnName(label2)) {
                 label2 = "_" + label2; //$NON-NLS-1$
             }
+            label2 = MetadataToolHelper.validateColumnName(label2, columnIndex, columnLabels);
             newColumn.setLabel(label2);
             newColumn.setPattern(column.getPattern());
             if (column.getLength() < 0) {
@@ -404,11 +410,14 @@ public final class ConvertionHelper {
             if (column.getTaggedValue().size() > 0) {
                 for (TaggedValue tv : column.getTaggedValue()) {
                     String additionalTag = tv.getTag();
+                    String additionaValue = tv.getValue();
                     if (additionalTag.startsWith(IConvertionConstants.ADDITIONAL_FIELD_PREFIX)) {
                         String[] splits = additionalTag.split(":");
                         additionalTag = splits[1];
+                    }else if(DiSchemaConstants.AVRO_TECHNICAL_KEY.equals(additionalTag)){
+                        additionaValue = MetadataToolAvroHelper.validateAvroColumnName(additionaValue, columnIndex, columnLabels);
                     }
-                    newColumn.getAdditionalField().put(additionalTag, tv.getValue());
+                    newColumn.getAdditionalField().put(additionalTag, additionaValue);
                 }
             }
             newColumn.setNullable(column.isNullable());
@@ -532,19 +541,29 @@ public final class ConvertionHelper {
      * @return
      */
     public static MetadataTable convert(IMetadataTable old) {
+        ICoreService coreService = (ICoreService) GlobalServiceRegister.getDefault().getService(ICoreService.class);
         MetadataTable result = ConnectionFactory.eINSTANCE.createMetadataTable();
         result.setComment(old.getComment());
         result.setId(old.getId());
         result.setLabel(old.getLabel());
         result.setSourceName(old.getTableName());
         List<MetadataColumn> columns = new ArrayList<MetadataColumn>(old.getListColumns().size());
+        int index = 0;
+        List<String> labels = new ArrayList<String>();
         for (IMetadataColumn column : old.getListColumns()) {
             MetadataColumn newColumn = ConnectionFactory.eINSTANCE.createMetadataColumn();
             columns.add(newColumn);
             newColumn.setComment(column.getComment());
             newColumn.setDefaultValue(column.getDefault());
             newColumn.setKey(column.isKey());
-            newColumn.setLabel(column.getLabel());
+            
+            String label = column.getLabel();
+            if(coreService != null && coreService.isKeyword(label)){
+                label = "_" + label; //$NON-NLS-1$
+            }
+            label = MetadataToolHelper.validateColumnName(label, index, labels);
+            newColumn.setLabel(label);
+            
             newColumn.setPattern(column.getPattern());
             if (column.getLength() == null || column.getLength() < 0) {
                 newColumn.setLength(-1);
@@ -578,8 +597,16 @@ public final class ConvertionHelper {
             Iterator<Entry<String, String>> afIterator = afEntrySet.iterator();
             while (afIterator.hasNext()) {
                 Entry<String, String> afEntry = afIterator.next();
-                addTaggedValue(newColumn, afEntry.getKey(), afEntry.getValue());
+                String key = afEntry.getKey();
+                String value = afEntry.getValue();
+                if(DiSchemaConstants.AVRO_TECHNICAL_KEY.equals(key)){
+                    value = MetadataToolAvroHelper.validateAvroColumnName(value, index, labels);
+                }
+                addTaggedValue(newColumn, key, value);
             }
+            
+            index ++;
+            labels.add(newColumn.getLabel());
         }
         result.getColumns().addAll(columns);
         return result;
