@@ -3496,6 +3496,10 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
         // nothing to do
 
     }
+    
+    public void initProject(Project project) throws PersistenceException {
+     // nothing to do
+    }
 
     protected void notifyProjectReload(org.talend.core.model.properties.Project project) {
         Bundle bundle = FrameworkUtil.getBundle(this.getClass());
