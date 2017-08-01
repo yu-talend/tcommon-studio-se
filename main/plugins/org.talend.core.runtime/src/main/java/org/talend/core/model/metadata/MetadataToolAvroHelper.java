@@ -58,16 +58,14 @@ public final class MetadataToolAvroHelper {
         int dynamicPosition = -1;
         org.talend.core.model.metadata.builder.connection.MetadataColumn dynColumn = null;
         int i = 0;
-        List<String> labels = new ArrayList<String>();
         for (org.talend.core.model.metadata.builder.connection.MetadataColumn column : in.getColumns()) {
             if ("id_Dynamic".equals(column.getTalendType())) { //$NON-NLS-1$
                 dynamicPosition = i;
                 dynColumn = column;
             } else {
-                fa = convertToAvro(fa, column, i, labels);
+                fa = convertToAvro(fa, column);
             }
             i++;
-            labels.add(column.getLabel());
         }
 
         Schema schema = fa.endRecord();
@@ -136,27 +134,19 @@ public final class MetadataToolAvroHelper {
      * Build a field into a schema using enriched properties from the incoming column.
      */
     private static FieldAssembler<Schema> convertToAvro(FieldAssembler<Schema> fa,
-            org.talend.core.model.metadata.builder.connection.MetadataColumn in, int index, List<String> labels) {
+            org.talend.core.model.metadata.builder.connection.MetadataColumn in) {
         ICoreService coreService = (ICoreService) GlobalServiceRegister.getDefault().getService(ICoreService.class);
         String label = in.getLabel(); 
         if (label != null && coreService != null) {
             if (coreService.isKeyword(label)) {
                 label = "_" + label; //$NON-NLS-1$
             }
-            label = MetadataToolHelper.validateColumnName(label, index, labels);
         }
         
         FieldBuilder<Schema> fb = fa.name(label);
         copyColumnProperties(fb, in);
         
         fb.prop(DiSchemaConstants.TALEND6_LABEL, label);
-        for (TaggedValue tv : in.getTaggedValue()) {
-            String additionalTag = tv.getTag();
-            if(DiSchemaConstants.AVRO_TECHNICAL_KEY.equals(additionalTag)){
-                fb.prop(DiSchemaConstants.AVRO_TECHNICAL_KEY, MetadataToolAvroHelper.validateAvroColumnName(tv.getValue(), index, labels));
-                break;
-            }
-        }
 
         Object defaultValue = null;
         Expression initialValue = in.getInitialValue();
@@ -560,9 +550,7 @@ public final class MetadataToolAvroHelper {
         label = MetadataToolHelper.validateColumnName(label, metadataTable.getColumns().size(), labels);
         col.setLabel(label);
         
-        String tec_key = field.name();
-        tec_key = MetadataToolAvroHelper.validateAvroColumnName(tec_key, metadataTable.getColumns().size(), labels);
-        TaggedValue tv = TaggedValueHelper.createTaggedValue(DiSchemaConstants.AVRO_TECHNICAL_KEY, tec_key);
+        TaggedValue tv = TaggedValueHelper.createTaggedValue(DiSchemaConstants.AVRO_TECHNICAL_KEY, field.name());
         col.getTaggedValue().add(tv);
         
         return col;
@@ -1006,41 +994,4 @@ public final class MetadataToolAvroHelper {
     // return schema;
     // }
     
-    public static String validateAvroColumnName(final String columnName, final int index, List<String> labels) {
-        String name = validateAvroColumnName(columnName, index);
-        UniqueStringGenerator<String> uniqueStringGenerator = new UniqueStringGenerator<String>(name, labels) {
-
-            @Override
-            protected String getBeanString(String bean) {
-                return bean;
-            }
-
-        };
-        return uniqueStringGenerator.getUniqueString();
-    }
-    
-    public static String validateAvroColumnName(final String columnName, final int index) {
-        String originalColumnName = new String(MetadataToolHelper.mapSpecialChar(columnName));
-        final String underLine = "_"; //$NON-NLS-1$
-
-        String returnedColumnName = "";
-     // match RepositoryConstants.COLUMN_NAME_VALIDATED
-        for (int i = 0; i < originalColumnName.length(); i++) {
-            Character car = originalColumnName.charAt(i);
-            // first character should have only a-z or A-Z or _
-            // other characters should have only a-z or A-Z or _ or 0-9
-            if (((car >= 'a') && (car <= 'z')) || ((car >= 'A') && (car <= 'Z')) || car == '_'
-                    || ((car >= '0') && (car <= '9') && (i != 0))) {
-                returnedColumnName += car;
-            } else {
-                returnedColumnName += underLine;
-            }
-        }
-        if ( org.apache.commons.lang.StringUtils.countMatches(returnedColumnName, underLine) > (originalColumnName.length() / 2)) {
-            returnedColumnName = "Column" + index; //$NON-NLS-1$
-        }
-
-        return returnedColumnName;
-
-    }
 }

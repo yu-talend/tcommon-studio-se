@@ -603,7 +603,7 @@ public class MetadataToolHelperTest {
         
         creatMetadataColumn = ConnectionFactory.eINSTANCE.createMetadataColumn();
         creatMetadataColumn.setId(factory.getNextId());
-        creatMetadataColumn.setLabel("1234");
+        creatMetadataColumn.setLabel("_234");
         creatMetadataColumn.setName("1234");
         tv = TaggedValueHelper.createTaggedValue(DiSchemaConstants.AVRO_TECHNICAL_KEY, "1234");
         creatMetadataColumn.getTaggedValue().add(tv);
@@ -621,7 +621,7 @@ public class MetadataToolHelperTest {
         creatMetadataColumn.setId(factory.getNextId());
         creatMetadataColumn.setLabel(MetadataToolHelper.validateColumnName("TEST", 0));
         creatMetadataColumn.setName("TEST");
-        tv = TaggedValueHelper.createTaggedValue(DiSchemaConstants.AVRO_TECHNICAL_KEY, MetadataToolAvroHelper.validateAvroColumnName("TEST", 0));
+        tv = TaggedValueHelper.createTaggedValue(DiSchemaConstants.AVRO_TECHNICAL_KEY, "TEST");
         creatMetadataColumn.getTaggedValue().add(tv);
         inputTable.getColumns().add(creatMetadataColumn);
         
@@ -631,7 +631,7 @@ public class MetadataToolHelperTest {
         }
         creatMetadataColumn = ConnectionFactory.eINSTANCE.createMetadataColumn();
         creatMetadataColumn.setId(factory.getNextId());
-        creatMetadataColumn.setLabel("TEST");
+        creatMetadataColumn.setLabel("TEST1");
         creatMetadataColumn.setName("TEST");
         tv = TaggedValueHelper.createTaggedValue(DiSchemaConstants.AVRO_TECHNICAL_KEY, "TEST");
         creatMetadataColumn.getTaggedValue().add(tv);
@@ -654,11 +654,11 @@ public class MetadataToolHelperTest {
         
         assertTrue(targetTable.getListColumns().get(3).getLabel().equals("_234"));
         assertTrue(targetTable.getListColumns().get(3).getOriginalDbColumnName().equals("1234"));
-        assertTrue(targetTable.getListColumns().get(3).getAdditionalField().get(DiSchemaConstants.AVRO_TECHNICAL_KEY).equals("_234"));
+        assertTrue(targetTable.getListColumns().get(3).getAdditionalField().get(DiSchemaConstants.AVRO_TECHNICAL_KEY).equals("1234"));
         
         assertTrue(targetTable.getListColumns().get(4).getLabel().equals("中文"));
         assertTrue(targetTable.getListColumns().get(4).getOriginalDbColumnName().equals("中文"));
-        assertTrue(targetTable.getListColumns().get(4).getAdditionalField().get(DiSchemaConstants.AVRO_TECHNICAL_KEY).equals("Column4"));
+        assertTrue(targetTable.getListColumns().get(4).getAdditionalField().get(DiSchemaConstants.AVRO_TECHNICAL_KEY).equals("中文"));
         
         assertTrue(targetTable.getListColumns().get(5).getLabel().equals("TEST"));
         assertTrue(targetTable.getListColumns().get(5).getOriginalDbColumnName().equals("TEST"));
@@ -666,13 +666,7 @@ public class MetadataToolHelperTest {
         
         assertTrue(targetTable.getListColumns().get(6).getLabel().equals("TEST1"));
         assertTrue(targetTable.getListColumns().get(6).getOriginalDbColumnName().equals("TEST"));
-        assertTrue(targetTable.getListColumns().get(6).getAdditionalField().get(DiSchemaConstants.AVRO_TECHNICAL_KEY).equals("TEST1"));
-        
-        coreUIPluginNode.putBoolean(IRepositoryPrefConstants.ALLOW_SPECIFIC_CHARACTERS_FOR_SCHEMA_COLUMNS, false);
-        targetTable = MetadataToolHelper.convert(inputTable);
-        assertTrue(targetTable.getListColumns().get(4).getLabel().equals("Column4"));
-        assertTrue(targetTable.getListColumns().get(4).getOriginalDbColumnName().equals("中文"));
-        assertTrue(targetTable.getListColumns().get(4).getAdditionalField().get(DiSchemaConstants.AVRO_TECHNICAL_KEY).equals("Column4"));
+        assertTrue(targetTable.getListColumns().get(6).getAdditionalField().get(DiSchemaConstants.AVRO_TECHNICAL_KEY).equals("TEST"));
         
     }
 }

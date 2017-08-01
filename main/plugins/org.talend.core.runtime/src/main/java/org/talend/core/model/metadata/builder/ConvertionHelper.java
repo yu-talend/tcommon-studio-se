@@ -379,8 +379,6 @@ public final class ConvertionHelper {
             sourceName = old.getLabel();
         }
         result.setTableName(sourceName);
-        int columnIndex = 0;
-        List<String> columnLabels = new ArrayList<String>();
         List<IMetadataColumn> columns = new ArrayList<IMetadataColumn>(old.getColumns().size());
         for (Object o : old.getColumns()) {
             MetadataColumn column = (MetadataColumn) o;
@@ -393,7 +391,6 @@ public final class ConvertionHelper {
             if (!MetadataToolHelper.isValidColumnName(label2)) {
                 label2 = "_" + label2; //$NON-NLS-1$
             }
-            label2 = MetadataToolHelper.validateColumnName(label2, columnIndex, columnLabels);
             newColumn.setLabel(label2);
             newColumn.setPattern(column.getPattern());
             if (column.getLength() < 0) {
@@ -414,8 +411,6 @@ public final class ConvertionHelper {
                     if (additionalTag.startsWith(IConvertionConstants.ADDITIONAL_FIELD_PREFIX)) {
                         String[] splits = additionalTag.split(":");
                         additionalTag = splits[1];
-                    }else if(DiSchemaConstants.AVRO_TECHNICAL_KEY.equals(additionalTag)){
-                        additionaValue = MetadataToolAvroHelper.validateAvroColumnName(additionaValue, columnIndex, columnLabels);
                     }
                     newColumn.getAdditionalField().put(additionalTag, additionaValue);
                 }
@@ -548,8 +543,6 @@ public final class ConvertionHelper {
         result.setLabel(old.getLabel());
         result.setSourceName(old.getTableName());
         List<MetadataColumn> columns = new ArrayList<MetadataColumn>(old.getListColumns().size());
-        int index = 0;
-        List<String> labels = new ArrayList<String>();
         for (IMetadataColumn column : old.getListColumns()) {
             MetadataColumn newColumn = ConnectionFactory.eINSTANCE.createMetadataColumn();
             columns.add(newColumn);
@@ -557,12 +550,7 @@ public final class ConvertionHelper {
             newColumn.setDefaultValue(column.getDefault());
             newColumn.setKey(column.isKey());
             
-            String label = column.getLabel();
-            if(coreService != null && coreService.isKeyword(label)){
-                label = "_" + label; //$NON-NLS-1$
-            }
-            label = MetadataToolHelper.validateColumnName(label, index, labels);
-            newColumn.setLabel(label);
+            newColumn.setLabel(column.getLabel());
             
             newColumn.setPattern(column.getPattern());
             if (column.getLength() == null || column.getLength() < 0) {
@@ -597,16 +585,8 @@ public final class ConvertionHelper {
             Iterator<Entry<String, String>> afIterator = afEntrySet.iterator();
             while (afIterator.hasNext()) {
                 Entry<String, String> afEntry = afIterator.next();
-                String key = afEntry.getKey();
-                String value = afEntry.getValue();
-                if(DiSchemaConstants.AVRO_TECHNICAL_KEY.equals(key)){
-                    value = MetadataToolAvroHelper.validateAvroColumnName(value, index, labels);
-                }
-                addTaggedValue(newColumn, key, value);
+                addTaggedValue(newColumn, afEntry.getKey(), afEntry.getValue());
             }
-            
-            index ++;
-            labels.add(newColumn.getLabel());
         }
         result.getColumns().addAll(columns);
         return result;

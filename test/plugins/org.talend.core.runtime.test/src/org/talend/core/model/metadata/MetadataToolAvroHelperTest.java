@@ -292,7 +292,7 @@ public class MetadataToolAvroHelperTest {
         while (ite.hasNext()) {
             TaggedValue t = ite.next();
             if(t.getTag().equals(DiSchemaConstants.AVRO_TECHNICAL_KEY)){
-                assertTrue(t.getValue().equals("Column4"));
+                assertTrue(t.getValue().equals("中文"));
                 break;
             }
         }
@@ -336,7 +336,7 @@ public class MetadataToolAvroHelperTest {
         while (ite.hasNext()) {
             TaggedValue t = ite.next();
             if(t.getTag().equals(DiSchemaConstants.AVRO_TECHNICAL_KEY)){
-                assertTrue(t.getValue().equals("Column4"));
+                assertTrue(t.getValue().equals("中文"));
                 break;
             }
         }
@@ -352,7 +352,7 @@ public class MetadataToolAvroHelperTest {
         
         MetadataColumn creatMetadataColumn = ConnectionFactory.eINSTANCE.createMetadataColumn();
         creatMetadataColumn.setId("111111");
-        creatMetadataColumn.setLabel("long");
+        creatMetadataColumn.setLabel("_long");
         creatMetadataColumn.setName("long");
         creatMetadataColumn.setTalendType("id_String");
         TaggedValue tv = TaggedValueHelper.createTaggedValue(DiSchemaConstants.AVRO_TECHNICAL_KEY, "long");
@@ -409,7 +409,7 @@ public class MetadataToolAvroHelperTest {
         creatMetadataColumn.setId("777777");
         creatMetadataColumn.setLabel("TEST1");
         creatMetadataColumn.setName("TEST");
-        tv = TaggedValueHelper.createTaggedValue(DiSchemaConstants.AVRO_TECHNICAL_KEY, "TEST");
+        tv = TaggedValueHelper.createTaggedValue(DiSchemaConstants.AVRO_TECHNICAL_KEY, "TEST1");
         creatMetadataColumn.getTaggedValue().add(tv);
         creatMetadataColumn.setTalendType("id_String");
         metadataTable.getColumns().add(creatMetadataColumn);
@@ -421,8 +421,8 @@ public class MetadataToolAvroHelperTest {
                 + "{\"name\":\"_long\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"long\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"_long\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"111111\",\"talend.field.dbColumnName\":\"long\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
                 + "{\"name\":\"A\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"A\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"A\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"222222\",\"talend.field.dbColumnName\":\"A\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
                 + "{\"name\":\"B\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"B\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"B\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"333333\",\"talend.field.dbColumnName\":\"B\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
-                + "{\"name\":\"_234\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"_234\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"_234\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"444444\",\"talend.field.dbColumnName\":\"1234\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
-                + "{\"name\":\"中文\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"Column4\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"中文\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"555555\",\"talend.field.dbColumnName\":\"中文\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
+                + "{\"name\":\"_234\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"1234\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"_234\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"444444\",\"talend.field.dbColumnName\":\"1234\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
+                + "{\"name\":\"中文\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"中文\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"中文\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"555555\",\"talend.field.dbColumnName\":\"中文\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
                 + "{\"name\":\"TEST\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"TEST\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"TEST\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"666666\",\"talend.field.dbColumnName\":\"TEST\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
                 + "{\"name\":\"TEST1\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"TEST1\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"TEST1\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"777777\",\"talend.field.dbColumnName\":\"TEST\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"}],"
                 + "\"di.table.comment\":\"\",\"di.table.name\":\"table1\",\"di.table.label\":\"table1\"}";
@@ -431,58 +431,14 @@ public class MetadataToolAvroHelperTest {
         coreUIPluginNode.putBoolean(IRepositoryPrefConstants.ALLOW_SPECIFIC_CHARACTERS_FOR_SCHEMA_COLUMNS, false);
         schema =MetadataToolAvroHelper.convertToAvro(metadataTable);
         s = "{\"type\":\"record\",\"name\":\"table1\",\"fields\":["
-        + "{\"name\":\"_long\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"long\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"_long\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"111111\",\"talend.field.dbColumnName\":\"long\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
-        + "{\"name\":\"A\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"A\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"A\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"222222\",\"talend.field.dbColumnName\":\"A\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
-        + "{\"name\":\"B\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"B\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"B\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"333333\",\"talend.field.dbColumnName\":\"B\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
-        + "{\"name\":\"_234\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"_234\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"_234\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"444444\",\"talend.field.dbColumnName\":\"1234\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
-        + "{\"name\":\"Column4\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"Column4\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"Column4\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"555555\",\"talend.field.dbColumnName\":\"中文\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
-        + "{\"name\":\"TEST\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"TEST\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"TEST\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"666666\",\"talend.field.dbColumnName\":\"TEST\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
-        + "{\"name\":\"TEST1\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"TEST1\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"TEST1\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"777777\",\"talend.field.dbColumnName\":\"TEST\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"}],"
-        + "\"di.table.comment\":\"\",\"di.table.name\":\"table1\",\"di.table.label\":\"table1\"}";
+           + "{\"name\":\"_long\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"long\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"_long\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"111111\",\"talend.field.dbColumnName\":\"long\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
+           + "{\"name\":\"A\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"A\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"A\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"222222\",\"talend.field.dbColumnName\":\"A\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
+           + "{\"name\":\"B\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"B\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"B\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"333333\",\"talend.field.dbColumnName\":\"B\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
+           + "{\"name\":\"_234\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"1234\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"_234\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"444444\",\"talend.field.dbColumnName\":\"1234\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
+           + "{\"name\":\"Column4\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"中文\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"Column4\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"555555\",\"talend.field.dbColumnName\":\"中文\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
+           + "{\"name\":\"TEST\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"TEST\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"TEST\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"666666\",\"talend.field.dbColumnName\":\"TEST\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"},"
+           + "{\"name\":\"TEST1\",\"type\":[\"string\",\"null\"],\"AVRO_TECHNICAL_KEY\":\"TEST1\",\"di.column.talendType\":\"id_String\",\"talend.field.pattern\":\"\",\"di.table.label\":\"TEST1\",\"talend.field.precision\":\"0\",\"di.table.comment\":\"\",\"di.column.id\":\"777777\",\"talend.field.dbColumnName\":\"TEST\",\"di.column.isNullable\":\"true\",\"talend.field.length\":\"0\",\"di.column.relationshipType\":\"\",\"di.column.originalLength\":\"0\",\"di.column.relatedEntity\":\"\"}],"
+           + "\"di.table.comment\":\"\",\"di.table.name\":\"table1\",\"di.table.label\":\"table1\"}";
         assertTrue(schema.toString().equals(s));
-    }
-    
-    @Test
-    public void testValidateAvroColumnName() {
-        IEclipsePreferences preferences = new InstanceScope().getNode(ITalendCorePrefConstants.CoreUIPlugin_ID);
-        preferences.putBoolean(IRepositoryPrefConstants.ALLOW_SPECIFIC_CHARACTERS_FOR_SCHEMA_COLUMNS, false);
-
-        String columnName = MetadataToolAvroHelper.validateAvroColumnName("public", 0);
-        assertEquals(columnName, "public");
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("id", 0);
-        assertEquals(columnName, "id");
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("na&me", 0);
-        assertEquals(columnName, "na_me");
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("addr_ess", 0);
-        assertEquals(columnName, "addr_ess");
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("9city", 0);
-        assertEquals(columnName, "_city");
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("country1", 0);
-        assertEquals(columnName, "country1");
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("problème", 0);
-        assertEquals(columnName, "probleme");
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("test(a)", 0);
-        assertEquals(columnName, "test_a_");
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("MyColumn_你好", 0);
-        assertEquals("MyColumn___", columnName);
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("你好", 0);
-        assertEquals("Column0", columnName);
-
-        preferences.putBoolean(IRepositoryPrefConstants.ALLOW_SPECIFIC_CHARACTERS_FOR_SCHEMA_COLUMNS, true);
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("你好", 0);
-        assertEquals("Column0", columnName);
-
-        columnName = MetadataToolAvroHelper.validateAvroColumnName("My Strange (?) Column !", 0);
-        assertEquals("My_Strange_____Column__", columnName);
     }
 }
