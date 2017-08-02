@@ -32,6 +32,8 @@ public class NexusServerBean {
 
     String snapshotRepId;
 
+    String type;
+
     public NexusServerBean() {
     }
 
@@ -147,6 +149,24 @@ public class NexusServerBean {
         this.official = official;
     }
 
+    /**
+     * Getter for type.
+     * 
+     * @return the type
+     */
+    public String getType() {
+        return this.type;
+    }
+
+    /**
+     * Sets the type.
+     * 
+     * @param type the type to set
+     */
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public String getRepositoryURI() {
         if (StringUtils.isEmpty(this.server)) {
             return null; // no server, no uri
@@ -169,6 +189,7 @@ public class NexusServerBean {
         result = prime * result + ((password == null) ? 0 : password.hashCode());
         result = prime * result + ((repositoryId == null) ? 0 : repositoryId.hashCode());
         result = prime * result + ((snapshotRepId == null) ? 0 : snapshotRepId.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
         return result;
     }
 
@@ -224,6 +245,14 @@ public class NexusServerBean {
                 return false;
             }
         } else if (!snapshotRepId.equals(other.snapshotRepId)) {
+            return false;
+        }
+
+        if (type == null) {
+            if (other.type != null) {
+                return false;
+            }
+        } else if (!type.equals(other.type)) {
             return false;
         }
 

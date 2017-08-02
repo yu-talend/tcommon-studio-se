@@ -25,9 +25,9 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.ops4j.pax.url.mvn.MavenResolver;
 import org.talend.commons.exception.ExceptionHandler;
-import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.model.general.INexusService;
+import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
 import org.talend.core.model.general.ModuleStatusProvider;
 import org.talend.core.nexus.NexusConstants;
 import org.talend.core.nexus.NexusServerBean;
@@ -148,9 +148,9 @@ public class ArtifactsDeployer {
             if (toRemoteNexus) {
                 installToRemote(libFile, parseMvnUrl, artifactType);
                 // deploy the pom
-//                if (pomFile != null && pomFile.exists()) {
-//                    installToRemote(pomFile, parseMvnUrl, pomType);
-//                }
+                // if (pomFile != null && pomFile.exists()) {
+                // installToRemote(pomFile, parseMvnUrl, pomType);
+                // }
             }
             if (generated) { // only for generate pom
                 FilesUtils.deleteFolder(pomFile.getParentFile(), true);
@@ -168,13 +168,13 @@ public class ArtifactsDeployer {
         }
         try {
             deleteOldEntity(artifact, type);
-            
+
             if (GlobalServiceRegister.getDefault().isServiceRegistered(INexusService.class)) {
-                INexusService nexusService = (INexusService) GlobalServiceRegister.getDefault().getService(
-                        INexusService.class);
-                nexusService.upload(nexusServer, artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), content.toURI().toURL());
+                INexusService nexusService = (INexusService) GlobalServiceRegister.getDefault().getService(INexusService.class);
+                nexusService.upload(nexusServer, artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), content
+                        .toURI().toURL());
             }
-            
+
         } catch (Exception e) {
             ExceptionHandler.process(e);
         }
@@ -195,17 +195,16 @@ public class ArtifactsDeployer {
         } else {
             target = target + nexusServer.getRepositoryId() + NexusConstants.SLASH;
         }
-        
+
         target = target + artifactPath;
         URL targetURL = new URL(target);
-        
-        
+
         DefaultHttpClient httpClient = new DefaultHttpClient();
         try {
             HttpHead httpHead = null;
             HttpResponse response = null;
             StatusLine statusLine = null;
-            if(targetURL.getFile()!=null && !targetURL.getFile().endsWith("SNAPSHOT.jar")){
+            if (targetURL.getFile() != null && !targetURL.getFile().endsWith("SNAPSHOT.jar")) {
                 httpClient.getCredentialsProvider().setCredentials(new AuthScope(targetURL.getHost(), targetURL.getPort()),
                         new UsernamePasswordCredentials(nexusServer.getUserName(), nexusServer.getPassword()));
                 httpHead = new HttpHead(targetURL.toString());
@@ -213,8 +212,8 @@ public class ArtifactsDeployer {
                 statusLine = response.getStatusLine();
                 int responseResult = statusLine.getStatusCode();
                 if (responseResult == 200) {
-                     HttpDelete httpDelete = new HttpDelete(targetURL.toString());
-                     httpClient.execute(httpDelete);
+                    HttpDelete httpDelete = new HttpDelete(targetURL.toString());
+                    httpClient.execute(httpDelete);
                 }
             }
         } catch (Exception e) {
@@ -237,29 +236,4 @@ public class ArtifactsDeployer {
             }
         }
     }
-
-    // private void install(String path, MavenArtifact artifact) {
-    // StringBuffer command = new StringBuffer();
-    // // mvn -Dfile=E:\studio_code\.metadata\aaabbbb\lib\java\ojdbc6.jar -DgroupId=org.talend.libraries
-    // // -DartifactId=ojdbc6 -Dversion=1.0.0 -Dpackaging=jar
-    // // -B install:install-file
-    // command.append(" mvn ");
-    // command.append(" -Dfile=");
-    // command.append(path);
-    // command.append(" -DgroupId=");
-    // command.append(artifact.getGroupId());
-    // command.append(" -DartifactId=");
-    // command.append(artifact.getArtifactId());
-    // command.append(" -Dversion=");
-    // command.append(artifact.getVersion());
-    // command.append(" -Dpackaging=");
-    // command.append(artifact.getType());
-    // command.append(" -B install:install-file");
-    // try {
-    // Runtime.getRuntime().exec("cmd /c " + command.toString());
-    // } catch (IOException e) {
-    // ExceptionHandler.process(e);
-    // }
-    // }
-
 }

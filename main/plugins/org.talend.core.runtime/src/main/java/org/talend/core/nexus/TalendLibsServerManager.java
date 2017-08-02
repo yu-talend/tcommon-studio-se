@@ -76,23 +76,15 @@ public class TalendLibsServerManager {
 
     public static final String TALEND_LIB_REPOSITORY = "libraries";//$NON-NLS-1$
 
-    // public static final String TALEND_LIB_SERVER = "http://localhost:8081/nexus/";//$NON-NLS-1$
-    //
-    // public static final String TALEND_LIB_USER = "";//$NON-NLS-1$
-    //
-    // public static final String TALEND_LIB_PASSWORD = "";//$NON-NLS-1$
-    //
-    // public static final String TALEND_LIB_REPOSITORY = "org.talend.libraries";//$NON-NLS-1$
-
     private static TalendLibsServerManager manager = null;
 
     private MavenResolver mavenResolver = null;
 
-    private NexusServerBean previousCustomBean;
+    private NexusServerBean artifactServerBean;
+
+    private boolean tacChecked = false;
 
     public static final int CONNECTION_OK = 200;
-
-    private static Boolean lastConnectionValid;
 
     private TalendLibsServerManager() {
         // the tracker is use in case the service is modifed
@@ -131,14 +123,14 @@ public class TalendLibsServerManager {
         return manager;
     }
 
-    public void updateMavenResolver(Dictionary<String, String> props, boolean setupRemoteRepository) {
+    public void updateMavenResolver(Dictionary<String, String> props, boolean setupCustomNexusFromTAC) {
         if (props == null) {
             props = new Hashtable<String, String>();
         }
         final BundleContext context = CoreRuntimePlugin.getInstance().getBundle().getBundleContext();
         ServiceReference<ManagedService> managedServiceRef = context.getServiceReference(ManagedService.class);
         if (managedServiceRef != null) {
-            if (setupRemoteRepository) {
+            if (setupCustomNexusFromTAC) {
                 String repositories = "";
                 NexusServerBean customServer = getCustomNexusServer();
                 if (customServer != null) {
@@ -182,6 +174,7 @@ public class TalendLibsServerManager {
 
             try {
                 managedService.updated(props);
+                mavenResolver = null;
             } catch (ConfigurationException e) {
                 throw new RuntimeException("Failed to modifiy the service properties"); //$NON-NLS-1$
             }
@@ -206,31 +199,24 @@ public class TalendLibsServerManager {
         return mavenResolver;
 
     }
-    
-    public void checkAndUpdateNexusServer() {
-        lastConnectionValid = null;
-        getCustomNexusServer();
-    }
 
     public NexusServerBean getCustomNexusServer() {
         if (!org.talend.core.PluginChecker.isCoreTISPluginLoaded()) {
             return null;
         }
-        NexusServerBean serverBean = null;
-        try {
-            String nexus_url = System.getProperty(NEXUS_URL);
-            String nexus_user = System.getProperty(NEXUS_USER);
-            String nexus_pass = System.getProperty(NEXUS_PASSWORD);
-            String repositoryId = System.getProperty(NEXUS_LIB_REPO, DEFAULT_LIB_REPO);
-            String snapshotRepId = System.getProperty(NEXUS_LIB_SNAPSHOT_REPO, DEFAULT_LIB_SNAPSHOT_REPO);
+        if (artifactServerBean == null) {
+            try {
+                String nexus_url = System.getProperty(NEXUS_URL);
+                String nexus_user = System.getProperty(NEXUS_USER);
+                String nexus_pass = System.getProperty(NEXUS_PASSWORD);
+                String repositoryId = System.getProperty(NEXUS_LIB_REPO, DEFAULT_LIB_REPO);
+                String snapshotRepId = System.getProperty(NEXUS_LIB_SNAPSHOT_REPO, DEFAULT_LIB_SNAPSHOT_REPO);
 
-            IProxyRepositoryFactory factory = CoreRuntimePlugin.getInstance().getProxyRepositoryFactory();
-            RepositoryContext repositoryContext = factory.getRepositoryContext();
-            if ((nexus_url == null && (factory.isLocalConnectionProvider() || repositoryContext.isOffline()))
-                    || Boolean.FALSE == lastConnectionValid) {
-                return null;
-            }
-            if (lastConnectionValid != Boolean.TRUE) {
+                IProxyRepositoryFactory factory = CoreRuntimePlugin.getInstance().getProxyRepositoryFactory();
+                RepositoryContext repositoryContext = factory.getRepositoryContext();
+                if ((nexus_url == null && (factory.isLocalConnectionProvider() || repositoryContext.isOffline()))) {
+                    return null;
+                }
                 if (repositoryContext != null && repositoryContext.getFields() != null && !factory.isLocalConnectionProvider()
                         && !repositoryContext.isOffline()) {
                     String adminUrl = repositoryContext.getFields().get(RepositoryConstants.REPOSITORY_URL);
@@ -244,8 +230,8 @@ public class TalendLibsServerManager {
 
                     if (adminUrl != null && !"".equals(adminUrl)
                             && GlobalServiceRegister.getDefault().isServiceRegistered(IRemoteService.class)) {
-                        IRemoteService remoteService = (IRemoteService) GlobalServiceRegister.getDefault()
-                                .getService(IRemoteService.class);
+                        IRemoteService remoteService = (IRemoteService) GlobalServiceRegister.getDefault().getService(
+                                IRemoteService.class);
                         NexusServerBean bean = remoteService.getLibNexusServer(userName, password, adminUrl);
                         if (bean != null) {
                             nexus_url = bean.getServer();
@@ -261,32 +247,24 @@ public class TalendLibsServerManager {
                         }
                     }
                 }
-            }
-            if (lastConnectionValid == null) {
                 boolean connectionOk = NexusServerUtils.checkConnectionStatus(nexus_url, repositoryId, nexus_user, nexus_pass)
                         && NexusServerUtils.checkConnectionStatus(nexus_url, snapshotRepId, nexus_user, nexus_pass);
-                lastConnectionValid = connectionOk;
                 if (!connectionOk) {
                     return null;
                 }
-            }
 
-            serverBean = new NexusServerBean();
-            serverBean.setServer(nexus_url);
-            serverBean.setUserName(nexus_user);
-            serverBean.setPassword(nexus_pass);
-            serverBean.setRepositoryId(repositoryId);
-            serverBean.setSnapshotRepId(snapshotRepId);
-        } catch (Exception e) {
-            serverBean = null;
-            ExceptionHandler.process(e);
+                artifactServerBean = new NexusServerBean();
+                artifactServerBean.setServer(nexus_url);
+                artifactServerBean.setUserName(nexus_user);
+                artifactServerBean.setPassword(nexus_pass);
+                artifactServerBean.setRepositoryId(repositoryId);
+                artifactServerBean.setSnapshotRepId(snapshotRepId);
+            } catch (Exception e) {
+                artifactServerBean = null;
+                ExceptionHandler.process(e);
+            }
         }
-        if (previousCustomBean == null && serverBean != null
-                || previousCustomBean != null && !previousCustomBean.equals(serverBean)) {
-            mavenResolver = null;
-        }
-        previousCustomBean = serverBean;
-        return serverBean;
+        return artifactServerBean;
 
     }
 
@@ -324,15 +302,15 @@ public class TalendLibsServerManager {
         try {
             if (adminUrl != null && !"".equals(adminUrl)
                     && GlobalServiceRegister.getDefault().isServiceRegistered(IRemoteService.class)) {
-                IRemoteService remoteService = (IRemoteService) GlobalServiceRegister.getDefault()
-                        .getService(IRemoteService.class);
+                IRemoteService remoteService = (IRemoteService) GlobalServiceRegister.getDefault().getService(
+                        IRemoteService.class);
                 NexusServerBean serverBean = remoteService.getUpdateRepositoryUrl(userName, password, adminUrl);
                 String nexus_url = serverBean.getServer();
                 String nexus_user = serverBean.getUserName();
                 String nexus_pass = serverBean.getPassword();
                 String nexus_repository = serverBean.getRepositoryId();
-                boolean connectionOK = NexusServerUtils.checkConnectionStatus(nexus_url, nexus_repository, nexus_user,
-                        nexus_pass);
+                boolean connectionOK = NexusServerUtils
+                        .checkConnectionStatus(nexus_url, nexus_repository, nexus_user, nexus_pass);
                 if (!connectionOK) {
                     return null;
                 }
