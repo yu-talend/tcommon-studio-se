@@ -102,11 +102,13 @@ public class BaseReferenceProjectFactory implements IReferenceProjectFactory {
         IProject iProject = ResourceUtils.getProject(project.getTechnicalLabel());
         IFolder folder = iProject.getFolder(".settings");
         IFile file = folder.getFile("references.properties");
-        if (file != null && file.exists()) {
-            return file.getLocationURI().toURL();
+        if (file != null) {
+            File propertiesFile = new File(file.getLocationURI());
+            if (propertiesFile != null && propertiesFile.exists()) {
+                return file.getLocationURI().toURL();
+            }
         }
         return null;
-
     }
 
     @Override
