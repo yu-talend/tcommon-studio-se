@@ -1,0 +1,136 @@
+package org.talend.repository.localprovider.model;
+
+// ============================================================================
+//
+// Copyright (C) 2006-2016 Talend Inc. - www.talend.com
+//
+// This source code is available under agreement available at
+// %InstallDIR%\features\org.talend.rcp.branding.%PRODUCTNAME%\%PRODUCTNAME%license.txt
+//
+// You should have received a copy of the agreement
+// along with this program; if not, write to Talend SA
+// 9 rue Pages 92150 Suresnes, France
+//
+// ============================================================================
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Platform;
+import org.junit.Test;
+import org.osgi.framework.Bundle;
+import org.talend.commons.exception.PersistenceException;
+import org.talend.core.model.properties.Project;
+import org.talend.core.model.properties.ProjectReference;
+import org.talend.core.model.properties.PropertiesFactory;
+import org.talend.core.model.properties.impl.PropertiesFactoryImpl;
+import org.talend.repository.ProjectManager;
+
+public class BaseReferenceProjectProviderTest {
+
+    private String refProjectName1 = "PROJECT_R";
+
+    private String refProjectBranch1 = "tags/tag1";
+
+    private String refProjectName2 = "PROJECT_R1";
+
+    private String refProjectBranch2 = "master";
+
+    @Test
+    public void testLoadProjectReferenceSetting() throws Exception {
+        Project project = getTestProject();
+        String branchName = "master";
+        BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
+        provider.loadProjectReferenceSetting();
+        if (provider.getProjectReference().size() == 0) {
+            testSaveProjectReferenceSetting();
+        }
+        assertNotNull(provider.getProjectReference());
+    }
+
+    @Test
+    public void testSaveProjectReferenceSetting() throws Exception {
+        Project project = getTestProject();
+        String branchName = "master";
+        BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
+        List<ProjectReference> projectReferenceList = getDefaultProjectReferenceList();
+        provider.setProjectReference(projectReferenceList);
+        provider.saveProjectReferenceSetting();
+    }
+
+    @Test
+    public void testGetProjectReference() throws Exception {
+        Project project = getTestProject();
+        String branchName = "master";
+        BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
+        provider.loadProjectReferenceSetting();
+        if (provider.getProjectReference().size() == 0) {
+            testSaveProjectReferenceSetting();
+        }
+        List<ProjectReference> list = provider.getProjectReference();
+        ProjectReference pr1 = list.get(0);
+        assertEquals(refProjectName1, pr1.getReferencedProject().getTechnicalLabel());
+        assertEquals(refProjectBranch1, pr1.getReferencedBranch());
+        ProjectReference pr2 = list.get(1);
+        assertEquals(refProjectName2, pr2.getReferencedProject().getTechnicalLabel());
+        assertEquals(refProjectBranch2, pr2.getReferencedBranch());
+        assertNotNull(provider.getProjectReference());
+    }
+
+    @Test
+    public void testSetProjectReference() throws Exception {
+        Project project = getTestProject();
+        String branchName = "master";
+        BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
+        provider.loadProjectReferenceSetting();
+        List<ProjectReference> projectReferenceList = getDefaultProjectReferenceList();
+        provider.setProjectReference(projectReferenceList);
+        provider.saveProjectReferenceSetting();
+    }
+
+    private Project getTestProject() {
+        return ProjectManager.getInstance().getCurrentProject().getEmfProject();
+    }
+
+    private List<ProjectReference> getDefaultProjectReferenceList() {
+        List<ProjectReference> list = new ArrayList<ProjectReference>();
+        PropertiesFactory propertiesFactory = PropertiesFactoryImpl.init();
+        Project project = getTestProject();
+        ProjectReference pr = propertiesFactory.createProjectReference();
+        pr.setProject(project);
+        pr.setBranch("master");
+        pr.setReferencedBranch(refProjectBranch1);
+        Project rp = propertiesFactory.createProject();
+        rp.setTechnicalLabel(refProjectName1);
+        pr.setReferencedProject(rp);
+        list.add(pr);
+
+        ProjectReference pr1 = propertiesFactory.createProjectReference();
+        pr1.setProject(project);
+        pr1.setBranch("master");
+        pr1.setReferencedBranch(refProjectBranch2);
+        Project rp1 = propertiesFactory.createProject();
+        rp1.setTechnicalLabel(refProjectName2);
+        pr1.setReferencedProject(rp1);
+        list.add(pr1);
+        return list;
+    }
+}
+
+class TestBaseReferenceProjectProvider extends BaseReferenceProjectProvider {
+
+    public TestBaseReferenceProjectProvider(Project project, String branchName) {
+        super(project, branchName);
+    }
+
+    protected File getConfigurationFile() throws PersistenceException, Exception {
+        Bundle bundle = Platform.getBundle("org.talend.repository.localprovider.test"); //$NON-NLS-1$
+        URL confEntry = bundle.getEntry("resources/references.properties"); //$NON-NLS-1$
+        return new File(FileLocator.toFileURL(confEntry).getFile());
+    }
+}

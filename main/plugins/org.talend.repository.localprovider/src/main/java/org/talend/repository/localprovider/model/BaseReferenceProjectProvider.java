@@ -15,8 +15,6 @@ package org.talend.repository.localprovider.model;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,24 +23,32 @@ import java.util.Map;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.exception.PersistenceException;
 import org.talend.commons.utils.workbench.resources.ResourceUtils;
 import org.talend.core.model.properties.Project;
 import org.talend.core.model.properties.ProjectReference;
 import org.talend.core.model.properties.PropertiesFactory;
 import org.talend.core.model.properties.impl.PropertiesFactoryImpl;
-import org.talend.core.repository.model.IReferenceProjectFactory;
+import org.talend.core.repository.model.IReferenceProjectProvider;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class BaseReferenceProjectFactory implements IReferenceProjectFactory {
+public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
+
+    private Project project;
+
+    private String branchName;
 
     private ReferenceProjectConfig referenceProjectConfig;
 
+    public BaseReferenceProjectProvider(Project project, String branchName) {
+        this.project = project;
+        this.branchName = branchName;
+    }
+
     @Override
-    public List<ProjectReference> getProjectReference(Project project, String branchName) {
+    public List<ProjectReference> getProjectReference() {
         List<ProjectReference> list = new ArrayList<ProjectReference>();
         if (referenceProjectConfig != null && referenceProjectConfig.getReference_project() != null) {
             PropertiesFactory propertiesFactory = PropertiesFactoryImpl.init();
@@ -54,17 +60,14 @@ public class BaseReferenceProjectFactory implements IReferenceProjectFactory {
                 Project rp = propertiesFactory.createProject();
                 rp.setTechnicalLabel(map.get(LABEL_TECHNICAL_LABEL));
                 pr.setReferencedProject(rp);
-
                 list.add(pr);
             }
-
         }
         return list;
     }
 
     @Override
-    public void setProjectReference(Project project, String branchName, List<ProjectReference> projectReferenceList) {
-
+    public void setProjectReference(List<ProjectReference> projectReferenceList) {
         if (projectReferenceList == null || projectReferenceList.size() == 0) {
             return;
         }
@@ -77,49 +80,46 @@ public class BaseReferenceProjectFactory implements IReferenceProjectFactory {
         for (ProjectReference projectReference : projectReferenceList) {
             Map<String, String> map = new HashMap<String, String>();
             map.put(LABEL_TECHNICAL_LABEL, projectReference.getReferencedProject().getTechnicalLabel());
-            map.put(LABEL_TECHNICAL_LABEL, projectReference.getReferencedBranch());
+            map.put(LABEL_BRANCH, projectReference.getReferencedBranch());
             referenceProjectConfig.getReference_project().add(map);
         }
     }
 
     @Override
-    public void loadProjectReferenceSetting(Project project, String branchName) {
+    public void loadProjectReferenceSetting() throws PersistenceException {
         TypeReference<ReferenceProjectConfig> typeReference = new TypeReference<ReferenceProjectConfig>() {
             // no need to overwrite
         };
 
         try {
-            URL url = getFileURL(project, branchName);
-            if (url != null) {
-                referenceProjectConfig = new ObjectMapper().readValue(getFileURL(project, branchName), typeReference);
+            File file = getConfigurationFile();
+            if (file != null && file.exists()) {
+                referenceProjectConfig = new ObjectMapper().readValue(file, typeReference);
             }
         } catch (Throwable e) {
-            ExceptionHandler.process(e);
+            throw new PersistenceException(e);
         }
     }
 
-    protected URL getFileURL(Project project, String branchName) throws PersistenceException, MalformedURLException {
+    protected File getConfigurationFile() throws Exception {
         IProject iProject = ResourceUtils.getProject(project.getTechnicalLabel());
-        IFolder folder = iProject.getFolder(".settings");
-        IFile file = folder.getFile("references.properties");
-        if (file != null) {
-            File propertiesFile = new File(file.getLocationURI());
-            if (propertiesFile != null && propertiesFile.exists()) {
-                return file.getLocationURI().toURL();
-            }
-        }
-        return null;
+        IFolder folder = iProject.getFolder(".settings"); //$NON-NLS-1$
+        IFile file = folder.getFile("references.properties"); //$NON-NLS-1$
+        File propertiesFile = new File(file.getLocationURI());
+        return propertiesFile;
     }
 
     @Override
-    public void saveProjectReferenceSetting(Project project, String branchName) throws Exception {
-        URL url = getFileURL(project, branchName);
-        File file = new File(url.getPath());
+    public void saveProjectReferenceSetting() throws Exception {
+        File file = getConfigurationFile();
+        if (!file.exists()) {
+            file.createNewFile();
+        }
         ObjectMapper objectMapper = new ObjectMapper();
         if (referenceProjectConfig == null) {
             referenceProjectConfig = new ReferenceProjectConfig();
         }
-        String content = objectMapper.writeValueAsString(referenceProjectConfig);
+        String content = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(referenceProjectConfig);
         BufferedWriter bw = null;
         try {
             bw = new BufferedWriter(new FileWriter(file));
