@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.2"?>
 <plugin>
-   <extension-point id="artifact_handler" name="Artifact Repository Handler" schema="schema/artifact_handler.exsd"/>
    <extension
          point="org.talend.core.runtime.service">
       <Service
@@ -38,9 +37,13 @@
       </systemRoutine>
    </extension>
    <extension
-         point="org.talend.librariesmanager.artifact_handler">
+         point="org.talend.core.runtime.artifact_handler">
       <handler
-            class="org.talend.librariesmanager.ArtifactRepositoryHandler1"
+            class="org.talend.librariesmanager.nexus.Nexus2RepositoryHandler"
+            type="NEXUS_2">
+      </handler>
+      <handler
+            class="org.talend.librariesmanager.nexus.Nexus3RepositoryHandler"
             type="NEXUS_2">
       </handler>
    </extension>

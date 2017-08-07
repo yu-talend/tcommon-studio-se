@@ -62,7 +62,7 @@
                   
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn=":org.talend.core.nexus.IArtifactRepositoryHandler"/>
+                  <meta.attribute kind="java" basedOn=":org.talend.core.nexus.IRemoteArtifactHandler"/>
                </appInfo>
             </annotation>
          </attribute>

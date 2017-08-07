@@ -67,7 +67,7 @@ import org.talend.core.prefs.ITalendCorePrefConstants;
 import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenUrlHelper;
 import org.talend.librariesmanager.emf.librariesindex.LibrariesIndex;
-import org.talend.librariesmanager.maven.ArtifactsDeployer;
+import org.talend.librariesmanager.maven.MavenArtifactsHandler;
 import org.talend.librariesmanager.model.ModulesNeededProvider;
 import org.talend.librariesmanager.prefs.LibrariesManagerUtils;
 import org.talend.repository.ProjectManager;
@@ -510,7 +510,7 @@ public class LocalLibraryManagerTest {
             }
 
             // install to nexus
-            ArtifactsDeployer deployer = new ArtifactsDeployer();
+            MavenArtifactsHandler deployer = new MavenArtifactsHandler();
             MavenArtifact artifact = MavenUrlHelper.parseMvnUrl(module1.getMavenUri(true));
             deployer.installToRemote(new File(FileLocator.toFileURL(entry1).getFile()), artifact, artifact.getType());
             artifact = MavenUrlHelper.parseMvnUrl(module2.getMavenUri(true));
@@ -637,7 +637,7 @@ public class LocalLibraryManagerTest {
                 artifact.getArtifactId(), artifact.getVersion(), artifact.getType());
         assertEquals(originalSHA1, remoteSha1);
         // deploy the new jar to nexus (without update the local jar)
-        new ArtifactsDeployer().installToRemote(newJarFile, artifact, "jar");
+        new MavenArtifactsHandler().installToRemote(newJarFile, artifact, "jar");
         remoteSha1 = NexusServerUtils.resolveSha1(customNexusServer.getServer(), customNexusServer.getUserName(),
                 customNexusServer.getPassword(), customNexusServer.getSnapshotRepId(), artifact.getGroupId(),
                 artifact.getArtifactId(), artifact.getVersion(), artifact.getType());
@@ -675,7 +675,7 @@ public class LocalLibraryManagerTest {
         URL entry = bundle.getEntry("/lib/old/test.jar");
         File originalJarFile = new File(FileLocator.toFileURL(entry).getFile());
         // deploy the new jar to nexus (without update the local jar)
-        new ArtifactsDeployer().installToRemote(originalJarFile, artifact, "jar");
+        new MavenArtifactsHandler().installToRemote(originalJarFile, artifact, "jar");
         String originalSHA1 = getSha1(originalJarFile);
 
         // jar should not exist still on local

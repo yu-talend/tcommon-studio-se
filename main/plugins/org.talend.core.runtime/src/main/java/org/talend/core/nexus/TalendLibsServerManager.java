@@ -14,16 +14,9 @@ package org.talend.core.nexus;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.List;
 
-import org.ops4j.pax.url.mvn.MavenResolver;
 import org.ops4j.pax.url.mvn.ServiceConstants;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.ConfigurationException;
-import org.osgi.service.cm.ManagedService;
-import org.osgi.util.tracker.ServiceTracker;
-import org.osgi.util.tracker.ServiceTrackerCustomizer;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.exception.LoginException;
 import org.talend.commons.exception.PersistenceException;
@@ -31,7 +24,6 @@ import org.talend.core.GlobalServiceRegister;
 import org.talend.core.context.RepositoryContext;
 import org.talend.core.model.properties.User;
 import org.talend.core.runtime.CoreRuntimePlugin;
-import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.service.IRemoteService;
 import org.talend.repository.model.IProxyRepositoryFactory;
 import org.talend.repository.model.RepositoryConstants;
@@ -78,43 +70,9 @@ public class TalendLibsServerManager {
 
     private static TalendLibsServerManager manager = null;
 
-    private MavenResolver mavenResolver = null;
-
     private NexusServerBean artifactServerBean;
 
-    private boolean tacChecked = false;
-
     public static final int CONNECTION_OK = 200;
-
-    private TalendLibsServerManager() {
-        // the tracker is use in case the service is modifed
-        final BundleContext context = CoreRuntimePlugin.getInstance().getBundle().getBundleContext();
-        ServiceTracker<org.ops4j.pax.url.mvn.MavenResolver, org.ops4j.pax.url.mvn.MavenResolver> serviceTracker = new ServiceTracker<org.ops4j.pax.url.mvn.MavenResolver, org.ops4j.pax.url.mvn.MavenResolver>(
-                context, org.ops4j.pax.url.mvn.MavenResolver.class,
-                new ServiceTrackerCustomizer<org.ops4j.pax.url.mvn.MavenResolver, org.ops4j.pax.url.mvn.MavenResolver>() {
-
-                    @Override
-                    public org.ops4j.pax.url.mvn.MavenResolver addingService(
-                            ServiceReference<org.ops4j.pax.url.mvn.MavenResolver> reference) {
-                        return context.getService(reference);
-                    }
-
-                    @Override
-                    public void modifiedService(ServiceReference<org.ops4j.pax.url.mvn.MavenResolver> reference,
-                            org.ops4j.pax.url.mvn.MavenResolver service) {
-                        mavenResolver = null;
-
-                    }
-
-                    @Override
-                    public void removedService(ServiceReference<org.ops4j.pax.url.mvn.MavenResolver> reference,
-                            org.ops4j.pax.url.mvn.MavenResolver service) {
-                        mavenResolver = null;
-                    }
-                });
-        serviceTracker.open();
-
-    }
 
     public static synchronized TalendLibsServerManager getInstance() {
         if (manager == null) {
@@ -127,76 +85,39 @@ public class TalendLibsServerManager {
         if (props == null) {
             props = new Hashtable<String, String>();
         }
-        final BundleContext context = CoreRuntimePlugin.getInstance().getBundle().getBundleContext();
-        ServiceReference<ManagedService> managedServiceRef = context.getServiceReference(ManagedService.class);
-        if (managedServiceRef != null) {
-            if (setupCustomNexusFromTAC) {
-                String repositories = "";
-                NexusServerBean customServer = getCustomNexusServer();
-                if (customServer != null) {
-                    String custom_server = customServer.getServer();
-                    String custom_user = customServer.getUserName();
-                    String custom_pass = customServer.getPassword();
-                    String release_rep = customServer.getRepositoryId();
-                    String snapshot_rep = customServer.getSnapshotRepId();
-                    if (custom_server.endsWith(NexusConstants.SLASH)) {
-                        custom_server = custom_server.substring(0, custom_server.length() - 1);
+        if (setupCustomNexusFromTAC) {
+            String repositories = "";
+            NexusServerBean customServer = getCustomNexusServer();
+            if (customServer != null) {
+                String custom_server = customServer.getServer();
+                String custom_user = customServer.getUserName();
+                String custom_pass = customServer.getPassword();
+                String release_rep = customServer.getRepositoryId();
+                String snapshot_rep = customServer.getSnapshotRepId();
+                if (custom_server.endsWith(NexusConstants.SLASH)) {
+                    custom_server = custom_server.substring(0, custom_server.length() - 1);
+                }
+                if (custom_user != null && !"".equals(custom_user)) {//$NON-NLS-1$
+                    String[] split = custom_server.split("://");//$NON-NLS-1$
+                    if (split.length != 2) {
+                        throw new RuntimeException("Nexus url is not valid ,please contract the administrator");
                     }
-                    if (custom_user != null && !"".equals(custom_user)) {//$NON-NLS-1$
-                        String[] split = custom_server.split("://");//$NON-NLS-1$
-                        if (split.length != 2) {
-                            throw new RuntimeException("Nexus url is not valid ,please contract the administrator");
-                        }
-                        custom_server = split[0] + "://" + custom_user + ":" + custom_pass + "@"//$NON-NLS-1$
-                                + split[1] + NexusConstants.CONTENT_REPOSITORIES;
-                    }
-                    String releaseUrl = custom_server + release_rep + "@id=" + release_rep;//$NON-NLS-1$
-                    String snapshotUrl = custom_server + snapshot_rep + "@id=" + snapshot_rep + NexusConstants.SNAPSHOTS;//$NON-NLS-1$
-                    // custom nexus server should use snapshot repository
-                    repositories = releaseUrl + "," + snapshotUrl;
+                    custom_server = split[0] + "://" + custom_user + ":" + custom_pass + "@"//$NON-NLS-1$
+                            + split[1] + NexusConstants.CONTENT_REPOSITORIES;
                 }
-                final NexusServerBean officailServer = getLibrariesNexusServer();
-                String official_server = officailServer.getServer();
-                // remove the trailing slash
-                if (official_server.endsWith(NexusConstants.SLASH)) {
-                    official_server = official_server.substring(0, official_server.length() - 1);
-                }
-                String officalUrl = official_server + NexusConstants.CONTENT_REPOSITORIES + officailServer.getRepositoryId()
-                        + "@id=" + officailServer.getRepositoryId();//$NON-NLS-1$
-                if (repositories.isEmpty()) {
-                    repositories = officalUrl;
-                } else {
-                    repositories = repositories + "," + officalUrl;
-                }
-                props.put(ServiceConstants.PID + '.' + ServiceConstants.PROPERTY_REPOSITORIES, repositories);
+                String releaseUrl = custom_server + release_rep + "@id=" + release_rep;//$NON-NLS-1$
+                String snapshotUrl = custom_server + snapshot_rep + "@id=" + snapshot_rep + NexusConstants.SNAPSHOTS;//$NON-NLS-1$
+                // custom nexus server should use snapshot repository
+                repositories = releaseUrl + "," + snapshotUrl;
             }
-            ManagedService managedService = context.getService(managedServiceRef);
-
-            try {
-                managedService.updated(props);
-                mavenResolver = null;
-            } catch (ConfigurationException e) {
-                throw new RuntimeException("Failed to modifiy the service properties"); //$NON-NLS-1$
-            }
-        } else {
-            throw new RuntimeException("Failed to load the service :" + ManagedService.class.getCanonicalName()); //$NON-NLS-1$
+            props.put(ServiceConstants.PID + '.' + ServiceConstants.PROPERTY_REPOSITORIES, repositories);
         }
 
-    }
-
-    public MavenResolver getMavenResolver() throws RuntimeException {
-        if (mavenResolver == null) {
-            final BundleContext context = CoreRuntimePlugin.getInstance().getBundle().getBundleContext();
-            ServiceReference<org.ops4j.pax.url.mvn.MavenResolver> mavenResolverService = context
-                    .getServiceReference(org.ops4j.pax.url.mvn.MavenResolver.class);
-            if (mavenResolverService != null) {
-                mavenResolver = context.getService(mavenResolverService);
-            } else {
-                throw new RuntimeException("Unable to acquire org.ops4j.pax.url.mvn.MavenResolver");
-            }
+        try {
+            TalendMavenResolver.updateMavenResolver(props);
+        } catch (ConfigurationException e) {
+            throw new RuntimeException("Failed to modifiy the service properties"); //$NON-NLS-1$
         }
-
-        return mavenResolver;
 
     }
 
@@ -247,12 +168,6 @@ public class TalendLibsServerManager {
                         }
                     }
                 }
-                boolean connectionOk = NexusServerUtils.checkConnectionStatus(nexus_url, repositoryId, nexus_user, nexus_pass)
-                        && NexusServerUtils.checkConnectionStatus(nexus_url, snapshotRepId, nexus_user, nexus_pass);
-                if (!connectionOk) {
-                    return null;
-                }
-
                 artifactServerBean = new NexusServerBean();
                 artifactServerBean.setServer(nexus_url);
                 artifactServerBean.setUserName(nexus_user);
@@ -268,7 +183,7 @@ public class TalendLibsServerManager {
 
     }
 
-    public NexusServerBean getLibrariesNexusServer() {
+    public NexusServerBean getTalentArtifactServer() {
         NexusServerBean serverBean = new NexusServerBean();
         serverBean.setServer(System.getProperty("org.talend.libraries.repo.url", TALEND_LIB_SERVER));
         serverBean.setUserName(TALEND_LIB_USER);
@@ -277,11 +192,6 @@ public class TalendLibsServerManager {
         serverBean.setOfficial(true);
 
         return serverBean;
-    }
-
-    public List<MavenArtifact> search(String nexusUrl, String userName, String password, String repositoryId,
-            String groupIdToSearch, String artifactId, String versionToSearch) throws Exception {
-        return NexusServerUtils.search(nexusUrl, userName, password, repositoryId, groupIdToSearch, artifactId, versionToSearch);
     }
 
     public String resolveSha1(String nexusUrl, String userName, String password, String repositoryId, String groupId,
@@ -298,7 +208,7 @@ public class TalendLibsServerManager {
      * @param password
      * @return
      */
-    public static NexusServerBean getSoftwareUpdateNexusServer(String adminUrl, String userName, String password) {
+    public NexusServerBean getSoftwareUpdateNexusServer(String adminUrl, String userName, String password) {
         try {
             if (adminUrl != null && !"".equals(adminUrl)
                     && GlobalServiceRegister.getDefault().isServiceRegistered(IRemoteService.class)) {
