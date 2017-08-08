@@ -61,7 +61,8 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
             projectResource.getContents().remove(projectReference);
         }
         project.getReferencedProjects().clear();
-
+        ReferenceProjectProblemManager.getInstance().clearAll();
+        
         BaseReferenceProjectProvider factory = new BaseReferenceProjectProvider(project, branchName);
         factory.loadProjectReferenceSetting();
         List<ProjectReference> list = factory.getProjectReference();
