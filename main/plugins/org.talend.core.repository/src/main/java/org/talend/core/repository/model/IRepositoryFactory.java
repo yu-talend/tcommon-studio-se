@@ -305,7 +305,7 @@ public interface IRepositoryFactory {
 
     public Property getUptodateProperty(Project project, Property property) throws PersistenceException;
     
-    public void initProject(Project project) throws PersistenceException;
+    public void initProjectRepository(Project project, String branchForMainProject) throws PersistenceException;
 
     public void beforeLogon(Project project) throws PersistenceException, LoginException;
 

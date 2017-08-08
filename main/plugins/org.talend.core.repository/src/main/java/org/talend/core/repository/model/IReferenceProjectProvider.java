@@ -14,6 +14,8 @@ package org.talend.core.repository.model;
 // ============================================================================
 import java.util.List;
 
+import org.talend.commons.exception.InvalidProjectException;
+import org.talend.commons.exception.PersistenceException;
 import org.talend.core.model.properties.ProjectReference;
 
 public interface IReferenceProjectProvider {
@@ -29,4 +31,7 @@ public interface IReferenceProjectProvider {
     public void loadProjectReferenceSetting() throws Exception;
 
     public void saveProjectReferenceSetting() throws Exception;
+
+    public void initReferenceProjectSetting(org.talend.core.model.general.Project[] allProjects)
+            throws InvalidProjectException, PersistenceException;
 }

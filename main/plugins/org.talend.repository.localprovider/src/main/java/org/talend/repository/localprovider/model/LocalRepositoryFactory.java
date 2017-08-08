@@ -73,6 +73,7 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.talend.commons.exception.BusinessException;
 import org.talend.commons.exception.ExceptionHandler;
+import org.talend.commons.exception.InvalidProjectException;
 import org.talend.commons.exception.LoginException;
 import org.talend.commons.exception.PersistenceException;
 import org.talend.commons.exception.ResourceNotFoundException;
@@ -147,6 +148,7 @@ import org.talend.core.repository.model.AbstractEMFRepositoryFactory;
 import org.talend.core.repository.model.FolderHelper;
 import org.talend.core.repository.model.ILocalRepositoryFactory;
 import org.talend.core.repository.model.ILockBean;
+import org.talend.core.repository.model.IReferenceProjectProvider;
 import org.talend.core.repository.model.ProjectRepositoryNode;
 import org.talend.core.repository.model.ProxyRepositoryFactory;
 import org.talend.core.repository.model.VersionList;
@@ -186,6 +188,8 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
     private boolean copyScreenshotFlag = false;
 
     private Set<String> invalidFiles = new HashSet<String>();
+    
+    private Project[] allAvailableProjects = null;
 
     public LocalRepositoryFactory() {
         super();
@@ -1111,7 +1115,8 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
      */
     @Override
     public Project[] readProject() throws PersistenceException {
-        return readProjects(true);
+        allAvailableProjects = readProjects(true);
+        return allAvailableProjects;
     }
 
     @Override
@@ -3128,7 +3133,9 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
         if (!doesLoggedUserExist() && project.isMainProject()) {
             createUser(project);
         }
-
+        
+        initProjectRepository(project, null);
+        
         IProject project2 = ResourceUtils.getProject(project);
         createFolders(project2, project.getEmfProject());
         synchronizeRoutines(project2);
@@ -3491,8 +3498,13 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
 
     }
     
-    public void initProject(Project project) throws PersistenceException {
-     // nothing to do
+    public void initProjectRepository(Project project,String branchForMainProject) throws PersistenceException {
+        IReferenceProjectProvider baseReferenceProjectProvider = new BaseReferenceProjectProvider(project.getEmfProject(), branchForMainProject);
+        try {
+            baseReferenceProjectProvider.initReferenceProjectSetting(allAvailableProjects);
+        } catch (InvalidProjectException ex) { // Ignore invalid project
+            ExceptionHandler.process(ex);
+        }
     }
 
     protected void notifyProjectReload(org.talend.core.model.properties.Project project) {
