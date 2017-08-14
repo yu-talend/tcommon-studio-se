@@ -12,8 +12,9 @@ package org.talend.core.repository.model;
 //
 // ============================================================================
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import org.talend.core.model.properties.ProjectReference;
 
@@ -21,7 +22,7 @@ public class ReferenceProjectProblemManager {
 
     private static ReferenceProjectProblemManager instance;
 
-    private List<ProjectReference> invalidProjectReferenceList = new ArrayList<ProjectReference>();
+    private Map<String, String> invalidProjectMap = new HashMap<String, String>();
 
     public static synchronized ReferenceProjectProblemManager getInstance() {
         if (instance == null) {
@@ -32,29 +33,16 @@ public class ReferenceProjectProblemManager {
 
     public void addInvalidProjectReference(ProjectReference projectReference) {
         if (projectReference != null) {
-            invalidProjectReferenceList.add(projectReference);
+            invalidProjectMap.put(projectReference.getReferencedProject().getTechnicalLabel(),
+                    projectReference.getReferencedBranch());
         }
     }
 
-    public List<ProjectReference> getInvalidProjectReferenceList() {
-        List<ProjectReference> result = new ArrayList<ProjectReference>();
-        result.addAll(invalidProjectReferenceList);
-        return result;
+    public Set<String> getInvalidProjectReferenceSet() {
+        return invalidProjectMap.keySet();
     }
 
     public void clearAll() {
-        invalidProjectReferenceList.clear();
-    }
-
-    public boolean isValidProjectReference(ProjectReference projectReference) {
-        if (projectReference != null) {
-            for (ProjectReference pr : invalidProjectReferenceList) {
-                if (projectReference.getReferencedProject().getTechnicalLabel()
-                        .equals(pr.getReferencedProject().getTechnicalLabel())) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        invalidProjectMap.clear();
     }
 }

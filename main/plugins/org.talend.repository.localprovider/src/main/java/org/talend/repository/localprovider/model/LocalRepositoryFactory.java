@@ -3499,9 +3499,9 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
     }
     
     public void initProjectRepository(Project project,String branchForMainProject) throws PersistenceException {
-        IReferenceProjectProvider baseReferenceProjectProvider = new BaseReferenceProjectProvider(project.getEmfProject(), branchForMainProject);
+        IReferenceProjectProvider baseReferenceProjectProvider = new BaseReferenceProjectProvider(project.getEmfProject());
         try {
-            baseReferenceProjectProvider.initReferenceProjectSetting(allAvailableProjects);
+            baseReferenceProjectProvider.initSettings(allAvailableProjects);
         } catch (InvalidProjectException ex) { // Ignore invalid project
             ExceptionHandler.process(ex);
         }

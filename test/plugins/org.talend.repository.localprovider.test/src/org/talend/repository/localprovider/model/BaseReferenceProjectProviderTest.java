@@ -46,7 +46,7 @@ public class BaseReferenceProjectProviderTest {
         Project project = getTestProject();
         String branchName = "master";
         BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
-        provider.loadProjectReferenceSetting();
+        provider.loadSettings();
         if (provider.getProjectReference().size() == 0) {
             testSaveProjectReferenceSetting();
         }
@@ -60,7 +60,7 @@ public class BaseReferenceProjectProviderTest {
         BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
         List<ProjectReference> projectReferenceList = getDefaultProjectReferenceList();
         provider.setProjectReference(projectReferenceList);
-        provider.saveProjectReferenceSetting();
+        provider.saveSettings();
     }
 
     @Test
@@ -68,7 +68,7 @@ public class BaseReferenceProjectProviderTest {
         Project project = getTestProject();
         String branchName = "master";
         BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
-        provider.loadProjectReferenceSetting();
+        provider.loadSettings();
         if (provider.getProjectReference().size() == 0) {
             testSaveProjectReferenceSetting();
         }
@@ -87,10 +87,10 @@ public class BaseReferenceProjectProviderTest {
         Project project = getTestProject();
         String branchName = "master";
         BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
-        provider.loadProjectReferenceSetting();
+        provider.loadSettings();
         List<ProjectReference> projectReferenceList = getDefaultProjectReferenceList();
         provider.setProjectReference(projectReferenceList);
-        provider.saveProjectReferenceSetting();
+        provider.saveSettings();
     }
 
     private Project getTestProject() {
@@ -125,12 +125,12 @@ public class BaseReferenceProjectProviderTest {
 class TestBaseReferenceProjectProvider extends BaseReferenceProjectProvider {
 
     public TestBaseReferenceProjectProvider(Project project, String branchName) {
-        super(project, branchName);
+        super(project);
     }
 
     protected File getConfigurationFile() throws PersistenceException, Exception {
         Bundle bundle = Platform.getBundle("org.talend.repository.localprovider.test"); //$NON-NLS-1$
-        URL confEntry = bundle.getEntry("resources/references.properties"); //$NON-NLS-1$
+        URL confEntry = bundle.getEntry("resources/reference_projects.settings"); //$NON-NLS-1$
         return new File(FileLocator.toFileURL(confEntry).getFile());
     }
 }

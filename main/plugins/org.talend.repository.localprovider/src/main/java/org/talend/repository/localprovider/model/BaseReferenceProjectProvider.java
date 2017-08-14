@@ -29,7 +29,6 @@ import org.talend.commons.utils.workbench.resources.ResourceUtils;
 import org.talend.core.model.properties.Project;
 import org.talend.core.model.properties.ProjectReference;
 import org.talend.core.model.properties.PropertiesFactory;
-import org.talend.core.model.properties.impl.PropertiesFactoryImpl;
 import org.talend.core.repository.model.IReferenceProjectProvider;
 import org.talend.core.repository.model.ReferenceProjectProblemManager;
 
@@ -43,17 +42,14 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
 
     private Project project;
 
-    private String branchName;
-
     private ReferenceProjectConfiguration referenceProjectConfig;
 
-    public BaseReferenceProjectProvider(Project project, String branchName) {
+    public BaseReferenceProjectProvider(Project project) {
         this.project = project;
-        this.branchName = branchName;
     }
 
     @SuppressWarnings("unchecked")
-    public void initReferenceProjectSetting(org.talend.core.model.general.Project[] allAvailableProjects)
+    public void initSettings(org.talend.core.model.general.Project[] allAvailableProjects)
             throws InvalidProjectException, PersistenceException {
         Resource projectResource = project.eResource();
         List<ProjectReference> referenceProjectList = project.getReferencedProjects();
@@ -62,9 +58,9 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
         }
         project.getReferencedProjects().clear();
         ReferenceProjectProblemManager.getInstance().clearAll();
-        
-        BaseReferenceProjectProvider factory = new BaseReferenceProjectProvider(project, branchName);
-        factory.loadProjectReferenceSetting();
+
+        BaseReferenceProjectProvider factory = new BaseReferenceProjectProvider(project);
+        factory.loadSettings();
         List<ProjectReference> list = factory.getProjectReference();
         for (ProjectReference projectReference : list) {
             org.talend.core.model.general.Project refProject = findProjectByTechnicalLabel(allAvailableProjects,
@@ -80,21 +76,21 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
             }
         }
         // get exception message
-        if (ReferenceProjectProblemManager.getInstance().getInvalidProjectReferenceList().size() > 0) {
+        if (ReferenceProjectProblemManager.getInstance().getInvalidProjectReferenceSet().size() > 0) {
             StringBuffer sb = new StringBuffer();
-            for (ProjectReference pr : ReferenceProjectProblemManager.getInstance().getInvalidProjectReferenceList()) {
+            for (String project : ReferenceProjectProblemManager.getInstance().getInvalidProjectReferenceSet()) {
                 if (sb.length() > 0) {
                     sb.append(",");
                 }
-                sb.append(pr.getReferencedProject().getTechnicalLabel());
+                sb.append(project);
             }
             throw new InvalidProjectException(" Can't access project {" + sb.toString() + "} by current user.");
         }
         return;
     }
 
-    private org.talend.core.model.general.Project findProjectByTechnicalLabel(org.talend.core.model.general.Project[] allAvailableProjects,
-            String technicalLabel) {
+    private org.talend.core.model.general.Project findProjectByTechnicalLabel(
+            org.talend.core.model.general.Project[] allAvailableProjects, String technicalLabel) {
         if (allAvailableProjects != null) {
             for (org.talend.core.model.general.Project project : allAvailableProjects) {
                 if (technicalLabel.equals(project.getTechnicalLabel())) {
@@ -109,12 +105,10 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
     public List<ProjectReference> getProjectReference() {
         List<ProjectReference> list = new ArrayList<ProjectReference>();
         if (referenceProjectConfig != null && referenceProjectConfig.getReferenceProject() != null) {
-            PropertiesFactory propertiesFactory = PropertiesFactoryImpl.init();
             for (ReferenceProjectBean bean : referenceProjectConfig.getReferenceProject()) {
-                ProjectReference pr = propertiesFactory.createProjectReference();
-                pr.setBranch(branchName);
+                ProjectReference pr = PropertiesFactory.eINSTANCE.createProjectReference();
                 pr.setReferencedBranch(bean.getBranchName());
-                Project rp = propertiesFactory.createProject();
+                Project rp = PropertiesFactory.eINSTANCE.createProject();
                 rp.setTechnicalLabel(bean.getProjectTechnicalName());
                 pr.setReferencedProject(rp);
                 list.add(pr);
@@ -143,7 +137,7 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
     }
 
     @Override
-    public void loadProjectReferenceSetting() throws PersistenceException {
+    public void loadSettings() throws PersistenceException {
         TypeReference<ReferenceProjectConfiguration> typeReference = new TypeReference<ReferenceProjectConfiguration>() {
             // no need to overwrite
         };
@@ -161,17 +155,17 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
     protected File getConfigurationFile() throws Exception {
         IProject iProject = ResourceUtils.getProject(project.getTechnicalLabel());
         IFolder folder = iProject.getFolder(".settings"); //$NON-NLS-1$
-        IFile file = folder.getFile("references.properties"); //$NON-NLS-1$
+        IFile file = folder.getFile("reference_projects.settings"); //$NON-NLS-1$
         File propertiesFile = new File(file.getLocationURI());
         return propertiesFile;
     }
 
     @Override
-    public void saveProjectReferenceSetting() throws Exception {
+    public void saveSettings() throws Exception {
         File file = getConfigurationFile();
-        if (!file.exists()) {
-            file.createNewFile();
-        }
+        if (!file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }      
         if (referenceProjectConfig == null) {
             referenceProjectConfig = new ReferenceProjectConfiguration();
         }
@@ -190,7 +184,7 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
 
 class ReferenceProjectConfiguration {
 
-    @JsonProperty("reference_project")
+    @JsonProperty("reference_projects")
     private List<ReferenceProjectBean> referenceProject = new ArrayList<ReferenceProjectBean>();
 
     public List<ReferenceProjectBean> getReferenceProject() {
@@ -203,23 +197,25 @@ class ReferenceProjectConfiguration {
 }
 
 class ReferenceProjectBean {
-    @JsonProperty("technical_label")
+
+    @JsonProperty("project")
     private String projectTechnicalName;
+
     @JsonProperty("branch")
     private String branchName;
-    
+
     public String getProjectTechnicalName() {
         return projectTechnicalName;
     }
-    
+
     public void setProjectTechnicalName(String projectTechnicalName) {
         this.projectTechnicalName = projectTechnicalName;
     }
-    
+
     public String getBranchName() {
         return branchName;
     }
-    
+
     public void setBranchName(String branchName) {
         this.branchName = branchName;
     }
