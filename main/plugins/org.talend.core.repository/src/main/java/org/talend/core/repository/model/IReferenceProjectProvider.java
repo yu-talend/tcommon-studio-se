@@ -20,10 +20,6 @@ import org.talend.core.model.properties.ProjectReference;
 
 public interface IReferenceProjectProvider {
 
-    public static final String LABEL_TECHNICAL_LABEL = "technical_label";
-
-    public static final String LABEL_BRANCH = "branch";
-
     public List<ProjectReference> getProjectReference();
 
     public void setProjectReference(List<ProjectReference> projectReferenceList);
