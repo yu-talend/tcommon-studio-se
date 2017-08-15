@@ -12,13 +12,14 @@
 // ============================================================================
 package org.talend.core.nexus;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 import org.ops4j.pax.url.mvn.MavenResolver;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
-import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
@@ -65,7 +66,7 @@ public class TalendMavenResolver {
         serviceTracker.open();
     }
 
-    public static void updateMavenResolver(Dictionary<String, String> props) throws ConfigurationException {
+    public static void updateMavenResolver(Dictionary<String, String> props) throws Exception {
         if (props == null) {
             props = new Hashtable<String, String>();
         }
@@ -80,6 +81,15 @@ public class TalendMavenResolver {
             throw new RuntimeException("Failed to load the service :" + ManagedService.class.getCanonicalName()); //$NON-NLS-1$
         }
 
+    }
+
+    public static File resolve(String mvnUri) throws IOException, RuntimeException {
+        return getMavenResolver().resolve(mvnUri);
+    }
+
+    public static void upload(String groupId, String artifactId, String classifier, String extension, String version,
+            File artifact) throws IOException {
+        getMavenResolver().upload(groupId, artifactId, classifier, extension, version, artifact);
     }
 
     public static MavenResolver getMavenResolver() throws RuntimeException {

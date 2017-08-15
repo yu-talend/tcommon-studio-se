@@ -20,6 +20,7 @@ import java.util.List;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.model.general.INexusService;
 import org.talend.core.nexus.IRepositoryArtifactHandler;
+import org.talend.core.nexus.NexusConstants;
 import org.talend.core.nexus.NexusServerUtils;
 import org.talend.core.runtime.maven.MavenArtifact;
 
@@ -50,11 +51,11 @@ public class Nexus2RepositoryHandler extends AbstractArtifactRepositoryHandler {
         boolean releaseStatus = false;
         boolean snapshotStatus = false;
         if (checkRelease && serverBean.getRepositoryId() != null) {
-            releaseStatus = NexusServerUtils.checkConnectionStatus(serverBean.getRepositoryURI(), serverBean.getRepositoryId(),
+            releaseStatus = NexusServerUtils.checkConnectionStatus(serverBean.getServer(), serverBean.getRepositoryId(),
                     serverBean.getUserName(), serverBean.getPassword());
         }
         if (checkSnapshot && serverBean.getSnapshotRepId() != null) {
-            snapshotStatus = NexusServerUtils.checkConnectionStatus(serverBean.getRepositoryURI(), serverBean.getSnapshotRepId(),
+            snapshotStatus = NexusServerUtils.checkConnectionStatus(serverBean.getServer(), serverBean.getSnapshotRepId(),
                     serverBean.getUserName(), serverBean.getPassword());
         }
         boolean result = (checkRelease ? releaseStatus : true) && (checkSnapshot ? snapshotStatus : true);
@@ -72,12 +73,12 @@ public class Nexus2RepositoryHandler extends AbstractArtifactRepositoryHandler {
             boolean fromSnapshot) throws Exception {
         List<MavenArtifact> results = new ArrayList<MavenArtifact>();
         if (fromRelease && serverBean.getRepositoryId() != null) {
-            results.addAll(NexusServerUtils.search(serverBean.getRepositoryURI(), serverBean.getUserName(),
-                    serverBean.getPassword(), serverBean.getRepositoryId(), groupIdToSearch, artifactId, versionToSearch));
+            results.addAll(NexusServerUtils.search(serverBean.getServer(), serverBean.getUserName(), serverBean.getPassword(),
+                    serverBean.getRepositoryId(), groupIdToSearch, artifactId, versionToSearch));
         }
         if (fromSnapshot && serverBean.getSnapshotRepId() != null) {
-            results.addAll(NexusServerUtils.search(serverBean.getRepositoryURI(), serverBean.getUserName(),
-                    serverBean.getPassword(), serverBean.getSnapshotRepId(), groupIdToSearch, artifactId, versionToSearch));
+            results.addAll(NexusServerUtils.search(serverBean.getServer(), serverBean.getUserName(), serverBean.getPassword(),
+                    serverBean.getSnapshotRepId(), groupIdToSearch, artifactId, versionToSearch));
         }
         return results;
     }
@@ -97,14 +98,9 @@ public class Nexus2RepositoryHandler extends AbstractArtifactRepositoryHandler {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.talend.core.nexus.IArtifacRepositoryHandler#resolve(java.lang.String)
-     */
     @Override
-    public File resolve(String mvnUrl) throws Exception {
-        return null;
+    protected String getRepositoryPrefixPath() {
+        return NexusConstants.CONTENT_REPOSITORIES;
     }
 
     @Override

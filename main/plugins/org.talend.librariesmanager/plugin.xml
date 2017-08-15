@@ -44,7 +44,7 @@
       </handler>
       <handler
             class="org.talend.librariesmanager.nexus.Nexus3RepositoryHandler"
-            type="NEXUS_2">
+            type="NEXUS_3">
       </handler>
    </extension>
 </plugin>

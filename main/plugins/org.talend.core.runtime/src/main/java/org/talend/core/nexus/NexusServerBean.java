@@ -20,19 +20,19 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class NexusServerBean {
 
-    String server;
+    private String server;
 
-    String userName;
+    private String userName;
 
-    String password;
+    private String password;
 
-    String repositoryId;
+    private String repositoryId;
 
-    boolean official;
+    private boolean official;
 
-    String snapshotRepId;
+    private String snapshotRepId;
 
-    String type;
+    private String type = "NEXUS_2";
 
     public NexusServerBean() {
     }
@@ -168,16 +168,31 @@ public class NexusServerBean {
     }
 
     public String getRepositoryURI() {
+        return getRepositoryURI(true);
+    }
+
+    public String getRepositoryURI(boolean isRelease) {
         if (StringUtils.isEmpty(this.server)) {
             return null; // no server, no uri
         }
-        String repositoryBaseURI = this.server;
-        if (repositoryBaseURI.endsWith(NexusConstants.SLASH)) {
-            repositoryBaseURI = repositoryBaseURI.substring(0, repositoryBaseURI.length() - 1);
+        IRepositoryArtifactHandler repositoryHandler = RepositoryArtifactHandlerManager.getRepositoryHandler(this);
+        if (repositoryHandler != null) {
+            return repositoryHandler.getRepositoryURL(isRelease);
+        } else {
+            String repId = "";
+            if (isRelease) {
+                repId = repositoryId;
+            } else {
+                repId = snapshotRepId;
+            }
+            String repositoryBaseURI = this.server;
+            if (repositoryBaseURI.endsWith(NexusConstants.SLASH)) {
+                repositoryBaseURI = repositoryBaseURI.substring(0, repositoryBaseURI.length() - 1);
+            }
+            repositoryBaseURI += NexusConstants.CONTENT_REPOSITORIES;
+            repositoryBaseURI += repId + NexusConstants.SLASH;
+            return repositoryBaseURI;
         }
-        repositoryBaseURI += NexusConstants.CONTENT_REPOSITORIES;
-        repositoryBaseURI += repositoryId + NexusConstants.SLASH;
-        return repositoryBaseURI;
     }
 
     @Override

@@ -15,12 +15,13 @@ package org.talend.librariesmanager.maven;
 import java.io.File;
 import java.util.Map;
 
-import org.ops4j.pax.url.mvn.MavenResolver;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
 import org.talend.core.model.general.ModuleStatusProvider;
 import org.talend.core.nexus.IRepositoryArtifactHandler;
+import org.talend.core.nexus.NexusServerBean;
 import org.talend.core.nexus.RepositoryArtifactHandlerManager;
+import org.talend.core.nexus.TalendLibsServerManager;
 import org.talend.core.nexus.TalendMavenResolver;
 import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenUrlHelper;
@@ -79,9 +80,8 @@ public class MavenArtifactsHandler {
             if (artifactType == null || "".equals(artifactType)) {
                 artifactType = TalendMavenConstants.PACKAGING_JAR;
             }
-            MavenResolver mvnResolver = TalendMavenResolver.getMavenResolver();
-            mvnResolver.upload(parseMvnUrl.getGroupId(), parseMvnUrl.getArtifactId(), parseMvnUrl.getClassifier(), artifactType,
-                    parseMvnUrl.getVersion(), libFile);
+            TalendMavenResolver.upload(parseMvnUrl.getGroupId(), parseMvnUrl.getArtifactId(), parseMvnUrl.getClassifier(),
+                    artifactType, parseMvnUrl.getVersion(), libFile);
 
             ModuleStatusProvider.getDeployStatusMap().put(mavenUri, ELibraryInstallStatus.DEPLOYED);
             ModuleStatusProvider.getStatusMap().put(mavenUri, ELibraryInstallStatus.INSTALLED);
@@ -102,12 +102,12 @@ public class MavenArtifactsHandler {
 
             String pomType = TalendMavenConstants.PACKAGING_POM;
             if (pomFile != null && pomFile.exists()) {
-                mvnResolver.upload(parseMvnUrl.getGroupId(), parseMvnUrl.getArtifactId(), parseMvnUrl.getClassifier(), pomType,
-                        parseMvnUrl.getVersion(), pomFile);
+                TalendMavenResolver.upload(parseMvnUrl.getGroupId(), parseMvnUrl.getArtifactId(), parseMvnUrl.getClassifier(),
+                        pomType, parseMvnUrl.getVersion(), pomFile);
             }
 
             if (deploy) {
-                deploy(pomFile, parseMvnUrl);
+                deploy(libFile, parseMvnUrl);
             }
             if (generated) { // only for generate pom
                 FilesUtils.deleteFolder(pomFile.getParentFile(), true);
@@ -116,7 +116,8 @@ public class MavenArtifactsHandler {
     }
 
     public void deploy(File content, MavenArtifact artifact) throws Exception {
-        IRepositoryArtifactHandler hander = RepositoryArtifactHandlerManager.getCustomerRepositoryHander();
+        NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
+        IRepositoryArtifactHandler hander = RepositoryArtifactHandlerManager.getRepositoryHandler(customNexusServer);
         if (hander != null) {
             hander.deploy(content, artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifact.getType(),
                     artifact.getVersion());

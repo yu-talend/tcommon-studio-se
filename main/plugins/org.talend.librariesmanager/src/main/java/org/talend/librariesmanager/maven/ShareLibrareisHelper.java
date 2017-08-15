@@ -32,7 +32,9 @@ import org.talend.core.ISVNProviderServiceInCoreRuntime;
 import org.talend.core.language.ECodeLanguage;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.core.nexus.IRepositoryArtifactHandler;
+import org.talend.core.nexus.NexusServerBean;
 import org.talend.core.nexus.RepositoryArtifactHandlerManager;
+import org.talend.core.nexus.TalendLibsServerManager;
 import org.talend.core.runtime.CoreRuntimePlugin;
 import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenUrlHelper;
@@ -128,7 +130,9 @@ public abstract class ShareLibrareisHelper {
                 int searchLimit = 50;
                 setJobName(job, Messages.getString("ShareLibsJob.message", TYPE_NEXUS));
                 final List<MavenArtifact> searchResults = new ArrayList<MavenArtifact>();
-                IRepositoryArtifactHandler customerRepHandler = RepositoryArtifactHandlerManager.getCustomerRepositoryHander();
+                NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
+                IRepositoryArtifactHandler customerRepHandler = RepositoryArtifactHandlerManager
+                        .getRepositoryHandler(customNexusServer);
                 if (customerRepHandler != null) {
                     filesToShare = getFilesToShare(monitor);
                     if (filesToShare == null) {

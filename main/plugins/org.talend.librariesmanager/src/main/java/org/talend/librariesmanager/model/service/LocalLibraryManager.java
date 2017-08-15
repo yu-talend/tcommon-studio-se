@@ -70,7 +70,6 @@ import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
 import org.talend.core.model.general.ModuleStatusProvider;
 import org.talend.core.nexus.NexusServerBean;
 import org.talend.core.nexus.NexusServerUtils;
-import org.talend.core.nexus.RepositoryArtifactHandlerManager;
 import org.talend.core.nexus.TalendLibsServerManager;
 import org.talend.core.nexus.TalendMavenResolver;
 import org.talend.core.prefs.ITalendCorePrefConstants;
@@ -480,7 +479,7 @@ public class LocalLibraryManager implements ILibraryManagerService {
             throws Exception, IOException {
         File resolvedFile = null;
         if (!isLocalJarSameAsNexus(manager, customNexusServer, uri)) {
-            resolvedFile = TalendMavenResolver.getMavenResolver().resolve(uri);
+            resolvedFile = TalendMavenResolver.resolve(uri);
         }
         if (resolvedFile != null) {
             // reset module status
@@ -882,7 +881,7 @@ public class LocalLibraryManager implements ILibraryManagerService {
      * deploy needed modules with snapshot version
      */
     @Override
-    public void deployModules(Collection<ModuleNeeded> modules, IProgressMonitor monitorWrap) {
+    public void installModules(Collection<ModuleNeeded> modules, IProgressMonitor monitorWrap) {
         boolean modified = false;
         EMap<String, String> libIndex = LibrariesIndexManager.getInstance().getStudioLibIndex().getJarsToRelativePath();
         EMap<String, String> mavenIndex = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath();
@@ -1605,12 +1604,12 @@ public class LocalLibraryManager implements ILibraryManagerService {
             return true;
         }
 
-        if (RepositoryArtifactHandlerManager.getCustomerRepositoryHander() != null && !isLocalJarSameAsNexus(jarFile.getName())) {
+        if (TalendLibsServerManager.getInstance().getCustomNexusServer() != null && !isLocalJarSameAsNexus(jarFile.getName())) {
             return true;
         }
 
         String mvnUri = MavenUrlHelper.generateMvnUrlForJarName(jarFile.getName());
-        if (!PomUtil.isAvailable(mvnUri)) {
+        if (!checkJarInstalledInMaven(mvnUri)) {
             return true;
         }
 

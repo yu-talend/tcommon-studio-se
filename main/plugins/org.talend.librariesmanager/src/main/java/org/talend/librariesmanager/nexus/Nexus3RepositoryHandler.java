@@ -13,17 +13,35 @@
 package org.talend.librariesmanager.nexus;
 
 import java.io.File;
-import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.entity.ContentType;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.util.EntityUtils;
+import org.eclipse.m2e.core.MavenPlugin;
 import org.talend.core.nexus.IRepositoryArtifactHandler;
 import org.talend.core.runtime.maven.MavenArtifact;
+import org.talend.core.runtime.maven.MavenUrlHelper;
+import org.talend.maven.aether.RepositorySystemFactory;
 
 /**
  * created by wchen on Aug 2, 2017 Detailled comment
  *
  */
 public class Nexus3RepositoryHandler extends AbstractArtifactRepositoryHandler {
+
+    private String SEARCH_SERVICE = "service/siesta/rest/v1/script/search/run";
+
+    private String REP_PREFIX_PATH = "/repository/";
 
     @Override
     public IRepositoryArtifactHandler clone() {
@@ -37,8 +55,7 @@ public class Nexus3RepositoryHandler extends AbstractArtifactRepositoryHandler {
      */
     @Override
     public boolean checkConnection() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     /*
@@ -48,8 +65,7 @@ public class Nexus3RepositoryHandler extends AbstractArtifactRepositoryHandler {
      */
     @Override
     public boolean checkConnection(boolean checkRelease, boolean checkSnapshot) {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     /*
@@ -61,8 +77,71 @@ public class Nexus3RepositoryHandler extends AbstractArtifactRepositoryHandler {
     @Override
     public List<MavenArtifact> search(String groupIdToSearch, String artifactId, String versionToSearch, boolean fromRelease,
             boolean fromSnapshot) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        String serverUrl = serverBean.getServer();
+        if (!serverUrl.endsWith("/")) {
+            serverUrl = serverUrl + "/";
+        }
+        String searchUrl = serverUrl + SEARCH_SERVICE;
+        Request request = Request.Post(searchUrl);
+        String userPass = serverBean.getUserName() + ":" + serverBean.getPassword();
+        String basicAuth = "Basic " + new String(new Base64().encode(userPass.getBytes()));
+        Header authority = new BasicHeader("Authorization", basicAuth);
+        Header contentType = new BasicHeader("Content-Type", "text/plain");
+        request.addHeader(contentType);
+        request.addHeader(authority);
+        List<MavenArtifact> resultList = new ArrayList<MavenArtifact>();
+        if (fromRelease) {
+            resultList.addAll(doSearch(request, serverBean.getRepositoryId(), groupIdToSearch, artifactId, versionToSearch));
+        }
+        if (fromSnapshot) {
+            resultList.addAll(doSearch(request, serverBean.getSnapshotRepId(), groupIdToSearch, artifactId, versionToSearch));
+        }
+
+        return resultList;
+    }
+
+    private List<MavenArtifact> doSearch(Request request, String repositoryId, String groupIdToSearch, String artifactId,
+            String versionToSearch) throws Exception {
+        List<MavenArtifact> resultList = new ArrayList<MavenArtifact>();
+        JSONObject body = new JSONObject();
+        body.put("repositoryId", repositoryId);
+        if (groupIdToSearch != null) {
+            body.put("g", groupIdToSearch);
+        }
+        if (artifactId != null) {
+            body.put("a", artifactId);
+        }
+        if (versionToSearch != null) {
+            body.put("v", versionToSearch);
+        }
+        request.bodyString(body.toString(),
+                ContentType.create(ContentType.APPLICATION_JSON.getMimeType(), StandardCharsets.UTF_8));
+        HttpResponse response = request.execute().returnResponse();
+        String content = EntityUtils.toString(response.getEntity());
+        JSONObject responseObject = new JSONObject().fromObject(content);
+        String resultStr = responseObject.getString("result");
+        JSONArray resultArray = null;
+        try {
+            resultArray = new JSONArray().fromObject(resultStr);
+        } catch (Exception e) {
+            throw new Exception(resultStr);
+        }
+        if (resultArray != null) {
+            for (int i = 0; i < resultArray.size(); i++) {
+                JSONObject jsonObject = resultArray.getJSONObject(i);
+                MavenArtifact artifact = new MavenArtifact();
+                artifact.setGroupId(jsonObject.getString("groupId"));
+                artifact.setArtifactId(jsonObject.getString("artifactId"));
+                artifact.setVersion(jsonObject.getString("version"));
+                artifact.setType(jsonObject.getString("extension"));
+                artifact.setDescription(jsonObject.getString("description"));
+                // artifact.setLicense(jsonObject.getString("license"));
+                // artifact.setLicenseUrl(jsonObject.getString("licenseUrl"));
+                // artifact.setUrl(jsonObject.getString("url"));
+                resultList.add(artifact);
+            }
+        }
+        return resultList;
     }
 
     /*
@@ -73,20 +152,24 @@ public class Nexus3RepositoryHandler extends AbstractArtifactRepositoryHandler {
      */
     @Override
     public void deploy(File content, String groupId, String artifactId, String classifier, String extension, String version)
-            throws IOException {
-        // TODO Auto-generated method stub
+            throws Exception {
+        String repositoryId = "";
+        boolean isRelease = !version.endsWith(MavenUrlHelper.VERSION_SNAPSHOT);
+        if (isRelease) {
+            repositoryId = serverBean.getRepositoryId();
+        } else {
+            repositoryId = serverBean.getSnapshotRepId();
+        }
+        String repositoryurl = getRepositoryURL(isRelease);
+        String localRepository = MavenPlugin.getMaven().getLocalRepositoryPath();
+        RepositorySystemFactory.deploy(content, localRepository, repositoryId, repositoryurl, serverBean.getUserName(),
+                serverBean.getPassword(), groupId, artifactId, classifier, extension, version);
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.talend.core.nexus.IRepositoryArtifactHandler#resolve(java.lang.String)
-     */
     @Override
-    public File resolve(String mvnUrl) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+    protected String getRepositoryPrefixPath() {
+        return REP_PREFIX_PATH;
     }
 
 }

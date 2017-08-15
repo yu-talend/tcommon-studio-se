@@ -13,7 +13,7 @@
 package org.talend.core.nexus;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.Dictionary;
 import java.util.List;
 
 import org.talend.core.runtime.maven.MavenArtifact;
@@ -48,9 +48,13 @@ public interface IRepositoryArtifactHandler {
             boolean fromSnapshot) throws Exception;
 
     public void deploy(File content, String groupId, String artifactId, String classifier, String extension, String version)
-            throws IOException;
+            throws Exception;
+
+    public void updateMavenResolver(Dictionary<String, String> props);
 
     public File resolve(String mvnUrl) throws Exception;
 
     public IRepositoryArtifactHandler clone();
+
+    public String getRepositoryURL(boolean isRelease);
 }

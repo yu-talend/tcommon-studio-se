@@ -31,8 +31,6 @@ public class RepositoryArtifactHandlerManager {
 
     private static Map<String, IRepositoryArtifactHandler> handlers = null;
 
-    private static IRepositoryArtifactHandler officialHandler = null;
-
     private synchronized static void initHandlers() {
         if (handlers == null) {
             handlers = new HashMap<String, IRepositoryArtifactHandler>();
@@ -59,51 +57,17 @@ public class RepositoryArtifactHandlerManager {
         }
     }
 
-    public static IRepositoryArtifactHandler getCustomerRepositoryHander() {
+    public static IRepositoryArtifactHandler getRepositoryHandler(NexusServerBean serverBean) {
         initHandlers();
-        NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
-        if (customNexusServer != null) {
-            IRepositoryArtifactHandler repHandler = handlers.get(customNexusServer.getType());
+        if (serverBean != null) {
+            IRepositoryArtifactHandler repHandler = handlers.get(serverBean.getType());
             if (repHandler != null) {
-                repHandler.setArtifactServerBean(customNexusServer);
-            }
-            if (repHandler.checkConnection()) {
+                repHandler = repHandler.clone();
+                repHandler.setArtifactServerBean(serverBean);
                 return repHandler;
             }
         }
         return null;
-    }
-
-    public static IRepositoryArtifactHandler getTalendRepositoryHander() {
-        initHandlers();
-        NexusServerBean talendServer = TalendLibsServerManager.getInstance().getTalentArtifactServer();
-        if (talendServer != null) {
-            IRepositoryArtifactHandler repHandler = handlers.get(talendServer.getType());
-            if (repHandler != null) {
-                repHandler = repHandler.clone();
-                repHandler.setArtifactServerBean(talendServer);
-            }
-            return repHandler;
-        }
-        return null;
-    }
-
-    public static IRepositoryArtifactHandler getSoftwareUpdateRepositoryHandler(String adminUrl, String userName, String password) {
-        initHandlers();
-        NexusServerBean updateServer = TalendLibsServerManager.getInstance().getSoftwareUpdateNexusServer(adminUrl, userName,
-                password);
-        if (updateServer != null) {
-            IRepositoryArtifactHandler repHandler = handlers.get(updateServer.getType());
-            if (repHandler != null) {
-                repHandler = repHandler.clone();
-                repHandler.setArtifactServerBean(updateServer);
-            }
-            if (repHandler.checkConnection()) {
-                return repHandler;
-            }
-        }
-        return null;
-
     }
 
 }

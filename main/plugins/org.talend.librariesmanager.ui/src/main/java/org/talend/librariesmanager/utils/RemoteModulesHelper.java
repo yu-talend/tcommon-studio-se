@@ -48,7 +48,9 @@ import org.talend.core.ILibraryManagerService;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.core.model.general.ModuleToInstall;
 import org.talend.core.nexus.IRepositoryArtifactHandler;
+import org.talend.core.nexus.NexusServerBean;
 import org.talend.core.nexus.RepositoryArtifactHandlerManager;
+import org.talend.core.nexus.TalendLibsServerManager;
 import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenConstants;
 import org.talend.core.runtime.maven.MavenUrlHelper;
@@ -181,7 +183,9 @@ public class RemoteModulesHelper {
                 }
             }
 
-            IRepositoryArtifactHandler customerRepHandler = RepositoryArtifactHandlerManager.getCustomerRepositoryHander();
+            NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
+            IRepositoryArtifactHandler customerRepHandler = RepositoryArtifactHandlerManager
+                    .getRepositoryHandler(customNexusServer);
             if (customerRepHandler != null) {
                 for (String groupId : groupIds) {
                     List<MavenArtifact> searchResults = customerRepHandler.search(groupId, null, null, true, true);
@@ -197,7 +201,9 @@ public class RemoteModulesHelper {
 
     private void searchFromRemoteNexus(Set<String> mavenUristoSearch, IProgressMonitor monitor) {
         try {
-            IRepositoryArtifactHandler talendRepositoryHander = RepositoryArtifactHandlerManager.getTalendRepositoryHander();
+            NexusServerBean talendServer = TalendLibsServerManager.getInstance().getTalentArtifactServer();
+            IRepositoryArtifactHandler talendRepositoryHander = RepositoryArtifactHandlerManager
+                    .getRepositoryHandler(talendServer);
             if (talendRepositoryHander != null) {
                 final Iterator<String> iterator = mavenUristoSearch.iterator();
                 Map<String, List<StringBuffer>> groupIdAndJarsToCheck = new HashMap<String, List<StringBuffer>>();

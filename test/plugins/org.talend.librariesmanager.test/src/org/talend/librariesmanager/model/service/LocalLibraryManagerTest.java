@@ -421,7 +421,7 @@ public class LocalLibraryManagerTest {
         modules.add(module5);
 
         // deploy to local maven
-        libraryManagerService.deployModules(modules, new NullProgressMonitor());
+        libraryManagerService.installModules(modules, new NullProgressMonitor());
 
         boolean retrieve1 = libraryManagerService.retrieve(module1, null, false, null);
         assertTrue(retrieve1);

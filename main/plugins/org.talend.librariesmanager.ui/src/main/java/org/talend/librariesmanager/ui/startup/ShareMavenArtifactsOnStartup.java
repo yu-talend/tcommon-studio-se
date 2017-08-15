@@ -93,8 +93,8 @@ public class ShareMavenArtifactsOnStartup extends ShareLibrareisHelper {
             FilesUtils.deleteFolder(generatedPom.getParentFile(), true);
         }
         deployer.deploy(file, artifact);
-        artifact.setType(MavenConstants.PACKAGING_POM);
-        deployer.deploy(pomFile, artifact);
+        // artifact.setType(MavenConstants.PACKAGING_POM);
+        // deployer.deploy(pomFile, artifact);
     }
 
 }
