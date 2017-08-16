@@ -10,10 +10,11 @@
 // 9 rue Pages 92150 Suresnes, France
 //
 // ============================================================================
-package org.talend.core.runtime.util;
+package org.talend.core.runtime.dynamic;
 
 import java.util.Dictionary;
 
+import org.eclipse.core.runtime.RegistryFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 
@@ -24,7 +25,7 @@ public class DynamicServiceUtil {
 
     public static <T> ServiceRegistration<T> registOSGiService(BundleContext context, String[] clazzes, Object service,
             Dictionary<String, T> properties) throws Exception {
-        return (ServiceRegistration<T>) context.registerService(clazzes, context, properties);
+        return (ServiceRegistration<T>) context.registerService(clazzes, service, properties);
     }
 
     public static <T> void unregistOSGiService(ServiceRegistration<T> serviceRegistration)
@@ -32,4 +33,8 @@ public class DynamicServiceUtil {
         serviceRegistration.unregister();
     }
 
+    public static void addContribution(String xmlStr) {
+        
+        RegistryFactory.getRegistry().addContribution(null, null, false, null, null, null);
+    }
 }
