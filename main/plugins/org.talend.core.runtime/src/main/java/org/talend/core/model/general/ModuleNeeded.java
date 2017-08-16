@@ -558,4 +558,12 @@ public class ModuleNeeded {
         return this.extraAttributes;
     }
 
+    public String getCustomMavenUri() {
+        return null;
+    }
+
+    public void setCustomMavenUri(String value) {
+
+    }
+
 }

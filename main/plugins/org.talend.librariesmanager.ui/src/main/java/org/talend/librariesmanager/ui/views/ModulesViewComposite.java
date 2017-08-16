@@ -29,11 +29,14 @@ import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
 import org.talend.commons.ui.runtime.swt.tableviewer.TableViewerCreatorNotModifiable.LAYOUT_MODE;
 import org.talend.commons.ui.runtime.swt.tableviewer.TableViewerCreatorNotModifiable.SORT;
+import org.talend.commons.ui.runtime.swt.tableviewer.celleditor.CellEditorDialogBehavior;
+import org.talend.commons.ui.runtime.swt.tableviewer.celleditor.ExtendedTextCellEditor;
 import org.talend.commons.ui.swt.tableviewer.TableViewerCreator;
 import org.talend.commons.ui.swt.tableviewer.TableViewerCreatorColumn;
 import org.talend.commons.utils.data.bean.IBeanPropertyAccessors;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.librariesmanager.model.ModulesNeededProvider;
+import org.talend.librariesmanager.ui.dialogs.InstallModuleDialog;
 import org.talend.librariesmanager.ui.i18n.Messages;
 
 /**
@@ -152,47 +155,51 @@ public class ModulesViewComposite extends Composite {
             public void set(ModuleNeeded bean, String value) {
             }
         });
-
         column.setModifiable(false);
         column.setWeight(6);
 
         column = new TableViewerCreatorColumn(tableViewerCreator);
-        column.setTitle(Messages.getString("ModulesViewComposite.Required.TitleText")); //$NON-NLS-1$
-
+        column.setTitle(Messages.getString("ModulesViewComposite.MavenUri")); //$NON-NLS-1$
         column.setBeanPropertyAccessors(new IBeanPropertyAccessors<ModuleNeeded, String>() {
 
             @Override
             public String get(ModuleNeeded bean) {
-                return bean.getInformationMsg();
+                String mvnUri = null;
+                if (bean.getCustomMavenUri() != null) {
+                    mvnUri = bean.getCustomMavenUri();
+                } else {
+                    mvnUri = bean.getMavenUri(true);
+                }
+                return mvnUri;
             }
 
             @Override
             public void set(ModuleNeeded bean, String value) {
+                bean.setCustomMavenUri(value);
+            }
+        });
+        CellEditorDialogBehavior behavior = new CellEditorDialogBehavior();
+        final ExtendedTextCellEditor cellEditor = new ExtendedTextCellEditor(tableViewerCreator.getTable(), behavior);
+        InstallModuleDialog dialog = new InstallModuleDialog(getShell());
+        behavior.setCellEditorDialog(dialog);
+        column.setCellEditor(cellEditor);
+        cellEditor.getTextControl().addFocusListener(new FocusListener() {
+
+            @Override
+            public void focusLost(FocusEvent e) {
+            }
+
+            @Override
+            public void focusGained(FocusEvent e) {
+                ModuleNeeded currentModifiedEntry = (ModuleNeeded) tableViewerCreator.getModifiedObjectInfo()
+                        .getCurrentModifiedBean();
+                dialog.setModule(currentModifiedEntry);
             }
         });
 
         column.setModifiable(true);
         column.setWeight(10);
 
-        column = new TableViewerCreatorColumn(tableViewerCreator);
-        column.setTitle(Messages.getString("ModulesViewComposite.Required.Title")); //$NON-NLS-1$
-        column.setImageProvider(new RequiredImageProvider());
-        column.setSortable(true);
-        column.setDisplayedValue(""); //$NON-NLS-1$
-        column.setBeanPropertyAccessors(new IBeanPropertyAccessors<ModuleNeeded, String>() {
-
-            @Override
-            public String get(ModuleNeeded bean) {
-                return String.valueOf(bean.isRequired());
-            }
-
-            @Override
-            public void set(ModuleNeeded bean, String value) {
-            }
-        });
-
-        column.setModifiable(false);
-        column.setWeight(2);
         // need check it's ok to remove, or caused bug
         // removed by TUP-833
         // IComponentsFactory compFac = ComponentsFactoryProvider.getInstance();
