@@ -27,11 +27,13 @@ public class DynamicExtension extends AbstractDynamicElement implements IDynamic
 
     private static final String ATTR_EXTENSION_POINT = "point"; //$NON-NLS-1$
 
+    private static final String ATTR_EXTENSION_ID = "id"; //$NON-NLS-1$
+
     public static final String TAG_NAME = "extension"; //$NON-NLS-1$
 
     @Override
     public String toXmlString() throws Exception {
-        return super.toXmlJson().toString();
+        return toXmlJson().toString();
     }
 
     @Override
@@ -66,6 +68,21 @@ public class DynamicExtension extends AbstractDynamicElement implements IDynamic
     }
 
     @Override
+    public void setExtensionId(String extensionId) {
+        super.setAttribute(ATTR_EXTENSION_ID, extensionId);
+    }
+
+    @Override
+    public String getExtensionId() {
+        Object value = getAttribute(ATTR_EXTENSION_ID);
+        if (value != null) {
+            return value.toString();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
     protected String getTagName() {
         return TAG_NAME;
     }
@@ -83,7 +100,6 @@ public class DynamicExtension extends AbstractDynamicElement implements IDynamic
         DynamicExtension dynamicExtension = new DynamicExtension();
 
         dynamicExtension.initAttributesFromXmlJson(json);
-        dynamicExtension.setExtensionPoint(json.getString(ATTR_EXTENSION_POINT));
 
         JSONArray children = getChildrenFrom(json);
         if (children != null) {
@@ -98,4 +114,5 @@ public class DynamicExtension extends AbstractDynamicElement implements IDynamic
         return dynamicExtension;
     
     }
+
 }

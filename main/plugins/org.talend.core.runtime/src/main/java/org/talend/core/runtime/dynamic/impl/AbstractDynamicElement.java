@@ -65,9 +65,10 @@ public abstract class AbstractDynamicElement {
         JSONObject json = new JSONObject();
 
         String tagName = getTagName();
-        if (tagName != null && !tagName.isEmpty()) {
-            json.put(XML_TAG_NAME, tagName);
+        if (tagName == null) {
+            throw new Exception("tagName is empty!");
         }
+        json.put(XML_TAG_NAME, tagName);
 
         for (Map.Entry<String, Object> entry : attributeMap.entrySet()) {
             json.put(entry.getKey(), entry.getValue());

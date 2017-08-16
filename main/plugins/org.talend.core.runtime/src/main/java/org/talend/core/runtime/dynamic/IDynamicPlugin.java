@@ -12,6 +12,7 @@
 // ============================================================================
 package org.talend.core.runtime.dynamic;
 
+import java.util.List;
 
 /**
  * DOC cmeng  class global comment. Detailled comment
@@ -20,7 +21,9 @@ public interface IDynamicPlugin {
 
     public IDynamicExtension removeExtension(String extensionPoint);
 
-    public IDynamicExtension getExtension(String extensionPoint, boolean createIfNotExist);
+    public IDynamicExtension getExtension(String extensionPoint, String extensionId, boolean createIfNotExist);
+
+    public List<IDynamicExtension> getAllExtensions();
 
     public String toXmlString() throws Exception;
 

@@ -31,4 +31,8 @@ public interface IDynamicExtension {
 
     public String getExtensionPoint();
 
+    public void setExtensionId(String extensionId);
+
+    public String getExtensionId();
+
 }

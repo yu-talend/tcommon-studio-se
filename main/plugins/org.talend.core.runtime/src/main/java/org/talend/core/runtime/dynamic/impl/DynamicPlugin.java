@@ -12,7 +12,9 @@
 // ============================================================================
 package org.talend.core.runtime.dynamic.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.talend.core.runtime.dynamic.IDynamicExtension;
@@ -35,16 +37,23 @@ public class DynamicPlugin extends AbstractDynamicElement implements IDynamicPlu
     }
 
     @Override
-    public IDynamicExtension getExtension(String extensionPoint, boolean createIfNotExist) {
-        IDynamicExtension extension = extensionMap.get(extensionPoint);
+    public IDynamicExtension getExtension(String extensionPoint, String extensionId, boolean createIfNotExist) {
+        String key = extensionPoint + "/" + extensionId; //$NON-NLS-1$
+        IDynamicExtension extension = extensionMap.get(key);
         if (extension == null && createIfNotExist) {
             DynamicExtension dynamicExtension = new DynamicExtension();
             dynamicExtension.setExtensionPoint(extensionPoint);
+            dynamicExtension.setExtensionId(extensionId);
             extension = dynamicExtension;
             super.addChild(dynamicExtension);
-            extensionMap.put(extensionPoint, extension);
+            extensionMap.put(key, extension);
         }
         return extension;
+    }
+
+    @Override
+    public List<IDynamicExtension> getAllExtensions() {
+        return new ArrayList<IDynamicExtension>(extensionMap.values());
     }
 
     @Override
@@ -63,7 +72,11 @@ public class DynamicPlugin extends AbstractDynamicElement implements IDynamicPlu
 
     @Override
     public String toXmlString() throws Exception {
-        return super.toXmlJson().toString();
+        StringBuffer xml = new StringBuffer();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"); //$NON-NLS-1$
+        xml.append("<?eclipse version=\"3.2\"?>\n"); //$NON-NLS-1$
+        xml.append(toXmlJson().toString());
+        return xml.toString();
     }
 
     @Override
