@@ -380,33 +380,36 @@ public class LocalLibraryManager implements ILibraryManagerService {
                 jarFile = getJarFile(jarNeeded);
             }
             // retrieve form custom nexus server automatically
-            TalendLibsServerManager manager = TalendLibsServerManager.getInstance();
-            if (customNexusServer == null) {
-                customNexusServer = manager.getCustomNexusServer();
-            }
-            if (customNexusServer != null) {
-                Set<String> toResolve = new HashSet<String>();
-                if (mavenUri != null) {
-                    toResolve.add(mavenUri);
-                } else {
-                    mavenUri = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath().get(jarNeeded);
-                    if (mavenUri == null) {
-                        mavenUri = MavenUrlHelper.generateMvnUrlForJarName(jarNeeded);
+            if (jarFile == null) {
+                TalendLibsServerManager manager = TalendLibsServerManager.getInstance();
+                if (customNexusServer == null) {
+                    customNexusServer = manager.getCustomNexusServer();
+                }
+                if (customNexusServer != null) {
+                    Set<String> toResolve = new HashSet<String>();
+                    if (mavenUri != null) {
                         toResolve.add(mavenUri);
                     } else {
-                        final String[] split = mavenUri.split(MavenUrlHelper.MVN_INDEX_SPLITER);
-                        for (String mvnUri : split) {
-                            toResolve.add(mvnUri);
+                        mavenUri = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath().get(jarNeeded);
+                        if (mavenUri == null) {
+                            mavenUri = MavenUrlHelper.generateMvnUrlForJarName(jarNeeded);
+                            toResolve.add(mavenUri);
+                        } else {
+                            final String[] split = mavenUri.split(MavenUrlHelper.MVN_INDEX_SPLITER);
+                            for (String mvnUri : split) {
+                                toResolve.add(mvnUri);
+                            }
                         }
                     }
-                }
-                for (String uri : toResolve) {
-                    if (isResolveAllowed(uri)) {
-                        File resolvedJar = resolveJar(manager, customNexusServer, uri);
-                        if (resolvedJar != null) {
-                            jarFile = resolvedJar;
-                            break;
+                    for (String uri : toResolve) {
+                        if (isResolveAllowed(uri)) {
+                            File resolvedJar = resolveJar(manager, customNexusServer, uri);
+                            if (resolvedJar != null) {
+                                jarFile = resolvedJar;
+                                break;
+                            }
                         }
+
                     }
                 }
             }
@@ -478,9 +481,7 @@ public class LocalLibraryManager implements ILibraryManagerService {
     public File resolveJar(TalendLibsServerManager manager, final NexusServerBean customNexusServer, String uri)
             throws Exception, IOException {
         File resolvedFile = null;
-        if (!isLocalJarSameAsNexus(manager, customNexusServer, uri)) {
-            resolvedFile = TalendMavenResolver.resolve(uri);
-        }
+        resolvedFile = TalendMavenResolver.resolve(uri);
         if (resolvedFile != null) {
             // reset module status
             final Map<String, ELibraryInstallStatus> statusMap = ModuleStatusProvider.getStatusMap();
