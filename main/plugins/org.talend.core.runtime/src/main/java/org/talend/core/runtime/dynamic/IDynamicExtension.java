@@ -19,11 +19,19 @@ import java.util.List;
  */
 public interface IDynamicExtension {
 
+    public static final String ATTR_EXTENSION_POINT = "point"; //$NON-NLS-1$
+
+    public static final String ATTR_EXTENSION_ID = "id"; //$NON-NLS-1$
+
+    public static final String TAG_NAME = "extension"; //$NON-NLS-1$
+
     public String toXmlString() throws Exception;
 
     public List<IDynamicConfiguration> getConfigurations();
 
     public void addConfiguration(IDynamicConfiguration config);
+
+    public void removeConfiguration(IDynamicConfiguration config);
 
     public IDynamicConfiguration createEmptyConfiguration();
 

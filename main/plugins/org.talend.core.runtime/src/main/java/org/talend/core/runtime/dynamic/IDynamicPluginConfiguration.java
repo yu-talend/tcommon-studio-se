@@ -12,26 +12,32 @@
 // ============================================================================
 package org.talend.core.runtime.dynamic;
 
-import java.util.List;
-import java.util.Map;
 
 /**
  * DOC cmeng  class global comment. Detailled comment
  */
-public interface IDynamicConfiguration {
+public interface IDynamicPluginConfiguration {
+
+    public static final String TAG_NAME = "dynamicPluginConfiguration"; //$NON-NLS-1$
+
+    public static final String ATTR_ID = "id"; //$NON-NLS-1$
+
+    public static final String ATTR_NAME = "name"; //$NON-NLS-1$
+
+    public static final String ATTR_DESCRIPTION = "description"; //$NON-NLS-1$
+
+    public String getId();
+
+    public void setId(String id);
+
+    public String getName();
+
+    public void setName(String name);
+
+    public String getDescription();
+
+    public void setDescription(String description);
 
     public String toXmlString() throws Exception;
-
-    public void setAttribute(String key, Object value);
-
-    public Object getAttribute(String key);
-
-    public Map<String, Object> getAttributes();
-
-    public void addChildConfiguration(IDynamicConfiguration configuration);
-
-    public void removeChildConfiguration(IDynamicConfiguration configuration);
-
-    public List<IDynamicConfiguration> getChildConfigurations();
 
 }

@@ -25,12 +25,6 @@ import us.monoid.json.JSONObject;
  */
 public class DynamicExtension extends AbstractDynamicElement implements IDynamicExtension {
 
-    private static final String ATTR_EXTENSION_POINT = "point"; //$NON-NLS-1$
-
-    private static final String ATTR_EXTENSION_ID = "id"; //$NON-NLS-1$
-
-    public static final String TAG_NAME = "extension"; //$NON-NLS-1$
-
     @Override
     public String toXmlString() throws Exception {
         return toXmlJson().toString();
@@ -45,6 +39,11 @@ public class DynamicExtension extends AbstractDynamicElement implements IDynamic
     @Override
     public void addConfiguration(IDynamicConfiguration config) {
         super.addChild((AbstractDynamicElement) config);
+    }
+
+    @Override
+    public void removeConfiguration(IDynamicConfiguration config) {
+        super.removeChild((AbstractDynamicElement) config);
     }
 
     @Override
@@ -83,7 +82,7 @@ public class DynamicExtension extends AbstractDynamicElement implements IDynamic
     }
 
     @Override
-    protected String getTagName() {
+    public String getTagName() {
         return TAG_NAME;
     }
 

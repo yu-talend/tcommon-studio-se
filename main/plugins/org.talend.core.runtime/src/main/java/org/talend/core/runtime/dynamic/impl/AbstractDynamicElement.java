@@ -26,43 +26,49 @@ import us.monoid.json.JSONObject;
  */
 public abstract class AbstractDynamicElement {
 
-    private static final String XML_TAG_NAME = "tagName"; //$NON-NLS-1$
+    public static final String XML_TAG_NAME = "tagName"; //$NON-NLS-1$
 
-    private static final String XML_ELEMENTS = "childNodes"; //$NON-NLS-1$
+    public static final String XML_ELEMENTS = "childNodes"; //$NON-NLS-1$
+
+    // private String tagName;
 
     private Map<String, Object> attributeMap;
 
     private List<AbstractDynamicElement> children;
 
-    abstract protected String getTagName();
+    abstract public String getTagName();
 
     public AbstractDynamicElement() {
         attributeMap = new HashMap<>();
         children = new ArrayList<>();
     }
 
-    protected void setAttribute(String key, Object value) {
+    public void setAttribute(String key, Object value) {
         attributeMap.put(key, value);
     }
 
-    protected Object getAttribute(String key) {
+    public Object getAttribute(String key) {
         return attributeMap.get(key);
     }
 
-    protected Map<String, Object> getAttributes() {
+    public Map<String, Object> getAttributes() {
         return attributeMap;
     }
 
-    protected void addChild(AbstractDynamicElement child) {
+    public void addChild(AbstractDynamicElement child) {
         children.add(child);
     }
 
-    protected List<AbstractDynamicElement> getChildren() {
+    public void removeChild(AbstractDynamicElement child) {
+        children.remove(child);
+    }
+
+    public List<AbstractDynamicElement> getChildren() {
         return children;
     }
 
-    protected JSONObject toXmlJson() throws Exception {
-        JSONObject json = new JSONObject();
+    public JSONObject toXmlJson() throws Exception {
+        JSONObject json = createJsonObject();
 
         String tagName = getTagName();
         if (tagName == null) {
@@ -84,7 +90,7 @@ public abstract class AbstractDynamicElement {
         return json;
     }
 
-    protected void initAttributesFromXmlJson(JSONObject json) throws Exception {
+    public void initAttributesFromXmlJson(JSONObject json) throws Exception {
         Iterator<String> keyIter = json.keys();
         if (keyIter != null) {
             while (keyIter.hasNext()) {
@@ -100,11 +106,19 @@ public abstract class AbstractDynamicElement {
         }
     }
 
-    protected static String getTagNameFrom(JSONObject xmlJson) throws Exception {
+    public static String getTagNameFrom(JSONObject xmlJson) throws Exception {
         return xmlJson.optString(XML_TAG_NAME);
     }
 
-    protected static JSONArray getChildrenFrom(JSONObject xmlJson) throws Exception {
+    public static JSONArray getChildrenFrom(JSONObject xmlJson) throws Exception {
         return xmlJson.optJSONArray(XML_ELEMENTS);
+    }
+
+    private JSONObject createJsonObject() throws Exception {
+        JSONObject json = new JSONObject();
+        // Field field = JSONObject.class.getDeclaredField("map"); //$NON-NLS-1$
+        // field.setAccessible(true);
+        // field.set(json, new LinkedHashMap<>());
+        return json;
     }
 }

@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.talend.core.runtime.dynamic.IDynamicExtension;
 import org.talend.core.runtime.dynamic.IDynamicPlugin;
+import org.talend.core.runtime.dynamic.IDynamicPluginConfiguration;
 
 import us.monoid.json.JSONArray;
 import us.monoid.json.JSONObject;
@@ -28,9 +29,9 @@ import us.monoid.json.JSONObject;
  */
 public class DynamicPlugin extends AbstractDynamicElement implements IDynamicPlugin {
 
-    private static final String TAG_NAME = "plugin"; //$NON-NLS-1$
-
     private Map<String, IDynamicExtension> extensionMap;
+
+    private DynamicPluginConfiguration pluginConfiguration;
 
     public DynamicPlugin() {
         extensionMap = new HashMap<>();
@@ -80,7 +81,23 @@ public class DynamicPlugin extends AbstractDynamicElement implements IDynamicPlu
     }
 
     @Override
-    protected String getTagName() {
+    public IDynamicPluginConfiguration getPluginConfiguration() {
+        return pluginConfiguration;
+    }
+
+    @Override
+    public void setPluginConfiguration(IDynamicPluginConfiguration pluginConfiguration) {
+        if (this.pluginConfiguration != null) {
+            super.removeChild(this.pluginConfiguration);
+        }
+        this.pluginConfiguration = (DynamicPluginConfiguration) pluginConfiguration;
+        if (this.pluginConfiguration != null) {
+            super.addChild(this.pluginConfiguration);
+        }
+    }
+
+    @Override
+    public String getTagName() {
         return TAG_NAME;
     }
 
@@ -103,13 +120,16 @@ public class DynamicPlugin extends AbstractDynamicElement implements IDynamicPlu
             int length = children.length();
             for (int i = 0; i < length; ++i) {
                 JSONObject jObj = children.getJSONObject(i);
-                String tagName = getTagNameFrom(json);
+                String tagName = getTagNameFrom(jObj);
                 if (tagName == null) {
                     DynamicConfiguration config = DynamicConfiguration.fromXmlJson(jObj);
                     dynamicPlugin.addChild(config);
                 } else if (DynamicExtension.TAG_NAME.equals(tagName)) {
-                    DynamicExtension extension = DynamicExtension.fromXmlJson(json);
+                    DynamicExtension extension = DynamicExtension.fromXmlJson(jObj);
                     dynamicPlugin.addExtension(extension);
+                } else if (DynamicPluginConfiguration.TAG_NAME.equals(tagName)) {
+                    DynamicPluginConfiguration pluginConfiguration = DynamicPluginConfiguration.fromXmlJson(jObj);
+                    dynamicPlugin.setPluginConfiguration(pluginConfiguration);
                 } else {
                     DynamicConfiguration config = DynamicConfiguration.fromXmlJson(jObj);
                     dynamicPlugin.addChild(config);

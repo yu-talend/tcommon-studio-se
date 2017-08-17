@@ -19,6 +19,8 @@ import java.util.List;
  */
 public interface IDynamicPlugin {
 
+    public static final String TAG_NAME = "plugin"; //$NON-NLS-1$
+
     public IDynamicExtension removeExtension(String extensionPoint);
 
     public IDynamicExtension getExtension(String extensionPoint, String extensionId, boolean createIfNotExist);
@@ -26,5 +28,9 @@ public interface IDynamicPlugin {
     public List<IDynamicExtension> getAllExtensions();
 
     public String toXmlString() throws Exception;
+
+    public IDynamicPluginConfiguration getPluginConfiguration();
+
+    public void setPluginConfiguration(IDynamicPluginConfiguration pluginConfiguration);
 
 }

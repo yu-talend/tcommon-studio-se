@@ -27,6 +27,9 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.talend.commons.exception.ExceptionHandler;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * DOC cmeng  class global comment. Detailled comment
  */
@@ -100,5 +103,12 @@ public class DynamicServiceUtil {
             return extensionRegistry.removeExtension(extension, userToken);
         }
         return true;
+    }
+
+    public static String formatJsonString(String string) throws Exception {
+        ObjectMapper om = new ObjectMapper();
+        JsonNode jn = om.readTree(string);
+        String formatedString = om.writerWithDefaultPrettyPrinter().writeValueAsString(jn);
+        return formatedString;
     }
 }

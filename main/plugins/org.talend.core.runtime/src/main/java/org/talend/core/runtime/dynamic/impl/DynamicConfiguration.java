@@ -52,6 +52,11 @@ public class DynamicConfiguration extends AbstractDynamicElement implements IDyn
     }
 
     @Override
+    public void removeChildConfiguration(IDynamicConfiguration configuration) {
+        super.removeChild((AbstractDynamicElement) configuration);
+    }
+
+    @Override
     public Object getAttribute(String key) {
         return super.getAttribute(key);
     }
@@ -63,7 +68,7 @@ public class DynamicConfiguration extends AbstractDynamicElement implements IDyn
     }
 
     @Override
-    protected String getTagName() {
+    public String getTagName() {
         return configurationName;
     }
 
@@ -85,4 +90,5 @@ public class DynamicConfiguration extends AbstractDynamicElement implements IDyn
 
         return dynamicConfiguration;
     }
+
 }
