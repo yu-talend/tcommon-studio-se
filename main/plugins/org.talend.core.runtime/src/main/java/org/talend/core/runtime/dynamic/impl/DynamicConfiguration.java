@@ -13,7 +13,6 @@
 package org.talend.core.runtime.dynamic.impl;
 
 import java.util.List;
-import java.util.Map;
 
 import org.talend.core.runtime.dynamic.IDynamicConfiguration;
 
@@ -37,16 +36,6 @@ public class DynamicConfiguration extends AbstractDynamicElement implements IDyn
     }
 
     @Override
-    public void setAttribute(String key, Object value) {
-        super.setAttribute(key, value);
-    }
-
-    @Override
-    public Map<String, Object> getAttributes() {
-        return super.getAttributes();
-    }
-
-    @Override
     public void addChildConfiguration(IDynamicConfiguration configuration) {
         super.addChild((AbstractDynamicElement) configuration);
     }
@@ -54,11 +43,6 @@ public class DynamicConfiguration extends AbstractDynamicElement implements IDyn
     @Override
     public void removeChildConfiguration(IDynamicConfiguration configuration) {
         super.removeChild((AbstractDynamicElement) configuration);
-    }
-
-    @Override
-    public Object getAttribute(String key) {
-        return super.getAttribute(key);
     }
 
     @Override

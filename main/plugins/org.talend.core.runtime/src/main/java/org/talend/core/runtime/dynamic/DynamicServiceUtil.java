@@ -12,7 +12,10 @@
 // ============================================================================
 package org.talend.core.runtime.dynamic;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileReader;
 import java.util.Dictionary;
 import java.util.List;
 
@@ -110,5 +113,35 @@ public class DynamicServiceUtil {
         JsonNode jn = om.readTree(string);
         String formatedString = om.writerWithDefaultPrettyPrinter().writeValueAsString(jn);
         return formatedString;
+    }
+
+    public static String readFile(File file) throws Exception {
+        FileReader fr = null;
+        BufferedReader br = null;
+        try {
+            fr = new FileReader(file);
+            br = new BufferedReader(fr);
+            String line = ""; //$NON-NLS-1$
+            StringBuffer sb = new StringBuffer();
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+            return sb.toString();
+        } finally {
+            if (fr != null) {
+                try {
+                    fr.close();
+                } catch (Exception e) {
+                    ExceptionHandler.process(e);
+                }
+            }
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (Exception e) {
+                    ExceptionHandler.process(e);
+                }
+            }
+        }
     }
 }

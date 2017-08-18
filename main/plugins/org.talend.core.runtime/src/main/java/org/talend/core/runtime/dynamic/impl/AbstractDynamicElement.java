@@ -18,13 +18,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.talend.core.runtime.dynamic.IDynamicAttribute;
+
 import us.monoid.json.JSONArray;
 import us.monoid.json.JSONObject;
 
 /**
  * DOC cmeng  class global comment. Detailled comment
  */
-public abstract class AbstractDynamicElement {
+public abstract class AbstractDynamicElement implements IDynamicAttribute {
 
     public static final String XML_TAG_NAME = "tagName"; //$NON-NLS-1$
 
@@ -43,16 +45,24 @@ public abstract class AbstractDynamicElement {
         children = new ArrayList<>();
     }
 
+    @Override
     public void setAttribute(String key, Object value) {
         attributeMap.put(key, value);
     }
 
+    @Override
     public Object getAttribute(String key) {
         return attributeMap.get(key);
     }
 
+    @Override
     public Map<String, Object> getAttributes() {
         return attributeMap;
+    }
+
+    @Override
+    public Object removeAttribute(String key) {
+        return attributeMap.remove(key);
     }
 
     public void addChild(AbstractDynamicElement child) {

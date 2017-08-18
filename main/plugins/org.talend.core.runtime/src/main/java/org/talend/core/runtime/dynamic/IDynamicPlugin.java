@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * DOC cmeng  class global comment. Detailled comment
  */
-public interface IDynamicPlugin {
+public interface IDynamicPlugin extends IDynamicAttribute {
 
     public static final String TAG_NAME = "plugin"; //$NON-NLS-1$
 

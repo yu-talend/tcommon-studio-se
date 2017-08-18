@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * DOC cmeng  class global comment. Detailled comment
  */
-public interface IDynamicExtension {
+public interface IDynamicExtension extends IDynamicAttribute {
 
     public static final String ATTR_EXTENSION_POINT = "point"; //$NON-NLS-1$
 

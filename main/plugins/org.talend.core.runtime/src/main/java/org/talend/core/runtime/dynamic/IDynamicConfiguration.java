@@ -13,20 +13,13 @@
 package org.talend.core.runtime.dynamic;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * DOC cmeng  class global comment. Detailled comment
  */
-public interface IDynamicConfiguration {
+public interface IDynamicConfiguration extends IDynamicAttribute {
 
     public String toXmlString() throws Exception;
-
-    public void setAttribute(String key, Object value);
-
-    public Object getAttribute(String key);
-
-    public Map<String, Object> getAttributes();
 
     public void addChildConfiguration(IDynamicConfiguration configuration);
 
