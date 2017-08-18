@@ -876,7 +876,9 @@ public final class ProjectManager {
         if (mainProject == null || projectReference == null) {
             return false;
         }
-
+        if (mainProject.getTechnicalLabel().equals(projectReference.getReferencedProject().getTechnicalLabel())) {
+            return false;
+        }
         String branchForMainProject = ProjectManager.getInstance().getMainProjectBranch(mainProject);
         String rBranch4Local = ProjectManager.getInstance().getLocalProjectReferenceBranch(mainProject, branchForMainProject, projectReference);
         String rRefBranch4Local = ProjectManager.getInstance().getLocalProjectReferenceReferenceBranch(mainProject, branchForMainProject, projectReference);

@@ -379,6 +379,14 @@
                style="push"
                toolbarPath="talend.group">
          </action>
+          <action
+               class="org.talend.repository.viewer.action.RepoReferenceProjectSetupAction"
+               icon="icons/code.png"
+               id="org.talend.repository.view.referenceProjectSetup"
+               label="%RepositoryView_Setup"
+               style="push"
+               toolbarPath="talend.group">
+         </action>
       </viewContribution>
    </extension>
    <extension

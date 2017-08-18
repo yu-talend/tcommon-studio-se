@@ -49,7 +49,7 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
     }
 
     @SuppressWarnings("unchecked")
-    public void initSettings(org.talend.core.model.general.Project[] allAvailableProjects)
+    public void initSettings(List<org.talend.core.model.properties.Project> allAvailableProjects)
             throws InvalidProjectException, PersistenceException {
         Resource projectResource = project.eResource();
         List<ProjectReference> referenceProjectList = project.getReferencedProjects();
@@ -63,12 +63,14 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
         factory.loadSettings();
         List<ProjectReference> list = factory.getProjectReference();
         for (ProjectReference projectReference : list) {
-            org.talend.core.model.general.Project refProject = findProjectByTechnicalLabel(allAvailableProjects,
+            org.talend.core.model.properties.Project refProject = findProjectByTechnicalLabel(allAvailableProjects,
                     projectReference.getReferencedProject().getTechnicalLabel());
             if (refProject != null) {
-                projectReference.setProject(project);
-                projectReference.setReferencedProject(refProject.getEmfProject());
-                projectResource.getContents().add(projectReference);
+                if (!project.getTechnicalLabel().equals(refProject.getTechnicalLabel())) {
+                    projectReference.setProject(project);
+                    projectReference.setReferencedProject(refProject);
+                    projectResource.getContents().add(projectReference);
+                }
             } else {
                 ReferenceProjectProblemManager.getInstance().addInvalidProjectReference(projectReference);
                 log.error("Invalid admin access: Can't access project {"
@@ -89,10 +91,10 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
         return;
     }
 
-    private org.talend.core.model.general.Project findProjectByTechnicalLabel(
-            org.talend.core.model.general.Project[] allAvailableProjects, String technicalLabel) {
+    private org.talend.core.model.properties.Project findProjectByTechnicalLabel(
+            List<org.talend.core.model.properties.Project> allAvailableProjects, String technicalLabel) {
         if (allAvailableProjects != null) {
-            for (org.talend.core.model.general.Project project : allAvailableProjects) {
+            for (org.talend.core.model.properties.Project project : allAvailableProjects) {
                 if (technicalLabel.equals(project.getTechnicalLabel())) {
                     return project;
                 }
