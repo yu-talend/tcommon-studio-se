@@ -227,6 +227,7 @@ public class LocalLibraryManager implements ILibraryManagerService {
                         }
                     }
                     deployer.install(sourceAndMavenUri, updateRemoteJar);
+
                     updateInstalledMvnUri(sourceAndMavenUri.keySet());
                 }
             } else {
@@ -254,6 +255,7 @@ public class LocalLibraryManager implements ILibraryManagerService {
                     // index
                     if (deployAsDefault) {
                         sourceAndMavenUri.put(defaultMavenUri, file.getAbsolutePath());
+
                     }
                 } else {
                     sourceAndMavenUri.put(snapshotMavenUri, file.getAbsolutePath());
@@ -279,6 +281,9 @@ public class LocalLibraryManager implements ILibraryManagerService {
         for (String uri : installedUris) {
             checkJarInstalledInMaven(uri);
         }
+
+        // TUP-18405, save the install modules
+        LibrariesIndexManager.getInstance().saveMavenIndexResource();
     }
 
     /*
@@ -395,21 +400,28 @@ public class LocalLibraryManager implements ILibraryManagerService {
                             mavenUri = MavenUrlHelper.generateMvnUrlForJarName(jarNeeded);
                             toResolve.add(mavenUri);
                         } else {
-                            final String[] split = mavenUri.split(MavenUrlHelper.MVN_INDEX_SPLITER);
-                            for (String mvnUri : split) {
-                                toResolve.add(mvnUri);
+                            mavenUri = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath()
+                                    .get(jarNeeded);
+                            if (mavenUri == null) {
+                                mavenUri = MavenUrlHelper.generateMvnUrlForJarName(jarNeeded);
+                                toResolve.add(mavenUri);
+                            } else {
+                                final String[] split = mavenUri.split(MavenUrlHelper.MVN_INDEX_SPLITER);
+                                for (String mvnUri : split) {
+                                    toResolve.add(mvnUri);
+                                }
                             }
                         }
-                    }
-                    for (String uri : toResolve) {
-                        if (isResolveAllowed(uri)) {
-                            File resolvedJar = resolveJar(manager, customNexusServer, uri);
-                            if (resolvedJar != null) {
-                                jarFile = resolvedJar;
-                                break;
+                        for (String uri : toResolve) {
+                            if (isResolveAllowed(uri)) {
+                                File resolvedJar = resolveJar(manager, customNexusServer, uri);
+                                if (resolvedJar != null) {
+                                    jarFile = resolvedJar;
+                                    break;
+                                }
                             }
-                        }
 
+                        }
                     }
                 }
             }

@@ -28,6 +28,7 @@ import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenUrlHelper;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.utils.PomUtil;
+import org.talend.librariesmanager.model.service.LibrariesIndexManager;
 import org.talend.utils.io.FilesUtils;
 
 /**
@@ -127,6 +128,9 @@ public class MavenArtifactsHandler {
             if (generated) { // only for generate pom
                 FilesUtils.deleteFolder(pomFile.getParentFile(), true);
             }
+
+            // TUP-18405, record the install module
+            LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath().put(libFile.getName(), mavenUri);
         }
     }
 
