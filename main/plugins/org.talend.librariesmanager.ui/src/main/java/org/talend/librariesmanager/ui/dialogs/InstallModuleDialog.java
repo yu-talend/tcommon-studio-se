@@ -31,6 +31,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.ui.runtime.expressionbuilder.ICellEditorDialog;
+import org.talend.commons.ui.runtime.swt.tableviewer.celleditor.ExtendedTextCellEditor;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.librariesmanager.ui.LibManagerUiPlugin;
 import org.talend.librariesmanager.ui.i18n.Messages;
@@ -51,6 +52,8 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
 
     private ModuleNeeded module;
 
+    private ExtendedTextCellEditor cellEditor;
+
     /**
      * DOC wchen InstallModuleDialog constructor comment.
      * 
@@ -59,6 +62,12 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
     public InstallModuleDialog(Shell parentShell) {
         super(parentShell);
         setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER | SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
+    }
+
+    public InstallModuleDialog(Shell parentShell, ExtendedTextCellEditor cellEditor) {
+        super(parentShell);
+        setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER | SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
+        this.cellEditor = cellEditor;
     }
 
     @Override
@@ -179,8 +188,11 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
     protected void okPressed() {
         if (useCustomBtn.getSelection()) {
             if (customUriText.getText() != null && !useCustomBtn.getText().equals(module.getCustomMavenUri())) {
-                module.setCustomMavenUri(customUriText.getText());
-                // TODO save the setting
+                if (cellEditor != null) {
+                    cellEditor.setConsumerExpression(customUriText.getText());
+                } else {
+                    module.setCustomMavenUri(customUriText.getText());
+                }
             }
         }
         if (jarPathTxt.getText() != null) {

@@ -47,10 +47,10 @@ public class LibrariesService implements ILibrariesService {
     private ILibrariesService getLibrariesService() {
         return javaService;
     }
-    
+
     @Override
     public void deployLibrary(URL source, boolean reset) throws IOException {
-        this.getLibrariesService().deployLibrary(source, reset);      
+        this.getLibrariesService().deployLibrary(source, reset);
     }
 
     @Override
@@ -238,15 +238,45 @@ public class LibrariesService implements ILibrariesService {
     public List<ModuleNeeded> getModuleNeeded(String id, boolean isGroup) {
         return getLibrariesService().getModuleNeeded(id, isGroup);
     }
-    
+
     @Override
-    public void deployProjectLibrary(File source) throws IOException{
-       this.getLibrariesService().deployProjectLibrary(source);
+    public void deployProjectLibrary(File source) throws IOException {
+        this.getLibrariesService().deployProjectLibrary(source);
     }
 
     @Override
     public void deployLibrary(URL source, String mavenUri) throws IOException {
         getLibrariesService().deployLibrary(source, mavenUri);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.core.model.general.ILibrariesService#setCustomMavenURI(java.lang.String, java.lang.String)
+     */
+    @Override
+    public void setCustomMavenURI(String orignalURI, String customURI) {
+        getLibrariesService().setCustomMavenURI(orignalURI, customURI);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.core.model.general.ILibrariesService#getCustomMavenURI(java.lang.String)
+     */
+    @Override
+    public String getCustomMavenURI(String orignalURI) {
+        return getLibrariesService().getCustomMavenURI(orignalURI);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.core.model.general.ILibrariesService#saveCustomMavenURIMap()
+     */
+    @Override
+    public void saveCustomMavenURIMap() {
+        getLibrariesService().saveCustomMavenURIMap();
     }
 
 }

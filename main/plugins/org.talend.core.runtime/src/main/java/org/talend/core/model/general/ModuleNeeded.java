@@ -559,11 +559,21 @@ public class ModuleNeeded {
     }
 
     public String getCustomMavenUri() {
+        if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibrariesService.class)) {
+            ILibrariesService libService = (ILibrariesService) GlobalServiceRegister.getDefault().getService(
+                    ILibrariesService.class);
+            String originalURI = getMavenUri(true);
+            return libService.getCustomMavenURI(originalURI);
+        }
         return null;
     }
 
-    public void setCustomMavenUri(String value) {
-
+    public void setCustomMavenUri(String customURI) {
+        if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibrariesService.class)) {
+            ILibrariesService libService = (ILibrariesService) GlobalServiceRegister.getDefault().getService(
+                    ILibrariesService.class);
+            libService.setCustomMavenURI(getMavenUri(true), customURI);
+        }
     }
 
 }

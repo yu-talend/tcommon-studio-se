@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
@@ -29,11 +30,14 @@ import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
 import org.talend.commons.ui.runtime.swt.tableviewer.TableViewerCreatorNotModifiable.LAYOUT_MODE;
 import org.talend.commons.ui.runtime.swt.tableviewer.TableViewerCreatorNotModifiable.SORT;
+import org.talend.commons.ui.runtime.swt.tableviewer.behavior.CellEditorValueAdapter;
 import org.talend.commons.ui.runtime.swt.tableviewer.celleditor.CellEditorDialogBehavior;
 import org.talend.commons.ui.runtime.swt.tableviewer.celleditor.ExtendedTextCellEditor;
 import org.talend.commons.ui.swt.tableviewer.TableViewerCreator;
 import org.talend.commons.ui.swt.tableviewer.TableViewerCreatorColumn;
 import org.talend.commons.utils.data.bean.IBeanPropertyAccessors;
+import org.talend.core.GlobalServiceRegister;
+import org.talend.core.model.general.ILibrariesService;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.librariesmanager.model.ModulesNeededProvider;
 import org.talend.librariesmanager.ui.dialogs.InstallModuleDialog;
@@ -176,13 +180,36 @@ public class ModulesViewComposite extends Composite {
             @Override
             public void set(ModuleNeeded bean, String value) {
                 bean.setCustomMavenUri(value);
+                if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibrariesService.class)) {
+                    ILibrariesService libService = (ILibrariesService) GlobalServiceRegister.getDefault().getService(
+                            ILibrariesService.class);
+                    libService.saveCustomMavenURIMap();
+                }
+                tableViewerCreator.getTableViewer().refresh();
             }
         });
         CellEditorDialogBehavior behavior = new CellEditorDialogBehavior();
         final ExtendedTextCellEditor cellEditor = new ExtendedTextCellEditor(tableViewerCreator.getTable(), behavior);
-        InstallModuleDialog dialog = new InstallModuleDialog(getShell());
+        InstallModuleDialog dialog = new InstallModuleDialog(getShell(), cellEditor);
         behavior.setCellEditorDialog(dialog);
-        column.setCellEditor(cellEditor);
+        column.setCellEditor(cellEditor, new CellEditorValueAdapter() {
+
+            @Override
+            public Object getCellEditorTypedValue(CellEditor cellEditor, Object originalTypedValue) {
+                return super.getCellEditorTypedValue(cellEditor, originalTypedValue);
+            }
+
+            @Override
+            public String getColumnText(CellEditor cellEditor, Object bean, Object cellEditorTypedValue) {
+                return super.getColumnText(cellEditor, bean, cellEditorTypedValue);
+            }
+
+            @Override
+            public Object getOriginalTypedValue(CellEditor cellEditor, Object cellEditorTypedValue) {
+                return super.getOriginalTypedValue(cellEditor, cellEditorTypedValue);
+            }
+
+        });
         cellEditor.getTextControl().addFocusListener(new FocusListener() {
 
             @Override

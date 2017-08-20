@@ -6,6 +6,7 @@ Bundle-Version: 6.5.0.qualifier
 Bundle-Vendor: .Talend SA.
 Bundle-Localization: plugin
 Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.emf.ecore,
  org.eclipse.emf.ecore.xmi,
  org.eclipse.core.expressions,
  org.apache.commons.lang,
@@ -23,9 +24,12 @@ Require-Bundle: org.eclipse.core.runtime,
  org.talend.designer.maven,
  org.talend.components.api,
  org.talend.maven.aether
+Bundle-ActivationPolicy: lazy
 Eclipse-LazyStart: true
 Bundle-ClassPath: .
 Export-Package: org.talend.librariesmanager.emf.librariesindex,
+ org.talend.librariesmanager.emf.librariesindex.impl,
+ org.talend.librariesmanager.emf.librariesindex.util,
  org.talend.librariesmanager.maven,
  org.talend.librariesmanager.model,
  org.talend.librariesmanager.model.service,

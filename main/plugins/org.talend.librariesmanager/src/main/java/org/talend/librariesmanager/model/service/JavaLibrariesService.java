@@ -281,4 +281,34 @@ public class JavaLibrariesService extends AbstractLibrariesService {
         // }
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.core.model.general.ILibrariesService#setCustomMavenURI(java.lang.String, java.lang.String)
+     */
+    @Override
+    public void setCustomMavenURI(String orignalURI, String customURI) {
+        CustomUriManager.getInstance().put(orignalURI, customURI);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.core.model.general.ILibrariesService#getCustomMavenURI(java.lang.String)
+     */
+    @Override
+    public String getCustomMavenURI(String orignalURI) {
+        return CustomUriManager.getInstance().get(orignalURI);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.core.model.general.ILibrariesService#saveCustomMavenURIMap()
+     */
+    @Override
+    public void saveCustomMavenURIMap() {
+        CustomUriManager.getInstance().saveCustomURIMap();
+    }
+
 }
