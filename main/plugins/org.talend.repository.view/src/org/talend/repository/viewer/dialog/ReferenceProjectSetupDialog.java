@@ -14,6 +14,7 @@ package org.talend.repository.viewer.dialog;
 // ============================================================================
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
@@ -39,8 +40,11 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.exception.PersistenceException;
+import org.talend.core.CorePlugin;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.PluginChecker;
+import org.talend.core.context.Context;
+import org.talend.core.context.RepositoryContext;
 import org.talend.core.model.general.Project;
 import org.talend.core.model.properties.ProjectReference;
 import org.talend.core.model.properties.PropertiesFactory;
@@ -227,13 +231,13 @@ public class ReferenceProjectSetupDialog extends TitleAreaDialog {
         }
         if (projects != null && projects.length > 0) {
             Project currentProject = ProjectManager.getInstance().getCurrentProject();
-            int currentProjectRepositoryType = getProjectRepositoryType(currentProject);
+            int projectRepositoryType = getProjectRepositoryType(currentProject);
             List<String> itemList = new ArrayList<String>();
             for (int i = 0; i < projects.length; i++) {
                 if (currentProject.getTechnicalLabel().equals(projects[i].getTechnicalLabel())) {
                     continue;
                 }
-                if (currentProjectRepositoryType == getProjectRepositoryType(projects[i])) {
+                if (projectRepositoryType == getProjectRepositoryType(projects[i])) {
                     itemList.add(projects[i].getTechnicalLabel());
                 }
             }
@@ -272,6 +276,15 @@ public class ReferenceProjectSetupDialog extends TitleAreaDialog {
         String errorMessage = null;
         List<String> allBranch;
 
+        Project currentProject = ProjectManager.getInstance().getCurrentProject();
+        int projectRepositoryType = getProjectRepositoryType(currentProject);
+        if (REPOSITORY_LOCAL == projectRepositoryType) {
+            return;
+        }
+        if (projectRepositoryType == REPOSITORY_SVN && this.getRepositoryContext().isOffline()) {
+            this.setErrorMessage(Messages.getString("ReferenceProjectSetupDialog.ErrorCanNotGetSVNBranchData")); //$NON-NLS-1$
+            return;
+        }
         OverTimePopupDialogTask<List<String>> overTimePopupDialogTask = new OverTimePopupDialogTask<List<String>>() {
 
             @Override
@@ -290,11 +303,27 @@ public class ReferenceProjectSetupDialog extends TitleAreaDialog {
             if (allBranch != null) {
                 branchCombo.setItems(allBranch.toArray(new String[0]));
             }
+            if (projectRepositoryType == REPOSITORY_SVN) {
+                if (!allBranch.contains("trunk")) {//$NON-NLS-1$
+                    allBranch.add("trunk");//$NON-NLS-1$
+                }
+                branchCombo.setItems(allBranch.toArray(new String[0]));
+                branchCombo.setText("trunk");//$NON-NLS-1$
+            } else if (projectRepositoryType == REPOSITORY_GIT) {
+                branchCombo.setItems(allBranch.toArray(new String[0]));
+                branchCombo.setText("master");//$NON-NLS-1$
+            }
         } catch (Throwable e) {
             errorMessage = e.getLocalizedMessage();
         }
         branchCombo.setEnabled(true);
         this.setErrorMessage(errorMessage);
+    }
+
+    private RepositoryContext getRepositoryContext() {
+        RepositoryContext repositoryContext = (RepositoryContext) CorePlugin.getContext()
+                .getProperty(Context.REPOSITORY_CONTEXT_KEY);
+        return repositoryContext;
     }
 
     protected Project getCurrentSelectedProject() {
@@ -417,6 +446,7 @@ public class ReferenceProjectSetupDialog extends TitleAreaDialog {
                 referenceProjectProvider.saveSettings();
             } catch (Exception e) {
                 errorMessages = e.getMessage();
+                this.setErrorMessage(errorMessages);
             }
             if (errorMessages != null) {
                 return;
@@ -439,7 +469,7 @@ public class ReferenceProjectSetupDialog extends TitleAreaDialog {
     }
 
     protected int getShellStyle() {
-        return SWT.RESIZE | SWT.MAX | SWT.CLOSE ;
+        return SWT.RESIZE | SWT.MAX | SWT.CLOSE;
     }
 
     @Override

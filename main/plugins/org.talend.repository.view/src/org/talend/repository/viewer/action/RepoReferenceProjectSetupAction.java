@@ -59,7 +59,7 @@ public class RepoReferenceProjectSetupAction implements IViewActionDelegate {
         if (dialog.open() == Window.OK && dialog.isModified()) {
             MessageDialog.openInformation(Display.getCurrent().getActiveShell(),
                     Messages.getString("RepoReferenceProjectSetupAction.TitleReferenceChanged"), //$NON-NLS-1$
-                    Messages.getString("RepoReferenceProjectSetupAction.MsgReferenceChanged"));  //$NON-NLS-1$
+                    Messages.getString("RepoReferenceProjectSetupAction.MsgReferenceChanged")); //$NON-NLS-1$
 
             IWorkspaceRunnable workspaceRunnable = new IWorkspaceRunnable() {
 
@@ -75,8 +75,7 @@ public class RepoReferenceProjectSetupAction implements IViewActionDelegate {
                     try {
                         projects = ProxyRepositoryFactory.getInstance().readProject();
                         for (Project p : projects) {
-                            if (p.getLabel().equals(currentProject.getLabel()) && currentProject.getEmfProject().getUrl() != null
-                                    && currentProject.getEmfProject().getUrl().equals(p.getEmfProject().getUrl())) {
+                            if (p.getTechnicalLabel().equals(currentProject.getTechnicalLabel())) {
                                 switchProject = p;
                                 break;
                             }

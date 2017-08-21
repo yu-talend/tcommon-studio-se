@@ -381,7 +381,7 @@
          </action>
           <action
                class="org.talend.repository.viewer.action.RepoReferenceProjectSetupAction"
-               icon="icons/code.png"
+               icon="icons/referenced.png"
                id="org.talend.repository.view.referenceProjectSetup"
                label="%RepositoryView_Setup"
                style="push"
