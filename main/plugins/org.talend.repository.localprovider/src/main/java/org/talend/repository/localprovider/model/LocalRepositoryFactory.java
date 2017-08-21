@@ -188,8 +188,6 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
     private boolean copyScreenshotFlag = false;
 
     private Set<String> invalidFiles = new HashSet<String>();
-    
-    private List<org.talend.core.model.properties.Project> allAvailableProjects = new ArrayList<org.talend.core.model.properties.Project>();
 
     public LocalRepositoryFactory() {
         super();
@@ -1116,12 +1114,6 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
     @Override
     public Project[] readProject() throws PersistenceException {
         Project[] projects = readProjects(true);
-        allAvailableProjects.clear();
-        if (projects != null && projects.length > 0) {
-            for (Project project : projects) {
-                allAvailableProjects.add(project.getEmfProject());
-            }
-        }
         return projects;
     }
 
@@ -3507,7 +3499,7 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
     public void initProjectRepository(Project project,String branchForMainProject) throws PersistenceException {
         IReferenceProjectProvider baseReferenceProjectProvider = new BaseReferenceProjectProvider(project.getEmfProject());
         try {
-            baseReferenceProjectProvider.initSettings(allAvailableProjects);
+            baseReferenceProjectProvider.initSettings();
         } catch (InvalidProjectException ex) { // Ignore invalid project
             ExceptionHandler.process(ex);
         }

@@ -30,6 +30,7 @@ import org.talend.core.model.properties.Project;
 import org.talend.core.model.properties.ProjectReference;
 import org.talend.core.model.properties.PropertiesFactory;
 import org.talend.core.repository.model.IReferenceProjectProvider;
+import org.talend.core.repository.model.ProxyRepositoryFactory;
 import org.talend.core.repository.model.ReferenceProjectProblemManager;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -49,8 +50,7 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
     }
 
     @SuppressWarnings("unchecked")
-    public void initSettings(List<org.talend.core.model.properties.Project> allAvailableProjects)
-            throws InvalidProjectException, PersistenceException {
+    public void initSettings() throws InvalidProjectException, PersistenceException {
         Resource projectResource = project.eResource();
         List<ProjectReference> referenceProjectList = project.getReferencedProjects();
         for (ProjectReference projectReference : referenceProjectList) {
@@ -63,7 +63,7 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
         factory.loadSettings();
         List<ProjectReference> list = factory.getProjectReference();
         for (ProjectReference projectReference : list) {
-            org.talend.core.model.properties.Project refProject = findProjectByTechnicalLabel(allAvailableProjects,
+            org.talend.core.model.properties.Project refProject = findProjectByTechnicalLabel(
                     projectReference.getReferencedProject().getTechnicalLabel());
             if (refProject != null) {
                 if (!project.getTechnicalLabel().equals(refProject.getTechnicalLabel())) {
@@ -91,8 +91,9 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
         return;
     }
 
-    private org.talend.core.model.properties.Project findProjectByTechnicalLabel(
-            List<org.talend.core.model.properties.Project> allAvailableProjects, String technicalLabel) {
+    private org.talend.core.model.properties.Project findProjectByTechnicalLabel(String technicalLabel) {
+        List<org.talend.core.model.properties.Project> allAvailableProjects = ProxyRepositoryFactory.getInstance()
+                .getAllAvailableProjects();
         if (allAvailableProjects != null) {
             for (org.talend.core.model.properties.Project project : allAvailableProjects) {
                 if (technicalLabel.equals(project.getTechnicalLabel())) {
@@ -167,7 +168,7 @@ public class BaseReferenceProjectProvider implements IReferenceProjectProvider {
         File file = getConfigurationFile();
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
-        }      
+        }
         if (referenceProjectConfig == null) {
             referenceProjectConfig = new ReferenceProjectConfiguration();
         }

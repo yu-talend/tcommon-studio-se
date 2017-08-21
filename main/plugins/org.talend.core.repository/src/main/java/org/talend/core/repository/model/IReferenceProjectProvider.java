@@ -28,6 +28,5 @@ public interface IReferenceProjectProvider {
 
     public void saveSettings() throws Exception;
 
-    public void initSettings(List<org.talend.core.model.properties.Project> allAvailableProjects)
-            throws InvalidProjectException, PersistenceException;
+    public void initSettings() throws InvalidProjectException, PersistenceException;
 }

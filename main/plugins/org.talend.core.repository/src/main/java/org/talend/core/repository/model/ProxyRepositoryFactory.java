@@ -160,6 +160,8 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
     private boolean fullLogonFinished;
 
     private final ProjectManager projectManager;
+    
+    private List<org.talend.core.model.properties.Project> allAvailableProjects = new ArrayList<org.talend.core.model.properties.Project>();
 
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener l) {
@@ -654,7 +656,15 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
         if (dqModelService != null) {
             dqModelService.initTDQEMFResource();
         }
-        return this.repositoryFactoryFromProvider.readProject();
+        allAvailableProjects.clear();
+        Project[] projects = this.repositoryFactoryFromProvider.readProject();  
+        if (projects != null && projects.length > 0) {
+            for (Project project : projects) {
+                allAvailableProjects.add(project.getEmfProject());
+            }
+        }
+        
+        return projects;
     }
 
     @Override
@@ -2323,4 +2333,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
         return repositoryFactoryFromProvider.getAllRemoteLocks();
     }
 
+    public List<org.talend.core.model.properties.Project> getAllAvailableProjects() {
+        return allAvailableProjects;
+    }
 }
