@@ -17,6 +17,7 @@ import java.util.List;
 import org.talend.core.runtime.dynamic.IDynamicConfiguration;
 
 import us.monoid.json.JSONArray;
+import us.monoid.json.JSONML;
 import us.monoid.json.JSONObject;
 
 /**
@@ -32,7 +33,7 @@ public class DynamicConfiguration extends AbstractDynamicElement implements IDyn
 
     @Override
     public String toXmlString() throws Exception {
-        return toXmlJson().toString();
+        return JSONML.toString(toXmlJson());
     }
 
     @Override

@@ -22,6 +22,7 @@ import org.talend.core.runtime.dynamic.IDynamicPlugin;
 import org.talend.core.runtime.dynamic.IDynamicPluginConfiguration;
 
 import us.monoid.json.JSONArray;
+import us.monoid.json.JSONML;
 import us.monoid.json.JSONObject;
 
 /**
@@ -76,7 +77,7 @@ public class DynamicPlugin extends AbstractDynamicElement implements IDynamicPlu
         StringBuffer xml = new StringBuffer();
         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"); //$NON-NLS-1$
         xml.append("<?eclipse version=\"3.2\"?>\n"); //$NON-NLS-1$
-        xml.append(toXmlJson().toString());
+        xml.append(JSONML.toString(toXmlJson()));
         return xml.toString();
     }
 

@@ -18,6 +18,7 @@ import org.talend.core.runtime.dynamic.IDynamicConfiguration;
 import org.talend.core.runtime.dynamic.IDynamicExtension;
 
 import us.monoid.json.JSONArray;
+import us.monoid.json.JSONML;
 import us.monoid.json.JSONObject;
 
 /**
@@ -27,7 +28,7 @@ public class DynamicExtension extends AbstractDynamicElement implements IDynamic
 
     @Override
     public String toXmlString() throws Exception {
-        return toXmlJson().toString();
+        return JSONML.toString(toXmlJson());
     }
 
     @Override

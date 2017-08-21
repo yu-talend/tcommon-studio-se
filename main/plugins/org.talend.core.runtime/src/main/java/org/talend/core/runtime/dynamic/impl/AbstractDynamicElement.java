@@ -38,8 +38,6 @@ public abstract class AbstractDynamicElement implements IDynamicAttribute {
 
     private List<AbstractDynamicElement> children;
 
-    abstract public String getTagName();
-
     public AbstractDynamicElement() {
         attributeMap = new HashMap<>();
         children = new ArrayList<>();

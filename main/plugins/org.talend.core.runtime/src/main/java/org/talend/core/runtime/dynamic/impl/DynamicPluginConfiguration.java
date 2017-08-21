@@ -15,6 +15,7 @@ package org.talend.core.runtime.dynamic.impl;
 import org.talend.core.runtime.dynamic.IDynamicPluginConfiguration;
 
 import us.monoid.json.JSONArray;
+import us.monoid.json.JSONML;
 import us.monoid.json.JSONObject;
 
 /**
@@ -92,7 +93,7 @@ public class DynamicPluginConfiguration extends AbstractDynamicElement implement
 
     @Override
     public String toXmlString() throws Exception {
-        return toXmlJson().toString();
+        return JSONML.toString(toXmlJson());
     }
 
 }

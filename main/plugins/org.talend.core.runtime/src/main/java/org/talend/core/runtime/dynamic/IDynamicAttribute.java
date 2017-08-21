@@ -27,4 +27,6 @@ public interface IDynamicAttribute {
 
     public Object removeAttribute(String key);
 
+    public String getTagName();
+
 }
