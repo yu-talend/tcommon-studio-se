@@ -13,6 +13,7 @@
 package org.talend.librariesmanager.nexus;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +24,15 @@ import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.m2e.core.MavenPlugin;
+import org.talend.commons.exception.ExceptionHandler;
 import org.talend.core.nexus.IRepositoryArtifactHandler;
 import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenUrlHelper;
@@ -55,7 +60,7 @@ public class Nexus3RepositoryHandler extends AbstractArtifactRepositoryHandler {
      */
     @Override
     public boolean checkConnection() {
-        return true;
+        return checkConnection(true, true);
     }
 
     /*
@@ -65,7 +70,32 @@ public class Nexus3RepositoryHandler extends AbstractArtifactRepositoryHandler {
      */
     @Override
     public boolean checkConnection(boolean checkRelease, boolean checkSnapshot) {
-        return true;
+        boolean connectionOk = true;
+        try {
+            if (checkRelease) {
+                connectionOk = doConnectionCheck(getRepositoryURL(true));
+            }
+            if (checkSnapshot && connectionOk) {
+                connectionOk = doConnectionCheck(getRepositoryURL(false));
+            }
+        } catch (Exception e) {
+            ExceptionHandler.process(e);
+        }
+        return connectionOk;
+    }
+
+    private boolean doConnectionCheck(String repositoryUrl) throws ClientProtocolException, IOException {
+        String userPass = serverBean.getUserName() + ":" + serverBean.getPassword();
+        String basicAuth = "Basic " + new String(new Base64().encode(userPass.getBytes()));
+        Header authority = new BasicHeader("Authorization", basicAuth);
+        HttpGet get = new HttpGet(repositoryUrl);
+        get.addHeader(authority);
+        DefaultHttpClient httpclient = new DefaultHttpClient();
+        HttpResponse response = httpclient.execute(get);
+        if (response.getStatusLine().getStatusCode() == 200) {
+            return true;
+        }
+        return false;
     }
 
     /*

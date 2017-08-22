@@ -175,10 +175,10 @@ public abstract class ShareLibrareisHelper {
                         }
 
                         boolean eixst = false;
+                        String groupId = artifact.getGroupId();
+                        String artifactId = artifact.getArtifactId();
+                        String version = artifact.getVersion();
                         for (MavenArtifact remoteAtifact : searchResults) {
-                            String groupId = artifact.getGroupId();
-                            String artifactId = artifact.getArtifactId();
-                            String version = artifact.getVersion();
                             String rGroup = remoteAtifact.getGroupId();
                             String rArtifact = remoteAtifact.getArtifactId();
                             String rVersion = remoteAtifact.getVersion();

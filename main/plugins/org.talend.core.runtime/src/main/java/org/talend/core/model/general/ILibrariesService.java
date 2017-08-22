@@ -95,6 +95,8 @@ public interface ILibrariesService extends IService {
 
     public void resetModulesNeeded();
 
+    public void refreshModulesNeeded();
+
     public void updateModulesNeededForCurrentJob(IProcess process);
 
     public boolean isLibSynchronized();

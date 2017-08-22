@@ -20,6 +20,11 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class NexusServerBean {
 
+    public enum NexusType {
+        NEXUS_2,
+        NEXUS_3;
+    }
+
     private String server;
 
     private String userName;
@@ -32,7 +37,7 @@ public class NexusServerBean {
 
     private String snapshotRepId;
 
-    private String type = "NEXUS_2";
+    private String type = NexusType.NEXUS_2.name();
 
     public NexusServerBean() {
     }

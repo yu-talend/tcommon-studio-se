@@ -156,6 +156,16 @@ public class LibrariesService implements ILibrariesService {
     /*
      * (non-Javadoc)
      * 
+     * @see org.talend.core.model.general.ILibrariesService#refreshModulesNeeded()
+     */
+    @Override
+    public void refreshModulesNeeded() {
+        this.getLibrariesService().refreshModulesNeeded();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.talend.core.model.general.ILibrariesService#undeployLibrary(java.net.URL)
      */
     @Override

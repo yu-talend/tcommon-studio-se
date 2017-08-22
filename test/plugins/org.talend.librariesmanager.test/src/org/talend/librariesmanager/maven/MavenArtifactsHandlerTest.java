@@ -30,7 +30,7 @@ import org.talend.utils.io.FilesUtils;
 /**
  * DOC ggu class global comment. Detailled comment
  */
-public class ArtifactsDeployerTest {
+public class MavenArtifactsHandlerTest {
 
     File tmpFolder;
 

@@ -13,6 +13,7 @@
 package org.talend.librariesmanager.maven;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 import org.talend.commons.exception.ExceptionHandler;
@@ -27,6 +28,7 @@ import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenUrlHelper;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.utils.PomUtil;
+import org.talend.librariesmanager.model.service.LibrariesIndexManager;
 import org.talend.utils.io.FilesUtils;
 
 /**
@@ -75,6 +77,20 @@ public class MavenArtifactsHandler {
             if (!libFile.exists()) {
                 return;
             }
+            // check if already exist in nexus server with this mvnUri
+            if (!parseMvnUrl.getVersion().endsWith(MavenUrlHelper.VERSION_SNAPSHOT)) {
+                NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
+                IRepositoryArtifactHandler hander = RepositoryArtifactHandlerManager.getRepositoryHandler(customNexusServer);
+                if (hander != null) {
+                    List<MavenArtifact> search = hander.search(parseMvnUrl.getGroupId(), parseMvnUrl.getArtifactId(),
+                            parseMvnUrl.getVersion(), true, false);
+                    if (search.size() == 1 && !"pom".equals(search.get(0).getType())) {
+                        throw new Exception("Artifact already deployed with maven uri" + mavenUri
+                                + " , please try to use custom maven uri to deploy agian! ");
+                    }
+                }
+            }
+
             // lib
             String artifactType = parseMvnUrl.getType();
             if (artifactType == null || "".equals(artifactType)) {
@@ -112,6 +128,9 @@ public class MavenArtifactsHandler {
             if (generated) { // only for generate pom
                 FilesUtils.deleteFolder(pomFile.getParentFile(), true);
             }
+
+            // TUP-18405, record the install module
+            LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath().put(libFile.getName(), mavenUri);
         }
     }
 

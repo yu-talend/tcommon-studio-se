@@ -92,8 +92,8 @@ public class RepositorySystemFactory {
         deployRequest.addArtifact(jarArtifact);
 
         String strClassifier = classifier == null ? "" : ("-" + classifier);
-        String pomPath = localRepository + "/" + repositoryId + "/" + groupId + "/" + artifactId + "/" + artifactId + "-"
-                + version + strClassifier + "." + extension;
+        String pomPath = localRepository + "/" + groupId.replaceAll("\\.", "/") + "/" + artifactId + "/" + version + "/"
+                + artifactId + "-" + version + strClassifier + "." + "pom";
         File pomFile = new File(pomPath);
         if (pomFile.exists()) {
             Artifact pomArtifact = new SubArtifact(jarArtifact, "", "pom");
@@ -108,5 +108,13 @@ public class RepositorySystemFactory {
         deployRequest.setRepository(distRepo);
 
         system.deploy(session, deployRequest);
+    }
+
+    public static boolean checkConnection(String repositoryId, String repositoryUrl, String userName, String password) {
+        Authentication auth = new AuthenticationBuilder().addUsername(userName).addPassword(password).build();
+        RemoteRepository distRepo = new RemoteRepository.Builder(repositoryId, "default", repositoryUrl).setAuthentication(auth)
+                .build();
+
+        return true;
     }
 }
