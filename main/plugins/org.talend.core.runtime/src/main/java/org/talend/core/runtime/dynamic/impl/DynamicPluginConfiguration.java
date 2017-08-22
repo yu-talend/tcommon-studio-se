@@ -83,7 +83,7 @@ public class DynamicPluginConfiguration extends AbstractDynamicElement implement
             int length = children.length();
             for (int i = 0; i < length; ++i) {
                 JSONObject jObj = children.getJSONObject(i);
-                DynamicPluginConfiguration config = fromXmlJson(jObj);
+                DynamicConfiguration config = DynamicConfiguration.fromXmlJson(jObj);
                 dynamicPluginConfiguration.addChild(config);
             }
         }

@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.talend.core.runtime.dynamic.IDynamicConfiguration;
 import org.talend.core.runtime.dynamic.IDynamicExtension;
+import org.talend.core.runtime.i18n.Messages;
 
 import us.monoid.json.JSONArray;
 import us.monoid.json.JSONML;
@@ -93,7 +94,7 @@ public class DynamicExtension extends AbstractDynamicElement implements IDynamic
         
         if (jsonTagName != null && !jsonTagName.isEmpty()) {
             if (!TAG_NAME.equals(jsonTagName)) {
-                throw new Exception("Current json object is not an extension");
+                throw new Exception(Messages.getString("DynamicElement.incorrectInstance", TAG_NAME, jsonTagName)); //$NON-NLS-1$
             }
         }
         

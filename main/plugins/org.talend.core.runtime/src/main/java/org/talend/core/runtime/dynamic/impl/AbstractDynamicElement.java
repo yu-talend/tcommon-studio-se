@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.talend.core.runtime.dynamic.IDynamicAttribute;
+import org.talend.core.runtime.i18n.Messages;
 
 import us.monoid.json.JSONArray;
 import us.monoid.json.JSONObject;
@@ -80,7 +81,7 @@ public abstract class AbstractDynamicElement implements IDynamicAttribute {
 
         String tagName = getTagName();
         if (tagName == null) {
-            throw new Exception("tagName is empty!");
+            throw new Exception(Messages.getString("DynamicElement.tagName.empty")); //$NON-NLS-1$
         }
         json.put(XML_TAG_NAME, tagName);
 

@@ -17,9 +17,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.talend.core.runtime.dynamic.IDynamicConfiguration;
 import org.talend.core.runtime.dynamic.IDynamicExtension;
 import org.talend.core.runtime.dynamic.IDynamicPlugin;
 import org.talend.core.runtime.dynamic.IDynamicPluginConfiguration;
+import org.talend.core.runtime.i18n.Messages;
 
 import us.monoid.json.JSONArray;
 import us.monoid.json.JSONML;
@@ -40,7 +42,7 @@ public class DynamicPlugin extends AbstractDynamicElement implements IDynamicPlu
 
     @Override
     public IDynamicExtension getExtension(String extensionPoint, String extensionId, boolean createIfNotExist) {
-        String key = extensionPoint + "/" + extensionId; //$NON-NLS-1$
+        String key = getKey(extensionPoint, extensionId);
         IDynamicExtension extension = extensionMap.get(key);
         if (extension == null && createIfNotExist) {
             DynamicExtension dynamicExtension = new DynamicExtension();
@@ -67,9 +69,36 @@ public class DynamicPlugin extends AbstractDynamicElement implements IDynamicPlu
         return extension;
     }
 
-    public void addExtension(IDynamicExtension extension) {
-        super.addChild((AbstractDynamicElement) extension);
-        extensionMap.put(extension.getExtensionPoint(), extension);
+    /**
+     * 
+     * return the extension used in this plugin
+     * 
+     * @param extension
+     * @return
+     */
+    public IDynamicExtension addExtension(IDynamicExtension extension) {
+        String point = extension.getExtensionPoint();
+        String id = extension.getExtensionId();
+        if (point == null || point.isEmpty() || id == null || id.isEmpty()) {
+            throw new RuntimeException(Messages.getString("DynamicPlugin.addExtension.empty")); //$NON-NLS-1$
+        }
+        String key = getKey(point, id);
+        IDynamicExtension existingExtension = extensionMap.get(key);
+        if (existingExtension != null) {
+            List<IDynamicConfiguration> configurations = extension.getConfigurations();
+            if (configurations != null && !configurations.isEmpty()) {
+                existingExtension.getConfigurations().addAll(configurations);
+            }
+            return existingExtension;
+        } else {
+            super.addChild((AbstractDynamicElement) extension);
+            extensionMap.put(key, extension);
+            return extension;
+        }
+    }
+
+    private String getKey(String extensionPoint, String extensionId) {
+        return extensionPoint + "/" + extensionId; //$NON-NLS-1$
     }
 
     @Override
@@ -108,7 +137,7 @@ public class DynamicPlugin extends AbstractDynamicElement implements IDynamicPlu
 
         if (jsonTagName != null && !jsonTagName.isEmpty()) {
             if (!TAG_NAME.equals(jsonTagName)) {
-                throw new Exception("Current json object is not a plugin");
+                throw new Exception(Messages.getString("DynamicElement.incorrectInstance", TAG_NAME, jsonTagName)); //$NON-NLS-1$
             }
         }
 
