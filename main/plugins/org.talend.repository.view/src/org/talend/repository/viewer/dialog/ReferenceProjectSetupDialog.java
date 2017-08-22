@@ -418,7 +418,8 @@ public class ReferenceProjectSetupDialog extends TitleAreaDialog {
             for (ProjectReferenceBean originValue : originList) {
                 boolean isFind = false;
                 for (ProjectReferenceBean value : viewerInput) {
-                    if (originValue.getReferenceProject().equals(value.getReferenceProject())
+                    if (originValue.getReferenceProject().getTechnicalLabel()
+                            .equals(value.getReferenceProject().getTechnicalLabel())
                             && originValue.getReferenceBranch().equals(value.getReferenceBranch())) {
                         isFind = true;
                         break;
