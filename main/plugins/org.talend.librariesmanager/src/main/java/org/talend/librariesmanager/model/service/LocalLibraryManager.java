@@ -385,14 +385,18 @@ public class LocalLibraryManager implements ILibraryManagerService {
                 jarFile = getJarFile(jarNeeded);
             }
             // retrieve form custom nexus server automatically
-            if (jarFile == null) {
-                TalendLibsServerManager manager = TalendLibsServerManager.getInstance();
-                if (customNexusServer == null) {
-                    customNexusServer = manager.getCustomNexusServer();
-                }
-                if (customNexusServer != null) {
-                    Set<String> toResolve = new HashSet<String>();
-                    if (mavenUri != null) {
+            TalendLibsServerManager manager = TalendLibsServerManager.getInstance();
+            if (customNexusServer == null) {
+                customNexusServer = manager.getCustomNexusServer();
+            }
+            if (customNexusServer != null) {
+                Set<String> toResolve = new HashSet<String>();
+                if (mavenUri != null) {
+                    toResolve.add(mavenUri);
+                } else {
+                    mavenUri = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath().get(jarNeeded);
+                    if (mavenUri == null) {
+                        mavenUri = MavenUrlHelper.generateMvnUrlForJarName(jarNeeded);
                         toResolve.add(mavenUri);
                     } else {
                         mavenUri = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath().get(jarNeeded);
@@ -400,28 +404,24 @@ public class LocalLibraryManager implements ILibraryManagerService {
                             mavenUri = MavenUrlHelper.generateMvnUrlForJarName(jarNeeded);
                             toResolve.add(mavenUri);
                         } else {
-                            mavenUri = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath()
-                                    .get(jarNeeded);
-                            if (mavenUri == null) {
-                                mavenUri = MavenUrlHelper.generateMvnUrlForJarName(jarNeeded);
-                                toResolve.add(mavenUri);
-                            } else {
-                                final String[] split = mavenUri.split(MavenUrlHelper.MVN_INDEX_SPLITER);
-                                for (String mvnUri : split) {
-                                    toResolve.add(mvnUri);
-                                }
+                            final String[] split = mavenUri.split(MavenUrlHelper.MVN_INDEX_SPLITER);
+                            for (String mvnUri : split) {
+                                toResolve.add(mvnUri);
                             }
                         }
-                        for (String uri : toResolve) {
-                            if (isResolveAllowed(uri)) {
+                    }
+                    for (String uri : toResolve) {
+                        if (isResolveAllowed(uri)) {
+                            MavenArtifact parseMvnUrl = MavenUrlHelper.parseMvnUrl(uri);
+                            if (jarFile == null || parseMvnUrl.getVersion().endsWith(MavenUrlHelper.VERSION_SNAPSHOT)) {
                                 File resolvedJar = resolveJar(manager, customNexusServer, uri);
                                 if (resolvedJar != null) {
                                     jarFile = resolvedJar;
                                     break;
                                 }
                             }
-
                         }
+
                     }
                 }
             }
