@@ -110,8 +110,6 @@ public class LocalLibraryManager implements ILibraryManagerService {
 
     private Map<String, String> mavenUriFromExtensions = new HashMap<String, String>();
 
-    private Set<String> jarsNeededForComponents = new HashSet<String>();
-
     private Set<String> urlWarned = new HashSet<String>();
 
     private JarMissingObservable missingJarObservable;
@@ -188,9 +186,8 @@ public class LocalLibraryManager implements ILibraryManagerService {
      * @param mavenUri snaopshot mvn uri
      * @param monitorWrap
      */
-    private void install(File file, String snapshotMavenUri, boolean updateRemoteJar, IProgressMonitor... monitorWrap) {
+    private void install(File file, String mavenRUI, boolean updateRemoteJar, IProgressMonitor... monitorWrap) {
         try {
-            listToUpdate = true;
             if (file.isDirectory()) {
                 List<File> jarFiles = FilesUtils.getJarFilesFromFolder(file, null);
                 Map<String, String> sourceAndMavenUri = new HashMap<String, String>();
@@ -198,7 +195,7 @@ public class LocalLibraryManager implements ILibraryManagerService {
                     for (File jarFile : jarFiles) {
                         String jarName = jarFile.getName();
                         String defaultMavenUri = MavenUrlHelper.generateMvnUrlForJarName(jarName);
-                        if (snapshotMavenUri == null) {
+                        if (mavenRUI == null) {
                             // TODO????? should deploy with all versions
                             String urisFromIndex = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath()
                                     .get(jarName);
@@ -223,7 +220,7 @@ public class LocalLibraryManager implements ILibraryManagerService {
                                 sourceAndMavenUri.put(defaultMavenUri, jarFile.getAbsolutePath());
                             }
                         } else {
-                            sourceAndMavenUri.put(snapshotMavenUri, jarFile.getAbsolutePath());
+                            sourceAndMavenUri.put(mavenRUI, jarFile.getAbsolutePath());
                         }
                     }
                     deployer.install(sourceAndMavenUri, updateRemoteJar);
@@ -232,7 +229,7 @@ public class LocalLibraryManager implements ILibraryManagerService {
             } else {
                 Map<String, String> sourceAndMavenUri = new HashMap<String, String>();
                 String defaultMavenUri = MavenUrlHelper.generateMvnUrlForJarName(file.getName());
-                if (snapshotMavenUri == null) {
+                if (mavenRUI == null) {
                     // TODO????? should deploy with all versions
                     String urisFromIndex = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath()
                             .get(file.getName());
@@ -256,7 +253,7 @@ public class LocalLibraryManager implements ILibraryManagerService {
                         sourceAndMavenUri.put(defaultMavenUri, file.getAbsolutePath());
                     }
                 } else {
-                    sourceAndMavenUri.put(snapshotMavenUri, file.getAbsolutePath());
+                    sourceAndMavenUri.put(mavenRUI, file.getAbsolutePath());
                 }
                 deployer.install(sourceAndMavenUri, updateRemoteJar);
                 updateInstalledMvnUri(sourceAndMavenUri.keySet());
@@ -279,46 +276,6 @@ public class LocalLibraryManager implements ILibraryManagerService {
         for (String uri : installedUris) {
             checkJarInstalledInMaven(uri);
         }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.talend.core.IRepositoryBundleService#deploy(java.util.Collection,
-     * org.eclipse.core.runtime.IProgressMonitor[])
-     */
-    @Override
-    public void deploy(Collection<URI> jarFileUris, IProgressMonitor... monitorWrap) {
-        if (jarFileUris == null || jarFileUris.size() == 0) {
-            return;
-        }
-        for (URI uri : jarFileUris) {
-            File file = new File(uri);
-            if (file == null || !file.exists()) {
-                return;
-            }
-            // deploy to maven
-            install(file, null, true, monitorWrap);
-            // deploy to configuration/lib/java if tac still use the svn lib
-            try {
-                if (isSvnLibSetup()) {
-                    String installLocation = getStorageDirectory().getAbsolutePath();
-                    if (file.isDirectory()) {
-                        FilesUtils.copyFolder(new File(uri), getStorageDirectory(), false,
-                                FilesUtils.getExcludeSystemFilesFilter(), FilesUtils.getAcceptJARFilesFilter(), false,
-                                monitorWrap);
-                    } else {
-                        File target = new File(installLocation, file.getName());
-                        FilesUtils.copyFile(file, target);
-                    }
-                }
-            } catch (IOException e) {
-                CommonExceptionHandler.process(e);
-            } catch (Exception e) {
-                CommonExceptionHandler.process(e);
-            }
-        }
-
     }
 
     @Override
@@ -828,6 +785,7 @@ public class LocalLibraryManager implements ILibraryManagerService {
     public void clearCache() {
         if (isInitialized()) {
             LibrariesIndexManager.getInstance().clearAll();
+            ModuleStatusProvider.reset();
         }
         listToUpdate = true;
     }
@@ -1139,7 +1097,6 @@ public class LocalLibraryManager implements ILibraryManagerService {
         }
         platfromUriFromExtensions.putAll(libsToRelativePath);
         mavenUriFromExtensions.putAll(libsToMavenUri);
-        listToUpdate = true;
     }
 
     @Override

@@ -14,10 +14,15 @@ package org.talend.librariesmanager.ui.dialogs;
 
 import java.io.File;
 
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.PatternMatcherInput;
+import org.apache.oro.text.regex.Perl5Matcher;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -54,20 +59,28 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
 
     private ExtendedTextCellEditor cellEditor;
 
+    private String expression = "(mvn:(\\w+.*/)(\\w+.*/)(([0-9]+\\.)+[0-9]/)\\w+)|(mvn:(\\w+.*/)(\\w+.*/)([0-9]+\\.)+[0-9])";
+
+    private PatternMatcherInput patternMatcherInput = new PatternMatcherInput(expression);
+
+    private Perl5Matcher matcher = new Perl5Matcher();
+
+    private Pattern pattern;
+
     /**
      * DOC wchen InstallModuleDialog constructor comment.
      * 
      * @param parentShell
      */
     public InstallModuleDialog(Shell parentShell) {
-        super(parentShell);
-        setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER | SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
+        this(parentShell, null);
     }
 
     public InstallModuleDialog(Shell parentShell, ExtendedTextCellEditor cellEditor) {
         super(parentShell);
         setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER | SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
         this.cellEditor = cellEditor;
+        // pattern = matcher.c
     }
 
     @Override
@@ -115,11 +128,18 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
         originalUriTxt.setBackground(container.getBackground());
         originalUriTxt.setText(module.getMavenUri(true));
 
-        useCustomBtn = new Button(container, SWT.CHECK);
+        Composite customContainter = new Composite(container, SWT.NONE);
+        customContainter.setLayoutData(new GridData());
+        layout = new GridLayout();
+        layout.marginTop = 0;
+        layout.marginLeft = 0;
+        layout.marginRight = 0;
+        layout.numColumns = 2;
+        customContainter.setLayout(layout);
+
+        useCustomBtn = new Button(customContainter, SWT.CHECK);
         gdData = new GridData();
-        gdData.horizontalSpan = 3;
         useCustomBtn.setLayoutData(gdData);
-        useCustomBtn.setSelection(module.getCustomMavenUri() != null);
         useCustomBtn.addSelectionListener(new SelectionAdapter() {
 
             @Override
@@ -128,13 +148,27 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
             }
         });
 
-        Label label3 = new Label(container, SWT.NONE);
+        Label label3 = new Label(customContainter, SWT.NONE);
         label3.setText(Messages.getString("InstallModuleDialog.customUri"));
         customUriText = new Text(container, SWT.BORDER);
         gdData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
         gdData.horizontalSpan = 2;
         customUriText.setLayoutData(gdData);
         customUriText.setEnabled(useCustomBtn.getSelection());
+        if (cellEditor != null) {
+            useCustomBtn.setSelection(cellEditor.getExpression().equals(module.getCustomMavenUri()));
+            customUriText.setEnabled(useCustomBtn.getSelection());
+        }
+        if (customUriText.isEnabled() && module.getCustomMavenUri() != null) {
+            customUriText.setText(module.getCustomMavenUri());
+        }
+        customUriText.addModifyListener(new ModifyListener() {
+
+            @Override
+            public void modifyText(ModifyEvent e) {
+
+            }
+        });
 
         return parent;
     }
@@ -193,6 +227,10 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
                 } else {
                     module.setCustomMavenUri(customUriText.getText());
                 }
+            }
+        } else {
+            if (cellEditor != null) {
+                cellEditor.setConsumerExpression(originalUriTxt.getText());
             }
         }
         if (jarPathTxt.getText() != null) {

@@ -14,7 +14,9 @@ package org.talend.librariesmanager.ui.views;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.swt.SWT;
@@ -179,18 +181,25 @@ public class ModulesViewComposite extends Composite {
 
             @Override
             public void set(ModuleNeeded bean, String value) {
-                bean.setCustomMavenUri(value);
-                if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibrariesService.class)) {
-                    ILibrariesService libService = (ILibrariesService) GlobalServiceRegister.getDefault().getService(
-                            ILibrariesService.class);
-                    libService.saveCustomMavenURIMap();
+                String originalValue = bean.getCustomMavenUri();
+                if (bean.getMavenUri(true).equals(value)) {
+                    bean.setCustomMavenUri(null);
+                } else {
+                    bean.setCustomMavenUri(value);
                 }
-                tableViewerCreator.getTableViewer().refresh();
+                if (!StringUtils.equals(value, originalValue)) {
+                    if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibrariesService.class)) {
+                        ILibrariesService libService = (ILibrariesService) GlobalServiceRegister.getDefault().getService(
+                                ILibrariesService.class);
+                        libService.saveCustomMavenURIMap();
+                    }
+                    tableViewerCreator.getTableViewer().refresh();
+                }
             }
         });
         CellEditorDialogBehavior behavior = new CellEditorDialogBehavior();
         final ExtendedTextCellEditor cellEditor = new ExtendedTextCellEditor(tableViewerCreator.getTable(), behavior);
-        InstallModuleDialog dialog = new InstallModuleDialog(getShell(), cellEditor);
+        InstallModuleDialog dialog = new InstallModuleDialog(tableViewerCreator.getTable().getShell(), cellEditor);
         behavior.setCellEditorDialog(dialog);
         column.setCellEditor(cellEditor, new CellEditorValueAdapter() {
 
@@ -231,7 +240,7 @@ public class ModulesViewComposite extends Composite {
         // removed by TUP-833
         // IComponentsFactory compFac = ComponentsFactoryProvider.getInstance();
         // compFac.getComponents();
-        List<ModuleNeeded> modules = ModulesNeededProvider.getModulesNeeded();
+        Set<ModuleNeeded> modules = ModulesNeededProvider.getModulesNeeded();
 
         tableViewerCreator.init(filterHidenModule(modules));
 
@@ -268,7 +277,7 @@ public class ModulesViewComposite extends Composite {
      * @param modules
      * @return
      */
-    private List filterHidenModule(List<ModuleNeeded> modules) {
+    private List filterHidenModule(Set<ModuleNeeded> modules) {
         List<ModuleNeeded> list = new ArrayList<ModuleNeeded>();
         for (ModuleNeeded module : modules) {
             if (module.isShow()) {

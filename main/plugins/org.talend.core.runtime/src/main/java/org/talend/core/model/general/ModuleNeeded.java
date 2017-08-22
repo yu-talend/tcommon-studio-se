@@ -392,9 +392,14 @@ public class ModuleNeeded {
         if (this.getBundleVersion() != null) {
             hashCode *= this.getBundleVersion().hashCode();
         }
+        if (this.getModuleLocaion() != null) {
+            hashCode *= this.getModuleLocaion().hashCode();
+        }
 
         hashCode *= new Boolean(this.isRequired()).hashCode();
         hashCode *= new Boolean(this.isMrRequired()).hashCode();
+        hashCode *= this.getMavenUri(true).hashCode();
+
         return hashCode;
     }
 
@@ -450,6 +455,19 @@ public class ModuleNeeded {
             }
         }
 
+        // Module context
+        if (other.getContext() == null) {
+            if (this.getContext() != null) {
+                return false;
+            }
+        } else {
+            if (this.getContext() == null) {
+                return false;
+            } else if (!other.getContext().equals(this.getContext())) {
+                return false;
+            }
+        }
+
         // Module Location
         if (other.getModuleLocaion() == null) {
             if (this.getModuleLocaion() != null) {
@@ -462,7 +480,6 @@ public class ModuleNeeded {
                 return false;
             }
         }
-
         if (other.isRequired() != this.isRequired()) {
             return false;
         }
@@ -470,7 +487,13 @@ public class ModuleNeeded {
         if (other.isMrRequired() != this.isMrRequired()) {
             return false;
         }
+        // maven uri
+        if (!other.getMavenUri(true).equals(this.getMavenUri(true))) {
+            return false;
+        }
+
         return true;
+
     }
 
     public String getMavenUri(boolean autoGenerate) {

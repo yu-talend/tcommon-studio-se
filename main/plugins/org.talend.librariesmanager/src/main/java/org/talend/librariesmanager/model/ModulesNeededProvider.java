@@ -97,9 +97,9 @@ public class ModulesNeededProvider {
      */
     private static final String PLUGINS_CONTEXT_KEYWORD = "plugin:";
 
-    private static List<ModuleNeeded> componentImportNeedsList = new ArrayList<ModuleNeeded>();;
+    private static Set<ModuleNeeded> componentImportNeedsList = new HashSet<ModuleNeeded>();;
 
-    private static List<ModuleNeeded> unUsedModules = new ArrayList<ModuleNeeded>();
+    private static Set<ModuleNeeded> unUsedModules = new HashSet<ModuleNeeded>();
 
     private static boolean isCreated = false;
 
@@ -116,7 +116,7 @@ public class ModulesNeededProvider {
         }
     }
 
-    public static List<ModuleNeeded> getModulesNeeded() {
+    public static Set<ModuleNeeded> getModulesNeeded() {
         // TimeMeasure.measureActive = true;
         // TimeMeasure.display = true;
         //        TimeMeasure.begin(Messages.getString("ModulesNeededProvider.0")); //$NON-NLS-1$
@@ -895,7 +895,7 @@ public class ModulesNeededProvider {
      * 
      * @return the unUsedModules
      */
-    public static List<ModuleNeeded> getUnUsedModules() {
+    public static Set<ModuleNeeded> getUnUsedModules() {
         return unUsedModules;
     }
 
