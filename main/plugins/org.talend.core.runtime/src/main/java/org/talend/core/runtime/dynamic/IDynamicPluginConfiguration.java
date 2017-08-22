@@ -26,12 +26,32 @@ public interface IDynamicPluginConfiguration extends IDynamicAttribute {
 
     public static final String ATTR_DESCRIPTION = "description"; //$NON-NLS-1$
 
+    /**
+     * get Id / Version
+     * 
+     * @return
+     */
     public String getId();
 
+    /**
+     * set Id / Version
+     * 
+     * @param id
+     */
     public void setId(String id);
 
+    /**
+     * get display name
+     * 
+     * @return
+     */
     public String getName();
 
+    /**
+     * set display name
+     * 
+     * @param name
+     */
     public void setName(String name);
 
     public String getDescription();
