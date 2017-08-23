@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.common.util.EMap;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.exception.PersistenceException;
@@ -1643,7 +1644,13 @@ public class ProjectRepositoryNode extends RepositoryNode implements IProjectRep
 
         List<MetadataTable> tablesWithOrders = ConnectionHelper.getTablesWithOrders(metadataConnection);
         EList tables = new BasicEList();
-        tables.addAll(tablesWithOrders);
+        for (MetadataTable tablesWithOrder : tablesWithOrders) {
+            EMap<String, String> properties = tablesWithOrder.getAdditionalProperties();
+            String partitionKey = properties.get(EProperties.CONTENT_TYPE.name());
+            if (!ERepositoryObjectType.METADATA_SAP_CONTENT_EXTRACTOR.name().equals(partitionKey)) {
+                tables.add(tablesWithOrder);
+            }
+        }
         createTables(tableContainer, repObj, tables, ERepositoryObjectType.METADATA_CON_TABLE, validationRules);
 
     }
@@ -1759,10 +1766,15 @@ public class ProjectRepositoryNode extends RepositoryNode implements IProjectRep
         }
 
         node.getChildren().add(tableContainer);
-        // TODO
         List<MetadataTable> tablesWithOrders = ConnectionHelper.getTablesWithOrders(metadataConnection);
         EList tables = new BasicEList();
-        tables.addAll(tablesWithOrders);
+        for (MetadataTable tablesWithOrder : tablesWithOrders) {
+            EMap<String, String> properties = tablesWithOrder.getAdditionalProperties();
+            String partitionKey = properties.get(EProperties.CONTENT_TYPE.name());
+            if (ERepositoryObjectType.METADATA_SAP_CONTENT_EXTRACTOR.name().equals(partitionKey)) {
+                tables.add(tablesWithOrder);
+            }
+        }
         createTables(tableContainer, repObj, tables, ERepositoryObjectType.METADATA_CON_TABLE, validationRules);
     }
 
