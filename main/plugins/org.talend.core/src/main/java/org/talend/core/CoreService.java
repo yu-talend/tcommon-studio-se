@@ -526,4 +526,9 @@ public class CoreService implements ICoreService {
         };
         ProxyRepositoryFactory.getInstance().executeRepositoryWorkUnit(repositoryWorkUnit);
     }
+
+    @Override
+    public void initMavenCodeProjects() {
+        
+    }
 }

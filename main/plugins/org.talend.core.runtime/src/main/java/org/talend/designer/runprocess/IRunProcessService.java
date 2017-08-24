@@ -27,10 +27,12 @@ import org.talend.core.IService;
 import org.talend.core.language.ECodeLanguage;
 import org.talend.core.language.ICodeProblemsChecker;
 import org.talend.core.model.general.ModuleNeeded;
+import org.talend.core.model.general.Project;
 import org.talend.core.model.process.IContext;
 import org.talend.core.model.process.IProcess;
 import org.talend.core.model.process.IProcess2;
 import org.talend.core.model.properties.Property;
+import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.runtime.process.ITalendProcessJavaProject;
 import org.talend.core.runtime.projectsetting.ProjectPreferenceManager;
 
@@ -191,5 +193,13 @@ public interface IRunProcessService extends IService {
     void storeProjectPreferences(IPreferenceStore preferenceStore);
 
     public File getJavaProjectLibFolder();
+    
+    void initMavenJavaProject(Project project);
+    
+    ITalendProcessJavaProject getTalendCodeJavaProject(ERepositoryObjectType type);
+
+    ITalendProcessJavaProject getTalendJobJavaProject(Property property);
+    
+    void deleteEclipseProjects();
 
 }

@@ -14,7 +14,9 @@ package org.talend.designer.maven.tools.creator;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -22,7 +24,9 @@ import java.util.Set;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
@@ -40,16 +44,20 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMaven;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
-import org.eclipse.m2e.core.project.IProjectConfigurationManager;
+import org.eclipse.m2e.core.internal.Messages;
+import org.eclipse.m2e.core.internal.project.ProjectConfigurationManager;
 import org.eclipse.m2e.core.project.ProjectImportConfiguration;
+import org.eclipse.osgi.util.NLS;
 import org.osgi.service.prefs.BackingStoreException;
 import org.talend.commons.exception.ExceptionHandler;
+import org.talend.core.model.general.TalendJobNature;
 import org.talend.core.runtime.projectsetting.IProjectSettingTemplateConstants;
 import org.talend.designer.maven.DesignerMavenPlugin;
 import org.talend.designer.maven.model.MavenSystemFolders;
 import org.talend.designer.maven.model.ProjectSystemFolder;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.template.MavenTemplateManager;
+import org.talend.designer.maven.utils.PomIdsHelper;
 import org.talend.designer.maven.utils.PomUtil;
 
 /**
@@ -61,6 +69,10 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
     public static final String IS_ALREADY_SET_ECLIPSE_COMPLIANCE = "IS_ALREADY_SET_ECLIPSE_COMPLIANCE"; //$NON-NLS-1$
 
     private IProject project;
+
+    private IFile pomFile;
+    
+    private IPath location;
 
     public CreateMavenCodeProject(IProject project) {
         super(project.getFile(TalendMavenConstants.POM_FILE_NAME), IProjectSettingTemplateConstants.PROJECT_TEMPLATE_FILE_NAME);
@@ -74,18 +86,12 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
 
     @Override
     protected Model createModel() {
-        Model templateModel = MavenTemplateManager.getCodeProjectTemplateModel();
-
-        // The groupId and artifactId are temp, will change it after create project.
-        setGroupId(project.getName());
-        setArtifactId(project.getName());
-        setVersion(templateModel.getVersion());
-        // Must be jar, if pom, won't create the classpath or such for jdt.
-        setPackaging(TalendMavenConstants.PACKAGING_JAR);
-
-        setAttributes(templateModel);
-        addProperties(templateModel);
-
+        // temp model.
+        Model templateModel = new Model();
+        templateModel.setGroupId(PomIdsHelper.getJobGroupId(project.getName()));
+        templateModel.setArtifactId(project.getName());
+        templateModel.setVersion(PomIdsHelper.getProjectVersion());
+        templateModel.setPackaging(TalendMavenConstants.PACKAGING_JAR);
         return templateModel;
     }
 
@@ -96,6 +102,14 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
      */
     protected IPath getBaseLocation() {
         return ResourcesPlugin.getWorkspace().getRoot().getLocation();
+    }
+
+    public void setProjectLocation(IPath location) {
+        this.location = location;
+    }
+    
+    public void setPomFile(IFile pomFile) {
+        this.pomFile = pomFile;
     }
 
     /**
@@ -131,7 +145,9 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
         if (!p.isOpen()) {
             p.open(monitor);
         }
+        addTalendNature(p, TalendJobNature.ID, monitor);
         convertJavaProjectToPom(monitor, p);
+        PomUtil.addToParentModules(pomFile);
         changeClasspath(monitor, p);
 
         IJavaProject javaProject = JavaCore.create(p);
@@ -147,27 +163,43 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
             pMoniter = new NullProgressMonitor();
         }
         IProgressMonitor subMonitor = new SubProgressMonitor(pMoniter, 100);
+        
+        Model model;
+        if (pomFile.exists()) {
+            model = MavenPlugin.getMavenModelManager().readMavenModel(pomFile);
+        } else {
+            // first time create, use temp model.
+            model = createModel();
+        }
 
-        final Model model = createModel();
         final ProjectImportConfiguration importConfiguration = new ProjectImportConfiguration();
-        final IProject p = importConfiguration.getProject(ResourcesPlugin.getWorkspace().getRoot(), model);
-        final IPath location = getBaseLocation();
-        final String[] folders = getFolders();
-
+        IProject p = ResourcesPlugin.getWorkspace().getRoot().getProject(project.getName());
         beforeCreate(subMonitor, p);
+
         subMonitor.worked(10);
 
-        IProjectConfigurationManager projectConfigurationManager = MavenPlugin.getProjectConfigurationManager();
-        projectConfigurationManager.createSimpleProject(p, location.append(p.getName()), model, folders, importConfiguration,
-                subMonitor);
+        createSimpleProject(subMonitor, p, model, importConfiguration);
+        // MavenPlugin.getProjectConversionManager().convert(project, model, subMonitor);
 
         subMonitor.worked(80);
-
+        
         afterCreate(subMonitor, p);
+
         subMonitor.done();
 
-        // update the project
-        this.project = p;
+        project = p;
+    }
+
+    public static void addTalendNature(IProject project, String natureId, IProgressMonitor monitor) throws CoreException {
+        if (!project.hasNature(natureId)) {
+            IProjectDescription description = project.getDescription();
+            String[] prevNatures = description.getNatureIds();
+            String[] newNatures = new String[prevNatures.length + 1];
+            System.arraycopy(prevNatures, 0, newNatures, 1, prevNatures.length);
+            newNatures[0] = natureId;
+            description.setNatureIds(newNatures);
+            project.setDescription(description, monitor);
+        }
     }
 
     private void convertJavaProjectToPom(IProgressMonitor monitor, IProject p) {
@@ -330,6 +362,76 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
                     pluginPreferences.flush();
                 } catch (BackingStoreException e) {
                     ExceptionHandler.process(e);
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("restriction")
+    private void createSimpleProject(IProgressMonitor monitor, IProject p, Model model, ProjectImportConfiguration importConfiguration) throws CoreException {
+        final String[] directories = getFolders();
+
+        ProjectConfigurationManager projectConfigurationManager = (ProjectConfigurationManager) MavenPlugin
+                .getProjectConfigurationManager();
+
+        String projectName = p.getName();
+        monitor.beginTask(NLS.bind(Messages.ProjectConfigurationManager_task_creating, projectName), 5);
+
+        monitor.subTask(Messages.ProjectConfigurationManager_task_creating_workspace);
+        IProjectDescription description = ResourcesPlugin.getWorkspace().newProjectDescription(projectName);
+        description.setLocation(location);
+        p.create(description, monitor);
+        p.open(monitor);
+        monitor.worked(1);
+
+        hideNestedProjectsFromParents(Collections.singletonList(p));
+
+        monitor.worked(1);
+        
+        monitor.subTask(Messages.ProjectConfigurationManager_task_creating_pom);
+        IFile pomFile = p.getFile(TalendMavenConstants.POM_FILE_NAME);
+        if (!pomFile.exists()) {
+            MavenPlugin.getMavenModelManager().createMavenModel(pomFile, model);
+        }
+        monitor.worked(1);
+
+        monitor.subTask(Messages.ProjectConfigurationManager_task_creating_folders);
+        for (int i = 0; i < directories.length; i++) {
+            ProjectConfigurationManager.createFolder(p.getFolder(directories[i]), false);
+        }
+        monitor.worked(1);
+
+        monitor.subTask(Messages.ProjectConfigurationManager_task_creating_project);
+        projectConfigurationManager.enableMavenNature(p, importConfiguration.getResolverConfiguration(), monitor);
+        monitor.worked(1);
+    }
+
+    private void hideNestedProjectsFromParents(List<IProject> projects) {
+
+        if (!MavenPlugin.getMavenConfiguration().isHideFoldersOfNestedProjects()) {
+            return;
+        }
+
+        // Prevent child project folders from showing up in parent project folders.
+
+        HashMap<File, IProject> projectFileMap = new HashMap<File, IProject>();
+
+        for (IProject project : projects) {
+            projectFileMap.put(project.getLocation().toFile(), project);
+        }
+        for (IProject project : projects) {
+            File projectFile = project.getLocation().toFile();
+            IProject physicalParentProject = projectFileMap.get(projectFile.getParentFile());
+            if (physicalParentProject == null) {
+                continue;
+            }
+            IFolder folder = physicalParentProject.getFolder(projectFile.getName());
+            if (folder.exists()) {
+                try {
+                    folder.setHidden(true);
+                } catch (Exception ex) {
+                    // log.error("Failed to hide resource; " + resource.getLocation().toOSString(), ex);
+                    ExceptionHandler.process(ex);
                 }
             }
         }

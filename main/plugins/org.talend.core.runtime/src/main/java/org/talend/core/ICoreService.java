@@ -124,5 +124,7 @@ public interface ICoreService extends IService {
     public IMetadataTable convert(MetadataTable originalTable);
     
     public void syncMappingsFileFromSystemToProject();
+    
+    public void initMavenCodeProjects();
 
 }

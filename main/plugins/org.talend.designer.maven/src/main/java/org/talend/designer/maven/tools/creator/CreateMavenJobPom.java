@@ -457,7 +457,8 @@ public class CreateMavenJobPom extends AbstractMavenProcessorPom {
 
         // generate routines
         MavenPomSynchronizer pomSync = new MavenPomSynchronizer(this.getJobProcessor());
-        pomSync.setArgumentsMap(getArgumentsMap());
+        // TODO change needSyncCodePoms, check CRC of routine & sub jobs folders: FilesUtils.getChecksumAlder32()
+        // if changed, then do sync and install.
         if (needSyncCodesPoms()) {
             // only sync pom for main job
             pomSync.syncCodesPoms(monitor, getJobProcessor(), true);

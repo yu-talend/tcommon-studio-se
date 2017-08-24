@@ -29,13 +29,14 @@ import org.talend.designer.maven.tools.creator.CreateMavenCodeProject;
  */
 public final class TalendCodeProjectUtil {
 
+    // TODO remove
     public static IProject initCodeProject(IProgressMonitor monitor) throws Exception {
         IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 
         IProject codeProject = root.getProject(TalendMavenConstants.PROJECT_NAME);
 
         if (!codeProject.exists() || needRecreate(monitor, codeProject)) {
-            // if existed, must delete it first, else when do CreateMavenCodeProject will cause problem.
+            // if existed, must delete it first, else when do CreateMavenCodeProject will cause problem. for .metadata
             if (codeProject.exists()) {
                 if (codeProject.isOpen()) {
                     codeProject.close(monitor);
@@ -58,7 +59,7 @@ public final class TalendCodeProjectUtil {
     }
 
     @SuppressWarnings("restriction")
-    private static boolean needRecreate(IProgressMonitor monitor, IProject codeProject) throws CoreException {
+    public static boolean needRecreate(IProgressMonitor monitor, IProject codeProject) throws CoreException {
         if (codeProject.exists()) { // exist the project for workspace metadata.
 
             // If the project is not existed physically (in disk). sometime, because delete it manually. Then finally,

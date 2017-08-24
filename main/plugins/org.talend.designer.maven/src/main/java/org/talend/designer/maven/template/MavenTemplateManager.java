@@ -20,8 +20,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -29,9 +31,10 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.utils.generation.JavaUtils;
@@ -357,5 +360,35 @@ public class MavenTemplateManager {
             ExceptionHandler.process(e);
         }
         return defaultModel; // if error, try to use default model
+    }
+
+    public static Model getAggregatorFolderTemplateModel(IFile pomFile, String groupId, String artifactId, String projectTechName)
+            throws Exception {
+        Model model = new Model();
+        model.setGroupId(groupId);
+        model.setArtifactId(artifactId);
+        model.setVersion(PomIdsHelper.getProjectVersion());
+        model.setPackaging(TalendMavenConstants.PACKAGING_POM);
+        model.setName(projectTechName + " " + artifactId); //$NON-NLS-1$
+        updateAggregatorPomModules(model, pomFile, false);
+        
+        return model;
+    }
+    
+    public static void updateAggregatorPomModules(Model model, IFile pomFile, boolean save) throws Exception {
+        List<String> modules = new ArrayList<>();
+        IResource[] members = pomFile.getParent().members();
+        for (IResource member : members) {
+            if (member instanceof IFolder) {
+                IFile modulePom = ((IFolder) member).getFile(TalendMavenConstants.POM_FILE_NAME);
+                if (modulePom.exists()) {
+                    modules.add(member.getName() + "/" + modulePom.getName()); //$NON-NLS-1$
+                }
+            }
+        }
+        model.setModules(modules);
+        if (save) {
+            PomUtil.savePom(null, model, pomFile);
+        }
     }
 }

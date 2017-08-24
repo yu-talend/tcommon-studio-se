@@ -15,7 +15,6 @@ package org.talend.designer.maven.tools;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,30 +25,32 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
-import org.talend.commons.exception.ExceptionHandler;
+import org.talend.commons.utils.generation.JavaUtils;
 import org.talend.core.GlobalServiceRegister;
-import org.talend.core.model.general.ILibrariesService;
 import org.talend.core.model.process.IProcess;
 import org.talend.core.model.process.ProcessUtils;
-import org.talend.core.model.properties.Item;
-import org.talend.core.model.properties.Project;
 import org.talend.core.model.properties.Property;
+import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.runtime.process.ITalendProcessJavaProject;
-import org.talend.core.runtime.process.TalendProcessArgumentConstant;
 import org.talend.core.runtime.projectsetting.IProjectSettingPreferenceConstants;
 import org.talend.core.runtime.projectsetting.IProjectSettingTemplateConstants;
+import org.talend.designer.maven.launch.MavenPomCommandLauncher;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.template.MavenTemplateManager;
 import org.talend.designer.maven.tools.creator.CreateMavenBeanPom;
-import org.talend.designer.maven.tools.creator.CreateMavenBundleTemplatePom;
 import org.talend.designer.maven.tools.creator.CreateMavenPigUDFPom;
 import org.talend.designer.maven.tools.creator.CreateMavenRoutinePom;
 import org.talend.designer.maven.utils.PomUtil;
 import org.talend.designer.runprocess.IProcessor;
-import org.talend.repository.ProjectManager;
+import org.talend.designer.runprocess.IRunProcessService;
 import org.talend.utils.io.FilesUtils;
 
 /**
@@ -59,60 +60,58 @@ import org.talend.utils.io.FilesUtils;
 public class MavenPomSynchronizer {
 
     private final ITalendProcessJavaProject codeProject;
-
-    private final IProcessor processor;
-
-    private Map<String, Object> argumentsMap = new HashMap<String, Object>();
-
+    
+    private IRunProcessService runProcessService;
+    
     public MavenPomSynchronizer(IProcessor processor) {
-        super();
-        this.processor = processor;
-        this.codeProject = this.processor.getTalendJavaProject();
+        this(processor.getTalendJavaProject());
     }
 
     public MavenPomSynchronizer(ITalendProcessJavaProject codeProject) {
         super();
-        this.processor = null;
         this.codeProject = codeProject;
+        if (GlobalServiceRegister.getDefault().isServiceRegistered(IRunProcessService.class)) {
+            runProcessService = (IRunProcessService) GlobalServiceRegister.getDefault().getService(IRunProcessService.class);
+        }
     }
 
     /**
      * generate routine pom.
      */
-    public void syncRoutinesPom(IProcessor processor,boolean overwrite) throws Exception {
-        // pom_routines.xml
-        IFile routinesPomFile = codeProject.getProject().getFile(
-                PomUtil.getPomFileName(TalendMavenConstants.DEFAULT_ROUTINES_ARTIFACT_ID));
+    public void syncRoutinesPom(Property property, boolean overwrite) throws Exception {
+        IFile routinesPomFile = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.ROUTINES).getProjectPom();
         // generate new one
         CreateMavenRoutinePom createTemplatePom = new CreateMavenRoutinePom(routinesPomFile);
-        createTemplatePom.setProcessor(processor);
-        createTemplatePom.setArgumentsMap(getArgumentsMap());
+        createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
+        if (true) { //TODO check file changes
+            new MavenPomCommandLauncher(routinesPomFile, TalendMavenConstants.GOAL_INSTALL).execute(new NullProgressMonitor());
+        }
     }
 
-    public void syncBeansPom(IProcessor processor,boolean overwrite) throws Exception {
-        // pom_beans.xml
-        IFile beansPomFile = codeProject.getProject().getFile(
-                PomUtil.getPomFileName(TalendMavenConstants.DEFAULT_BEANS_ARTIFACT_ID));
+    public void syncBeansPom(Property property, boolean overwrite) throws Exception {
+        IFile beansPomFile = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.valueOf("BEANS")).getProjectPom(); //$NON-NLS-1$
         // generate new one
         CreateMavenBeanPom createTemplatePom = new CreateMavenBeanPom(beansPomFile);
-        createTemplatePom.setProcessor(processor);
-        createTemplatePom.setArgumentsMap(getArgumentsMap());
+        createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
+        if (true) { //TODO check file changes
+            new MavenPomCommandLauncher(beansPomFile, TalendMavenConstants.GOAL_INSTALL).execute(new NullProgressMonitor());
+        }
     }
 
-    public void syncPigUDFsPom(IProcessor processor,boolean overwrite) throws Exception {
-        // pom_pigudfs.xml
-        IFile beansPomFile = codeProject.getProject().getFile(
-                PomUtil.getPomFileName(TalendMavenConstants.DEFAULT_PIGUDFS_ARTIFACT_ID));
+    public void syncPigUDFsPom(Property property, boolean overwrite) throws Exception {
+        IFile pigudfPomFile = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.PIG_UDF).getProjectPom();
         // generate new one
-        CreateMavenPigUDFPom createTemplatePom = new CreateMavenPigUDFPom(beansPomFile);
-        createTemplatePom.setProcessor(processor);
-        createTemplatePom.setArgumentsMap(getArgumentsMap());
+        CreateMavenPigUDFPom createTemplatePom = new CreateMavenPigUDFPom(pigudfPomFile);
+        createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
+        if (true) { //TODO check file changes
+            new MavenPomCommandLauncher(pigudfPomFile, TalendMavenConstants.GOAL_INSTALL).execute(new NullProgressMonitor());
+        }
     }
 
 
@@ -128,7 +127,7 @@ public class MavenPomSynchronizer {
         IFile batFile = templateFolder.getFile(IProjectSettingTemplateConstants.JOB_RUN_BAT_TEMPLATE_FILE_NAME);
         IFile infoFile = templateFolder.getFile(IProjectSettingTemplateConstants.JOB_INFO_TEMPLATE_FILE_NAME);
 
-        final Map<String, Object> templateParameters = PomUtil.getTemplateParameters(processor);
+        final Map<String, Object> templateParameters = PomUtil.getTemplateParameters(codeProject.getPropery());
         String shContent = MavenTemplateManager.getProjectSettingValue(IProjectSettingPreferenceConstants.TEMPLATE_SH,
                 templateParameters);
         String batContent = MavenTemplateManager.getProjectSettingValue(IProjectSettingPreferenceConstants.TEMPLATE_BAT,
@@ -195,18 +194,39 @@ public class MavenPomSynchronizer {
      * another cleaning up for sources codes or such in @see DeleteAllJobWhenStartUp.
      */
     public void cleanMavenFiles(IProgressMonitor monitor) throws Exception {
+        IJavaProject jProject = codeProject.getJavaProject();
+        if (!jProject.isOpen()) {
+            jProject.open(monitor);
+        }
+        // TODO should remove .classpath and .project?
 
-        // remove all job poms
-        FilenameFilter filter = new FilenameFilter() {
+        // empty the src/main/java...
+        IFolder srcFolder = codeProject.getSrcFolder();
+        codeProject.cleanFolder(monitor, srcFolder);
+        // contexts
+        IFolder resourcesFolder = codeProject.getResourcesFolder();
+        emptyContexts(monitor, resourcesFolder, codeProject);
 
-            @Override
-            public boolean accept(File dir, String name) {
-                // pom_xxx.xml
-                return name.startsWith(TalendMavenConstants.POM_NAME + '_') && name.endsWith(TalendMavenConstants.XML_EXT);
-            }
-        };
-        cleanupContainer(codeProject.getProject(), filter);
+        // empty the outputs, target
+        IFolder targetFolder = codeProject.getTargetFolder();
+        codeProject.cleanFolder(monitor, targetFolder);
 
+        // empty the src/test/java
+        IFolder testSrcFolder = codeProject.getTestSrcFolder();
+        codeProject.cleanFolder(monitor, testSrcFolder);
+
+        // empty the src/test/java (main for contexts)
+        IFolder testResourcesFolder = codeProject.getTestResourcesFolder();
+        codeProject.cleanFolder(monitor, testResourcesFolder);
+
+        // rules
+        IFolder rulesResFolder = codeProject.getResourceSubFolder(monitor, JavaUtils.JAVA_RULES_DIRECTORY);
+        codeProject.cleanFolder(monitor, rulesResFolder);
+
+        // sqltemplate
+        IFolder sqlTemplateResFolder = codeProject.getResourceSubFolder(monitor, JavaUtils.JAVA_SQLPATTERNS_DIRECTORY);
+        codeProject.cleanFolder(monitor, sqlTemplateResFolder);
+        
         // clean all assemblies in src/main/assemblies
         fullCleanupContainer(codeProject.getAssembliesFolder());
 
@@ -217,33 +237,7 @@ public class MavenPomSynchronizer {
         fullCleanupContainer(codeProject.getTestsFolder());
 
         codeProject.getProject().refreshLocal(IResource.DEPTH_ONE, monitor);
-        
-        // when clean, regenerate it.
-        updateCodesPomWithProject(monitor);
 
-        // try to compile it.
-        final Map<String, Object> argumentsMap = new HashMap<String, Object>();
-        argumentsMap.put(TalendProcessArgumentConstant.ARG_GOAL, TalendMavenConstants.GOAL_COMPILE);
-        codeProject.buildModules(monitor, null, argumentsMap);
-
-        //
-        if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibrariesService.class)) {
-            ILibrariesService libService = (ILibrariesService) GlobalServiceRegister.getDefault().getService(
-                    ILibrariesService.class);
-            libService.addChangeLibrariesListener(new ILibrariesService.IChangedLibrariesListener() {
-
-                @Override
-                public void afterChangingLibraries() {
-                    try {
-                        // update the dependencies
-                        updateCodesPomWithProject(null);
-                    } catch (Exception e) {
-                        ExceptionHandler.process(e);
-                    }
-                }
-            });
-
-        }
     }
 
     private void fullCleanupContainer(IContainer container) {
@@ -273,34 +267,70 @@ public class MavenPomSynchronizer {
 
     public void syncCodesPoms(IProgressMonitor monitor, IProcessor processor, boolean overwrite) throws Exception {
         final IProcess process =processor!=null? processor.getProcess():null;
-        
-        syncRoutinesPom(processor,overwrite);
+        //TODO NPE doing cleanMavenFiles
+        syncRoutinesPom(processor.getProperty(), overwrite);
         // PigUDFs
         if (ProcessUtils.isRequiredPigUDFs(process)) {
-            syncPigUDFsPom(processor,overwrite);
+            syncPigUDFsPom(processor.getProperty(), overwrite);
         }
         // Beans
         if (ProcessUtils.isRequiredBeans(process)) {
-            syncBeansPom(processor,overwrite);
+            syncBeansPom(processor.getProperty(), overwrite);
         }
     }
 
+    private static void emptyContexts(IProgressMonitor monitor, IContainer baseContainer,
+            ITalendProcessJavaProject talendJavaProject) throws CoreException {
+        IPath location = baseContainer.getLocation();
+        File[] listFiles = location.toFile().listFiles();
+        if (listFiles != null) { // for each project sub folder
+            for (File child : listFiles) {
+                File testContextFile = findTestContextFile(child);
+                if (testContextFile != null) {
+                    IPath testContextPath = new Path(testContextFile.toString());
+                    IPath testRelativePath = testContextPath.makeRelativeTo(location);
+                    String projectSegment = testRelativePath.segment(0);
+                    IFolder folder = baseContainer.getFolder(new Path(projectSegment));
+                    talendJavaProject.cleanFolder(monitor, folder);
+                    if (folder.exists()) { // also delete it
+                        folder.delete(true, monitor);
+                    }
+                }
+            }
+        }
+    }
+
+    private static File findTestContextFile(File file) {
+        if (file != null) {
+            if (file.getName().endsWith(JavaUtils.JAVA_CONTEXT_EXTENSION)
+                    && file.getParentFile().getName().equals(JavaUtils.JAVA_CONTEXTS_DIRECTORY)) {
+                return file;
+            }
+            if (file.isDirectory()) {
+                File[] listFiles = file.listFiles();
+                if (listFiles != null) {
+                    for (File f : listFiles) {
+                        File contextFile = findTestContextFile(f);
+                        if (contextFile != null) {
+                            return contextFile;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    //TODO to remove
     private void updateCodesPomWithProject(IProgressMonitor monitor) throws Exception {
-        syncCodesPoms(monitor,null,  true);
+        syncCodesPoms(monitor, null, true);
         // finally, update project
-        regenerateMainProjectPom(monitor, processor);
+        regenerateMainProjectPom(monitor, null);
     }
 
     public void regenerateMainProjectPom(IProgressMonitor monitor, IProcessor processor) throws Exception {
-        ProjectPomManager projectManager = new ProjectPomManager(codeProject.getProject());
-        projectManager.update(monitor, processor);
+        // ProjectPomManager projectManager = new ProjectPomManager(codeProject.getProject());
+        // projectManager.update(monitor, processor);
     }
 
-    public Map<String, Object> getArgumentsMap() {
-        return argumentsMap;
-    }
-
-    public void setArgumentsMap(Map<String, Object> argumentsMap) {
-        this.argumentsMap = argumentsMap;
-    }
 }

@@ -202,6 +202,13 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
         }
         return null;
     }
+    
+    private IRunProcessService getRunProcessService() {
+        if (GlobalServiceRegister.getDefault().isServiceRegistered(IRunProcessService.class)) {
+            return (IRunProcessService) GlobalServiceRegister.getDefault().getService(IRunProcessService.class);
+        }
+        return null;
+    }
 
     /*
      * (non-Javadoc)
@@ -1943,8 +1950,8 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                         newVersion = specifiedVersion;
                     }
                     JavaUtils.updateProjectJavaVersion(newVersion);
-
-                    coreService.deleteAllJobs(false);
+                    
+                    // coreService.deleteAllJobs(false);
                     TimeMeasure.step("logOnProject", "clean Java project"); //$NON-NLS-1$ //$NON-NLS-2$     
 
                     if (workspace instanceof Workspace) {
@@ -1959,6 +1966,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                     if (CommonsPlugin.isHeadless()) {
                         deleteAllRoutinesAndBeans();
                     }
+                    getRunProcessService().initMavenJavaProject(project);
                     try {
                         coreService.syncAllRoutines();
                         // PTODO need refactor later, this is not good, I think
@@ -2025,6 +2033,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                 root.dispose();
             }
         }
+        getRunProcessService().deleteEclipseProjects();
         fullLogonFinished = false;
     }
 

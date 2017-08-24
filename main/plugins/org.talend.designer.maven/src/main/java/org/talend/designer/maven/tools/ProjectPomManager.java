@@ -13,7 +13,6 @@
 package org.talend.designer.maven.tools;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +28,6 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
 import org.talend.core.model.process.JobInfo;
-import org.talend.core.runtime.process.TalendProcessArgumentConstant;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.template.MavenTemplateManager;
 import org.talend.designer.maven.utils.PomIdsHelper;
@@ -52,8 +50,6 @@ public class ProjectPomManager {
     private boolean updateModules = true;
 
     private boolean updateDependencies = true;
-
-    private Map<String, Object> argumentsMap = new HashMap<String, Object>();
 
     public ProjectPomManager(IProject project) {
         super();
@@ -88,11 +84,11 @@ public class ProjectPomManager {
         Model projectModel = MODEL_MANAGER.readMavenModel(projectPomFile);
 
         // attributes
-        updateAttributes(monitor, processor, projectModel);
+        // updateAttributes(monitor, processor, projectModel);
         // modules
-        updateModulesList(monitor, processor, projectModel);
+        // updateModulesList(monitor, processor, projectModel);
         // dependencies
-        updateDependencies(monitor, processor, projectModel);
+        // updateDependencies(monitor, processor, projectModel);
 
         PomUtil.savePom(monitor, projectModel, projectPomFile);
     }
@@ -123,12 +119,6 @@ public class ProjectPomManager {
     protected void updateAttributes(IProgressMonitor monitor, IProcessor processor, Model projectModel) throws Exception {
         final Map<String, Object> templateParameters = PomUtil.getTemplateParameters(processor);
         Model templateModel = MavenTemplateManager.getCodeProjectTemplateModel(templateParameters);
-
-        String deployVersion = (String) argumentsMap.get(TalendProcessArgumentConstant.ARG_DEPLOY_VERSION);
-        if (deployVersion != null) {
-            templateModel.setVersion(deployVersion);
-        }
-
         projectModel.setGroupId(templateModel.getGroupId());
         projectModel.setArtifactId(templateModel.getArtifactId());
         projectModel.setVersion(templateModel.getVersion());
@@ -141,6 +131,7 @@ public class ProjectPomManager {
      * update the modules list for project pom.
      * 
      * The routines should be added always.
+     * TODO remove
      */
     protected void updateModulesList(IProgressMonitor monitor, IProcessor processor, Model projectModel) throws Exception {
         if (!isUpdateModules()) {
@@ -190,8 +181,7 @@ public class ProjectPomManager {
                         continue; // not same
                     }
 
-                    PomUtil.checkParent(model, file, processor,
-                            (String) argumentsMap.get(TalendProcessArgumentConstant.ARG_DEPLOY_VERSION));
+                    PomUtil.checkParent(model, file, processor.getProperty());
                     PomUtil.savePom(monitor, model, file);
                 }
             }
@@ -200,6 +190,7 @@ public class ProjectPomManager {
 
     /**
      * If standard job and base job pom file existed, will use the dependences of job pom directly.
+     * TODO remove
      */
     protected void updateDependencies(IProgressMonitor monitor, IProcessor processor, Model projectModel) throws Exception {
         if (!isUpdateDependencies()) {
@@ -247,7 +238,7 @@ public class ProjectPomManager {
     }
 
     public void setArgumentsMap(Map<String, Object> argumentsMap) {
-        this.argumentsMap = argumentsMap;
+        //TODO to remove
     }
 
 }

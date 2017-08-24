@@ -46,6 +46,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMaven;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
@@ -174,7 +175,7 @@ public class PomUtil {
      * @param curModel
      * @param curPomFile
      */
-    public static void checkParent(Model curModel, IFile curPomFile, IProcessor processor, String specialVersion) {
+    public static void checkParent(Model curModel, IFile curPomFile, Property property) {
         Parent parent = curModel.getParent();
         if (parent == null) {
             parent = new Parent();
@@ -182,19 +183,24 @@ public class PomUtil {
         } else {
             // TODO, if existed, maybe just replace, not overwrite
         }
-        final Map<String, Object> templateParameters = PomUtil.getTemplateParameters(processor);
+        final Map<String, Object> templateParameters = PomUtil.getTemplateParameters(property);
         Model codeProjectTemplateModel = MavenTemplateManager.getCodeProjectTemplateModel(templateParameters);
-
-        if (specialVersion != null) {
-            codeProjectTemplateModel.setVersion(specialVersion);
-        }
 
         parent.setGroupId(codeProjectTemplateModel.getGroupId());
         parent.setArtifactId(codeProjectTemplateModel.getArtifactId());
         parent.setVersion(codeProjectTemplateModel.getVersion());
+        String relativePath = getPomRelativePath(curPomFile.getParent(), "poms"); //$NON-NLS-1$
+        parent.setRelativePath(relativePath);
 
-        parent.setRelativePath("./" + TalendMavenConstants.POM_FILE_NAME);
+    }
 
+    public static String getPomRelativePath(IContainer container, String baseFolder) {
+        String path = "../"; //$NON-NLS-1$
+        // TODO should not allow user-defined folder named poms.
+        if (container != null && !container.getName().equals(baseFolder)) {
+            path += getPomRelativePath(container.getParent(), baseFolder);
+        }
+        return path;
     }
 
     /**
@@ -668,5 +674,39 @@ public class PomUtil {
             jobVersion = "${project.version}";
         }
         return jobVersion;
+    }
+
+    public static void addToParentModules(IFile pomFile) throws Exception {
+        IContainer container = pomFile.getParent().getParent();
+        if (container instanceof IFolder) {
+            IFolder folder = (IFolder) container;
+            IFile parentPom = folder.getFile(TalendMavenConstants.POM_FILE_NAME);
+            IPath relativePath = pomFile.getFullPath().makeRelativeTo(folder.getFullPath());
+            Model model = MODEL_MANAGER.readMavenModel(parentPom);
+            List<String> modules = model.getModules();
+            if (modules == null) {
+                modules = new ArrayList<>();
+                model.setModules(modules);
+            }
+            if (!modules.contains(relativePath)) {
+                modules.add(relativePath.toPortableString());
+                savePom(null, model, parentPom);
+            }
+        }
+    }
+
+    public static void removeFromParentModules(IFile pomFile) throws Exception {
+        IContainer container = pomFile.getParent().getParent();
+        if (container instanceof IFolder) {
+            IFolder folder = (IFolder) container;
+            IFile parentPom = folder.getFile(TalendMavenConstants.POM_FILE_NAME);
+            IPath relativePath = pomFile.getFullPath().makeRelativeTo(folder.getFullPath());
+            Model model = MODEL_MANAGER.readMavenModel(parentPom);
+            List<String> modules = model.getModules();
+            if (modules != null && !modules.contains(relativePath)) {
+                modules.remove(relativePath);
+                savePom(null, model, pomFile);
+            }
+        }
     }
 }
