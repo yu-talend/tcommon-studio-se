@@ -120,9 +120,4 @@ public interface ILibrariesService extends IService {
         public void afterChangingLibraries();
     }
 
-    public void setCustomMavenURI(String orignalURI, String customURI);
-
-    public String getCustomMavenURI(String orignalURI);
-
-    public void saveCustomMavenURIMap();
 }

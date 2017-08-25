@@ -259,34 +259,4 @@ public class LibrariesService implements ILibrariesService {
         getLibrariesService().deployLibrary(source, mavenUri);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.talend.core.model.general.ILibrariesService#setCustomMavenURI(java.lang.String, java.lang.String)
-     */
-    @Override
-    public void setCustomMavenURI(String orignalURI, String customURI) {
-        getLibrariesService().setCustomMavenURI(orignalURI, customURI);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.talend.core.model.general.ILibrariesService#getCustomMavenURI(java.lang.String)
-     */
-    @Override
-    public String getCustomMavenURI(String orignalURI) {
-        return getLibrariesService().getCustomMavenURI(orignalURI);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.talend.core.model.general.ILibrariesService#saveCustomMavenURIMap()
-     */
-    @Override
-    public void saveCustomMavenURIMap() {
-        getLibrariesService().saveCustomMavenURIMap();
-    }
-
 }

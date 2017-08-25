@@ -34,14 +34,14 @@ import org.talend.commons.ui.runtime.swt.tableviewer.TableViewerCreatorNotModifi
 import org.talend.commons.ui.runtime.swt.tableviewer.TableViewerCreatorNotModifiable.SORT;
 import org.talend.commons.ui.runtime.swt.tableviewer.behavior.CellEditorValueAdapter;
 import org.talend.commons.ui.runtime.swt.tableviewer.celleditor.CellEditorDialogBehavior;
-import org.talend.commons.ui.runtime.swt.tableviewer.celleditor.ExtendedTextCellEditor;
 import org.talend.commons.ui.swt.tableviewer.TableViewerCreator;
 import org.talend.commons.ui.swt.tableviewer.TableViewerCreatorColumn;
 import org.talend.commons.utils.data.bean.IBeanPropertyAccessors;
 import org.talend.core.GlobalServiceRegister;
-import org.talend.core.model.general.ILibrariesService;
+import org.talend.core.ILibraryManagerService;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.librariesmanager.model.ModulesNeededProvider;
+import org.talend.librariesmanager.ui.dialogs.CustomURITextCellEditor;
 import org.talend.librariesmanager.ui.dialogs.InstallModuleDialog;
 import org.talend.librariesmanager.ui.i18n.Messages;
 
@@ -174,7 +174,7 @@ public class ModulesViewComposite extends Composite {
                 if (bean.getCustomMavenUri() != null) {
                     mvnUri = bean.getCustomMavenUri();
                 } else {
-                    mvnUri = bean.getMavenUri(true);
+                    mvnUri = bean.getMavenUri();
                 }
                 return mvnUri;
             }
@@ -182,23 +182,21 @@ public class ModulesViewComposite extends Composite {
             @Override
             public void set(ModuleNeeded bean, String value) {
                 String originalValue = bean.getCustomMavenUri();
-                if (bean.getMavenUri(true).equals(value)) {
+                if (bean.getMavenUri().equals(value)) {
                     bean.setCustomMavenUri(null);
                 } else {
                     bean.setCustomMavenUri(value);
                 }
                 if (!StringUtils.equals(value, originalValue)) {
-                    if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibrariesService.class)) {
-                        ILibrariesService libService = (ILibrariesService) GlobalServiceRegister.getDefault().getService(
-                                ILibrariesService.class);
-                        libService.saveCustomMavenURIMap();
-                    }
+                    ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault()
+                            .getService(ILibraryManagerService.class);
+                    libManagerService.saveCustomMavenURIMap();
                     tableViewerCreator.getTableViewer().refresh();
                 }
             }
         });
         CellEditorDialogBehavior behavior = new CellEditorDialogBehavior();
-        final ExtendedTextCellEditor cellEditor = new ExtendedTextCellEditor(tableViewerCreator.getTable(), behavior);
+        final CustomURITextCellEditor cellEditor = new CustomURITextCellEditor(tableViewerCreator.getTable(), behavior);
         InstallModuleDialog dialog = new InstallModuleDialog(tableViewerCreator.getTable().getShell(), cellEditor);
         behavior.setCellEditorDialog(dialog);
         column.setCellEditor(cellEditor, new CellEditorValueAdapter() {

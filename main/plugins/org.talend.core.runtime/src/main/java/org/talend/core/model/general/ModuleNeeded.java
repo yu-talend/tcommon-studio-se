@@ -78,6 +78,9 @@ public class ModuleNeeded {
 
     public static final String QUOTATION_MARK = "\""; //$NON-NLS-1$
 
+    ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+            ILibraryManagerService.class);
+
     /**
      * DOC smallet ModuleNeeded class global comment. Detailled comment <br/>
      *
@@ -249,7 +252,10 @@ public class ModuleNeeded {
     }
 
     public ELibraryInstallStatus getStatus() {
-        String mvnUriStatusKey = getMavenUri(true);
+        String mvnUriStatusKey = getCustomMavenUri();
+        if (mvnUriStatusKey == null) {
+            mvnUriStatusKey = getMavenUri();
+        }
         final ELibraryInstallStatus eLibraryInstallStatus = ModuleStatusProvider.getStatusMap().get(mvnUriStatusKey);
         if (eLibraryInstallStatus != null) {
             return eLibraryInstallStatus;
@@ -271,7 +277,10 @@ public class ModuleNeeded {
     }
 
     public ELibraryInstallStatus getDeployStatus() {
-        String mvnUriStatusKey = getMavenUri(true);
+        String mvnUriStatusKey = getCustomMavenUri();
+        if (mvnUriStatusKey == null) {
+            mvnUriStatusKey = getMavenUri();
+        }
         final ELibraryInstallStatus eLibraryDeployStatus = ModuleStatusProvider.getDeployStatusMap().get(mvnUriStatusKey);
         if (eLibraryDeployStatus != null) {
             return eLibraryDeployStatus;
@@ -368,7 +377,10 @@ public class ModuleNeeded {
     }
 
     public String getModuleLocaion() {
-        return this.moduleLocaion;
+        if (this.moduleLocaion == null) {
+            moduleLocaion = libManagerService.getPlatformURLFromIndex(moduleName);
+        }
+        return moduleLocaion;
     }
 
     public void setModuleLocaion(String moduleLocaion) {
@@ -396,9 +408,7 @@ public class ModuleNeeded {
             hashCode *= this.getModuleLocaion().hashCode();
         }
 
-        hashCode *= new Boolean(this.isRequired()).hashCode();
-        hashCode *= new Boolean(this.isMrRequired()).hashCode();
-        hashCode *= this.getMavenUri(true).hashCode();
+        hashCode *= this.getMavenUri().hashCode();
 
         return hashCode;
     }
@@ -480,15 +490,9 @@ public class ModuleNeeded {
                 return false;
             }
         }
-        if (other.isRequired() != this.isRequired()) {
-            return false;
-        }
 
-        if (other.isMrRequired() != this.isMrRequired()) {
-            return false;
-        }
         // maven uri
-        if (!other.getMavenUri(true).equals(this.getMavenUri(true))) {
+        if (!other.getMavenUri().equals(this.getMavenUri())) {
             return false;
         }
 
@@ -499,8 +503,6 @@ public class ModuleNeeded {
     public String getMavenUri(boolean autoGenerate) {
         if (autoGenerate && (mavenUri == null || "".equals(mavenUri))) { //$NON-NLS-1$
             // get the latest snapshot maven uri from index as default
-            ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
-                    ILibraryManagerService.class);
             String mvnUrisFromIndex = libManagerService.getMavenUriFromIndex(getModuleName());
             if (mvnUrisFromIndex != null) {
                 final String[] split = mvnUrisFromIndex.split(MavenUrlHelper.MVN_INDEX_SPLITER);
@@ -541,7 +543,7 @@ public class ModuleNeeded {
      * @return the mavenUriSnapshot
      */
     public String getMavenUri() {
-        return getMavenUri(false);
+        return getMavenUri(true);
     }
 
     /**
@@ -582,21 +584,12 @@ public class ModuleNeeded {
     }
 
     public String getCustomMavenUri() {
-        if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibrariesService.class)) {
-            ILibrariesService libService = (ILibrariesService) GlobalServiceRegister.getDefault().getService(
-                    ILibrariesService.class);
-            String originalURI = getMavenUri(true);
-            return libService.getCustomMavenURI(originalURI);
-        }
-        return null;
+        String originalURI = getMavenUri();
+        return libManagerService.getCustomMavenURI(originalURI);
     }
 
     public void setCustomMavenUri(String customURI) {
-        if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibrariesService.class)) {
-            ILibrariesService libService = (ILibrariesService) GlobalServiceRegister.getDefault().getService(
-                    ILibrariesService.class);
-            libService.setCustomMavenURI(getMavenUri(true), customURI);
-        }
+        libManagerService.setCustomMavenURI(getMavenUri(), customURI);
     }
 
 }

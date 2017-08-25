@@ -1120,9 +1120,6 @@ public class RepositoryToComponentProperty {
                                 value2.add(line);
                             }
                         }
-                        if (deployed) {
-                            CoreRuntimePlugin.getInstance().getLibrariesService().resetModulesNeeded();
-                        }
                     }
 
                 } catch (Exception e) {

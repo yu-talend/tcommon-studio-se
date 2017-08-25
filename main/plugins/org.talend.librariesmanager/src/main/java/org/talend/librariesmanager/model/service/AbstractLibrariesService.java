@@ -71,8 +71,8 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
 
     private final List<IChangedLibrariesListener> listeners = new ArrayList<IChangedLibrariesListener>();
 
-    private ILibraryManagerService repositoryBundleService = (ILibraryManagerService) GlobalServiceRegister.getDefault()
-            .getService(ILibraryManagerService.class);
+    private ILibraryManagerService localLibraryManager = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+            ILibraryManagerService.class);
 
     // protected String LIBS = "libs";
 
@@ -103,28 +103,23 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
     }
 
     @Override
-    public void deployLibrary(URL source, boolean reset) throws IOException {
-        deployLibrary(source, null, reset);
+    public void deployLibrary(URL source, boolean refresh) throws IOException {
+        deployLibrary(source, null, refresh);
     }
 
-    private void deployLibrary(URL source, String mavenUri, boolean reset) throws IOException {
-
-        // fix for bug 0020953
-        // if jdk is not 1.5, need decode %20 for space.
-
+    private void deployLibrary(URL source, String mavenUri, boolean refresh) throws IOException {
         String decode = null;
         if (source.getFile().contains("%20")) {
             decode = URLDecoder.decode(source.getFile(), "UTF-8");
         } else {
             decode = source.getFile();
         }
-
         final File sourceFile = new File(decode);
         final File targetFile = new File(LibrariesManagerUtils.getLibrariesPath(ECodeLanguage.JAVA) + File.separatorChar
                 + sourceFile.getName());
 
-        if (!repositoryBundleService.contains(source.getFile())) {
-            repositoryBundleService.deploy(sourceFile.toURI(), mavenUri);
+        if (!localLibraryManager.contains(source.getFile())) {
+            localLibraryManager.deploy(sourceFile.toURI(), mavenUri);
             if (PluginChecker.isSVNProviderPluginLoaded()) {
                 ISVNProviderServiceInCoreRuntime svnService = (ISVNProviderServiceInCoreRuntime) GlobalServiceRegister
                         .getDefault().getService(ISVNProviderServiceInCoreRuntime.class);
@@ -135,7 +130,9 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
         }
 
         ModulesNeededProvider.userAddImportModules(targetFile.getPath(), sourceFile.getName(), ELibraryInstallStatus.INSTALLED);
-        resetAndRefreshLocal(new String[] { sourceFile.getName() }, reset);
+        if (refresh) {
+            resetAndRefreshLocal(new String[] { sourceFile.getName() });
+        }
 
     }
 
@@ -147,7 +144,7 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
             namse[i] = new File(url.toString()).getName();
             deployLibrary(url, false);
         }
-        resetAndRefreshLocal(namse, true);
+        resetAndRefreshLocal(namse);
     }
 
     private RepositoryContext getRepositoryContext() {
@@ -155,10 +152,8 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
         return (RepositoryContext) ctx.getProperty(Context.REPOSITORY_CONTEXT_KEY);
     }
 
-    private void resetAndRefreshLocal(final String names[], boolean reset) {
-        if (reset) {
-            resetModulesNeeded();
-        }
+    private void resetAndRefreshLocal(final String names[]) {
+        refreshModulesNeeded();
 
         // for feature 12877
         Project currentProject = ProjectManager.getInstance().getCurrentProject();
@@ -167,7 +162,7 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
         // synchronize .Java project for all new jars.
         try {
             for (String name : names) {
-                String jarPath = repositoryBundleService.getJarPath(name);
+                String jarPath = localLibraryManager.getJarPath(name);
                 if (jarPath != null) {
                     File source = new File(jarPath);
                     if (source.exists()) {

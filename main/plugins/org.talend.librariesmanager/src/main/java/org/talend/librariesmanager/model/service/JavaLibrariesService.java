@@ -221,7 +221,7 @@ public class JavaLibrariesService extends AbstractLibrariesService {
         // if clean the component cache, it will automatically recheck all libs still.
         if (!repositoryBundleService.isInitialized()) {
             // 2. Components libraries and libraries from extension
-            repositoryBundleService.deployComponentAndExtensionLibs(monitorWrap);
+            repositoryBundleService.createModulesIndexFromComponentAndExtension(monitorWrap);
             repositoryBundleService.setInitialized();
         }
 
@@ -279,36 +279,6 @@ public class JavaLibrariesService extends AbstractLibrariesService {
         // File libsTargetFile = new File(path);
         // repositoryBundleService.deploy(libsTargetFile.toURI(), monitorWrap);
         // }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.talend.core.model.general.ILibrariesService#setCustomMavenURI(java.lang.String, java.lang.String)
-     */
-    @Override
-    public void setCustomMavenURI(String orignalURI, String customURI) {
-        CustomUriManager.getInstance().put(orignalURI, customURI);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.talend.core.model.general.ILibrariesService#getCustomMavenURI(java.lang.String)
-     */
-    @Override
-    public String getCustomMavenURI(String orignalURI) {
-        return CustomUriManager.getInstance().get(orignalURI);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.talend.core.model.general.ILibrariesService#saveCustomMavenURIMap()
-     */
-    @Override
-    public void saveCustomMavenURIMap() {
-        CustomUriManager.getInstance().saveCustomURIMap();
     }
 
 }

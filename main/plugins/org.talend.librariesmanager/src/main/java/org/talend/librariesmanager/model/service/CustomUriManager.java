@@ -127,7 +127,11 @@ public class CustomUriManager {
     }
 
     public void put(String key, String value) {
-        customURIMap.getUriMap().put(key, value);
+        if (value != null) {
+            customURIMap.getUriMap().put(key, value);
+        } else {
+            customURIMap.getUriMap().remove(key);
+        }
     }
 
     public String get(String key) {

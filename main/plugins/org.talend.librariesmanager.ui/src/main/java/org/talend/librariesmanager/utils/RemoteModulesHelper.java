@@ -595,7 +595,7 @@ public class RemoteModulesHelper {
         final Iterator<ModuleNeeded> iterator = neededModules.iterator();
         while (iterator.hasNext()) {
             ModuleNeeded module = iterator.next();
-            String mvnUri = module.getMavenUri();
+            String mvnUri = module.getMavenUri(false);
             if (mvnUri == null) {
                 Set<String> urisFromIndex = new HashSet<String>();
                 ILibraryManagerService librairesManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault()

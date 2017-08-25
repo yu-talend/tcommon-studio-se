@@ -58,7 +58,6 @@ import org.talend.core.model.components.ComponentManager;
 import org.talend.core.model.components.IComponent;
 import org.talend.core.model.components.IComponentsFactory;
 import org.talend.core.model.components.IComponentsService;
-import org.talend.core.model.general.ILibrariesService;
 import org.talend.core.model.general.LibraryInfo;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
@@ -629,8 +628,8 @@ public class ModulesNeededProvider {
         return new ArrayList<ModuleNeeded>(importNeedsList);
     }
 
-    private static List<ModuleNeeded> createModuleNeededFromRoutine(RoutineItem routine) {
-        List<ModuleNeeded> importNeedsList = new ArrayList<ModuleNeeded>();
+    private static Set<ModuleNeeded> createModuleNeededFromRoutine(RoutineItem routine) {
+        Set<ModuleNeeded> importNeedsList = new HashSet<ModuleNeeded>();
         if (routine != null) {
             EList imports = routine.getImports();
             for (Object o : imports) {
@@ -930,19 +929,10 @@ public class ModulesNeededProvider {
         return codesModules;
     }
 
-    private static List<ILibrariesService.IChangedLibrariesListener> changedLibrariesListeners = new ArrayList<ILibrariesService.IChangedLibrariesListener>();
-
-    public static boolean addChangedLibrariesListener(ILibrariesService.IChangedLibrariesListener listener) {
-        return changedLibrariesListeners.add(listener);
+    public static Set<ModuleNeeded> updateModulesNeededForRoutine(RoutineItem routineItem) {
+        Set<ModuleNeeded> modulesNeeded = createModuleNeededFromRoutine(routineItem);
+        componentImportNeedsList.addAll(modulesNeeded);
+        return modulesNeeded;
     }
 
-    public static boolean removeChangedLibrariesListener(ILibrariesService.IChangedLibrariesListener listener) {
-        return changedLibrariesListeners.remove(listener);
-    }
-
-    public static void fireChangedLibrariesListener() {
-        for (ILibrariesService.IChangedLibrariesListener listener : changedLibrariesListeners) {
-            listener.afterChangingLibraries();
-        }
-    }
 }

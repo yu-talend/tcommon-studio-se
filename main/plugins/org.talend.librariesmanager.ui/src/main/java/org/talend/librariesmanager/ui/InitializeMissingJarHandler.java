@@ -148,7 +148,7 @@ public class InitializeMissingJarHandler implements IStartup, Observer {
                                 if ("file".equals(url.getProtocol())) { //$NON-NLS-1$
                                     // TUP-4968 using 'URIUtil.toURI(url)' supports a path with special chars(like
                                     // as space).
-                                    libraryManagerService.deploy(URIUtil.toURI(url), module.getMavenUri(true));
+                                    libraryManagerService.deploy(URIUtil.toURI(url), module.getMavenUri());
                                     installed = true;
                                 }// else not a file so keep going
                                 break;

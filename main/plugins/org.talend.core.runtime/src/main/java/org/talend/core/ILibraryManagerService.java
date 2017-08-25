@@ -61,7 +61,7 @@ public interface ILibraryManagerService extends IService {
      * @param libsToRelativePath
      * @param monitorWrap
      */
-    public void deploy(Map<String, String> libsToRelativePath, IProgressMonitor... monitorWrap);
+    public void savePlatfromURLIndex(Map<String, String> libsToRelativePath, IProgressMonitor... monitorWrap);
 
     /**
      * 
@@ -70,9 +70,9 @@ public interface ILibraryManagerService extends IService {
      * @param libsToMavenUri
      * @param monitorWrap
      */
-    public void deployMavenIndex(Map<String, String> libsToMavenUri, IProgressMonitor... monitorWrap);
+    public void saveMavenIndex(Map<String, String> libsToMavenUri, IProgressMonitor... monitorWrap);
 
-    public void deployComponentAndExtensionLibs(IProgressMonitor... monitorWrap);
+    public void createModulesIndexFromComponentAndExtension(IProgressMonitor... monitorWrap);
 
     /**
      * DOC ycbai Comment method "retrieve".
@@ -97,9 +97,6 @@ public interface ILibraryManagerService extends IService {
             IProgressMonitor... monitorWrap);
 
     public boolean retrieve(ModuleNeeded module, String pathToStore, boolean showDialog, IProgressMonitor... monitorWrap);
-
-    public boolean retrieve(ModuleNeeded module, String pathToStore, boolean showDialog, NexusServerBean bean,
-            IProgressMonitor... monitorWrap);
 
     /**
      * 
@@ -168,6 +165,14 @@ public interface ILibraryManagerService extends IService {
     public void synToLocalMaven();
 
     public String getMavenUriFromIndex(String jarName);
+
+    public void setCustomMavenURI(String orignalURI, String customURI);
+
+    public String getCustomMavenURI(String orignalURI);
+
+    public void saveCustomMavenURIMap();
+
+    public String getPlatformURLFromIndex(String jarName);
 
     /**
      * DOC ycbai Comment method "isJarExistInLibFolder".

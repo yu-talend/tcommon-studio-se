@@ -51,7 +51,7 @@ public class ProcessorDependenciesManager {
             for (ModuleNeeded module : neededLibraries) {
                 Dependency dependency = null;
                 if (module.getDeployStatus() == ELibraryInstallStatus.DEPLOYED) {
-                    dependency = PomUtil.createModuleDependency(module.getMavenUri(true));
+                    dependency = PomUtil.createModuleDependency(module.getMavenUri());
                 }
                 if (dependency != null) {
                     neededDependencies.add(dependency);

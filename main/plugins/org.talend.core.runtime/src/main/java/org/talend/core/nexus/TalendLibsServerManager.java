@@ -138,6 +138,9 @@ public class TalendLibsServerManager {
                         }
                     }
                 }
+                if (nexus_url == null) {
+                    return null;
+                }
                 NexusServerBean serverBean = new NexusServerBean();
                 serverBean.setServer(nexus_url);
                 serverBean.setUserName(nexus_user);

@@ -88,7 +88,6 @@ import org.talend.core.model.general.ModuleStatusProvider;
 import org.talend.core.model.general.ModuleToInstall;
 import org.talend.core.runtime.maven.MavenConstants;
 import org.talend.designer.core.IDesignerCoreService;
-import org.talend.librariesmanager.model.ModulesNeededProvider;
 import org.talend.librariesmanager.ui.LibManagerUiPlugin;
 import org.talend.librariesmanager.ui.actions.ImportExternalJarAction;
 import org.talend.librariesmanager.ui.i18n.Messages;
@@ -586,7 +585,7 @@ public class ExternalModulesInstallDialog extends TitleAreaDialog implements IMo
                                             service.refreshComponentView();
                                         }
                                     }
-                                    ModulesNeededProvider.fireChangedLibrariesListener();
+                                    LibManagerUiPlugin.getDefault().getLibrariesService().refreshModulesNeeded();
                                 }
                             }
                         });
@@ -936,7 +935,7 @@ public class ExternalModulesInstallDialog extends TitleAreaDialog implements IMo
                     service.refreshComponentView();
                 }
             }
-            ModulesNeededProvider.fireChangedLibrariesListener();
+            LibManagerUiPlugin.getDefault().getLibrariesService().refreshModulesNeeded();
         }
     }
 

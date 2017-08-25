@@ -105,7 +105,7 @@ public class LocalLibraryManagerTest {
 
     /**
      * Test method for
-     * {@link org.talend.librariesmanager.model.service.LocalLibraryManagerTest#deploy(java.net.URI, org.eclipse.core.runtime.IProgressMonitor[])}
+     * {@link org.talend.librariesmanager.model.service.LocalLibraryManagerTest#savePlatfromURLIndex(java.net.URI, org.eclipse.core.runtime.IProgressMonitor[])}
      * .
      *
      * @throws IOException
@@ -513,11 +513,11 @@ public class LocalLibraryManagerTest {
 
             // install to nexus
             MavenArtifactsHandler deployer = new MavenArtifactsHandler();
-            deployer.install(FileLocator.toFileURL(entry1).getFile(), module1.getMavenUri(true));
-            deployer.install(FileLocator.toFileURL(entry2).getFile(), module2.getMavenUri(true));
-            deployer.install(FileLocator.toFileURL(entry3).getFile(), module3.getMavenUri(true));
-            deployer.install(FileLocator.toFileURL(entry4).getFile(), module4.getMavenUri(true));
-            deployer.install(FileLocator.toFileURL(entry5).getFile(), module5.getMavenUri(true));
+            deployer.install(FileLocator.toFileURL(entry1).getFile(), module1.getMavenUri());
+            deployer.install(FileLocator.toFileURL(entry2).getFile(), module2.getMavenUri());
+            deployer.install(FileLocator.toFileURL(entry3).getFile(), module3.getMavenUri());
+            deployer.install(FileLocator.toFileURL(entry4).getFile(), module4.getMavenUri());
+            deployer.install(FileLocator.toFileURL(entry5).getFile(), module5.getMavenUri());
 
             boolean retrieve1 = libraryManagerService.retrieve(module1, null, false, null);
             assertTrue(retrieve1);

@@ -14,12 +14,15 @@ package org.talend.librariesmanager.ui.dialogs;
 
 import java.io.File;
 
+import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcherInput;
+import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -36,7 +39,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.ui.runtime.expressionbuilder.ICellEditorDialog;
-import org.talend.commons.ui.runtime.swt.tableviewer.celleditor.ExtendedTextCellEditor;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.librariesmanager.ui.LibManagerUiPlugin;
 import org.talend.librariesmanager.ui.i18n.Messages;
@@ -57,13 +59,22 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
 
     private ModuleNeeded module;
 
-    private ExtendedTextCellEditor cellEditor;
+    private CustomURITextCellEditor cellEditor;
 
-    private String expression = "(mvn:(\\w+.*/)(\\w+.*/)(([0-9]+\\.)+[0-9]/)\\w+)|(mvn:(\\w+.*/)(\\w+.*/)([0-9]+\\.)+[0-9])";
+    // match mvn:group-id/artifact-id/version/type/classifier
+    private String expression1 = "(mvn:(\\w+.*/)(\\w+.*/)(([0-9]+\\.)+[0-9]/)(\\w+/)(\\w+))";
 
-    private PatternMatcherInput patternMatcherInput = new PatternMatcherInput(expression);
+    // match mvn:group-id/artifact-id/version/type
+    private String expression2 = "(mvn:(\\w+.*/)(\\w+.*/)(([0-9]+\\.)+[0-9]/)\\w+)";
+
+    // match mvn:group-id/artifact-id/version
+    private String expression3 = "(mvn:(\\w+.*/)(\\w+.*/)([0-9]+\\.)+[0-9])";
+
+    private PatternMatcherInput patternMatcherInput;
 
     private Perl5Matcher matcher = new Perl5Matcher();
+
+    private Perl5Compiler compiler = new Perl5Compiler();
 
     private Pattern pattern;
 
@@ -76,11 +87,15 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
         this(parentShell, null);
     }
 
-    public InstallModuleDialog(Shell parentShell, ExtendedTextCellEditor cellEditor) {
+    public InstallModuleDialog(Shell parentShell, CustomURITextCellEditor cellEditor) {
         super(parentShell);
         setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER | SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
         this.cellEditor = cellEditor;
-        // pattern = matcher.c
+        try {
+            pattern = compiler.compile(expression1 + "|" + expression2 + "|" + expression3);
+        } catch (MalformedPatternException e) {
+            ExceptionHandler.process(e);
+        }
     }
 
     @Override
@@ -126,7 +141,7 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
         originalUriTxt.setLayoutData(gdData);
         originalUriTxt.setEnabled(false);
         originalUriTxt.setBackground(container.getBackground());
-        originalUriTxt.setText(module.getMavenUri(true));
+        originalUriTxt.setText(module.getMavenUri());
 
         Composite customContainter = new Composite(container, SWT.NONE);
         customContainter.setLayoutData(new GridData());
@@ -140,13 +155,6 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
         useCustomBtn = new Button(customContainter, SWT.CHECK);
         gdData = new GridData();
         useCustomBtn.setLayoutData(gdData);
-        useCustomBtn.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                customUriText.setEnabled(useCustomBtn.getSelection());
-            }
-        });
 
         Label label3 = new Label(customContainter, SWT.NONE);
         label3.setText(Messages.getString("InstallModuleDialog.customUri"));
@@ -155,18 +163,53 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
         gdData.horizontalSpan = 2;
         customUriText.setLayoutData(gdData);
         customUriText.setEnabled(useCustomBtn.getSelection());
+        final String customMavenUri = module.getCustomMavenUri();
         if (cellEditor != null) {
-            useCustomBtn.setSelection(cellEditor.getExpression().equals(module.getCustomMavenUri()));
+            useCustomBtn.setSelection(cellEditor.getExpression().equals(customMavenUri));
             customUriText.setEnabled(useCustomBtn.getSelection());
         }
-        if (customUriText.isEnabled() && module.getCustomMavenUri() != null) {
-            customUriText.setText(module.getCustomMavenUri());
+        if (customUriText.isEnabled() && customMavenUri != null) {
+            customUriText.setText(customMavenUri);
         }
+
+        final Label errorLabel = new Label(container, SWT.NONE);
+        gdData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+        gdData.horizontalSpan = 3;
+        errorLabel.setLayoutData(gdData);
+        errorLabel.setForeground(getShell().getDisplay().getSystemColor(SWT.COLOR_RED));
+
+        useCustomBtn.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                customUriText.setEnabled(useCustomBtn.getSelection());
+                if (customUriText.isEnabled()) {
+                    if (customMavenUri != null) {
+                        customUriText.setText(customMavenUri);
+                    } else {
+                        customUriText.setText("mvn:org.talend.libraries/");//$NON-NLS-1$
+                    }
+                } else {
+                    getButton(IDialogConstants.OK_ID).setEnabled(true);
+                    errorLabel.setText("");
+                }
+            }
+        });
+
         customUriText.addModifyListener(new ModifyListener() {
 
             @Override
             public void modifyText(ModifyEvent e) {
-
+                patternMatcherInput = new PatternMatcherInput(customUriText.getText().trim());
+                matcher.setMultiline(false);
+                boolean isMatch = matcher.matches(patternMatcherInput, pattern);
+                if (isMatch) {
+                    getButton(IDialogConstants.OK_ID).setEnabled(true);
+                    errorLabel.setText("");
+                } else {
+                    getButton(IDialogConstants.OK_ID).setEnabled(false);
+                    errorLabel.setText(Messages.getString("InstallModuleDialog.error"));
+                }
             }
         });
 
@@ -223,9 +266,10 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
         if (useCustomBtn.getSelection()) {
             if (customUriText.getText() != null && !useCustomBtn.getText().equals(module.getCustomMavenUri())) {
                 if (cellEditor != null) {
-                    cellEditor.setConsumerExpression(customUriText.getText());
+                    cellEditor.setConsumerExpression(customUriText.getText().trim());
+                    cellEditor.fireApplyEditorValue();
                 } else {
-                    module.setCustomMavenUri(customUriText.getText());
+                    module.setCustomMavenUri(customUriText.getText().trim());
                 }
             }
         } else {
@@ -234,11 +278,11 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
             }
         }
         if (jarPathTxt.getText() != null) {
-            File file = new File(jarPathTxt.getText());
+            File file = new File(jarPathTxt.getText().trim());
             if (file.exists()) {
                 String mvnUri = module.getCustomMavenUri();
                 if (mvnUri == null) {
-                    mvnUri = module.getMavenUri(true);
+                    mvnUri = module.getMavenUri();
                 }
                 try {
                     LibManagerUiPlugin.getDefault().getLibrariesService().deployLibrary(file.toURL(), mvnUri);
