@@ -48,6 +48,7 @@ import org.talend.core.context.RepositoryContext;
 import org.talend.core.model.general.Project;
 import org.talend.core.model.properties.ProjectReference;
 import org.talend.core.model.properties.PropertiesFactory;
+import org.talend.core.model.repository.SVNConstant;
 import org.talend.core.repository.model.ProxyRepositoryFactory;
 import org.talend.core.services.IGITProviderService;
 import org.talend.core.services.ISVNProviderService;
@@ -304,14 +305,17 @@ public class ReferenceProjectSetupDialog extends TitleAreaDialog {
                 branchCombo.setItems(allBranch.toArray(new String[0]));
             }
             if (projectRepositoryType == REPOSITORY_SVN) {
-                if (!allBranch.contains("trunk")) {//$NON-NLS-1$
-                    allBranch.add("trunk");//$NON-NLS-1$
+                if (!allBranch.contains(SVNConstant.NAME_TRUNK)) {
+                    allBranch.add(SVNConstant.NAME_TRUNK);
                 }
                 branchCombo.setItems(allBranch.toArray(new String[0]));
-                branchCombo.setText("trunk");//$NON-NLS-1$
+                branchCombo.setText(SVNConstant.NAME_TRUNK);
             } else if (projectRepositoryType == REPOSITORY_GIT) {
+                if (!allBranch.contains(SVNConstant.NAME_MASTER)) {
+                    allBranch.add(SVNConstant.NAME_MASTER);
+                }
                 branchCombo.setItems(allBranch.toArray(new String[0]));
-                branchCombo.setText("master");//$NON-NLS-1$
+                branchCombo.setText(SVNConstant.NAME_MASTER);
             }
         } catch (Throwable e) {
             errorMessage = e.getLocalizedMessage();
