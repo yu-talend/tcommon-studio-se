@@ -17,7 +17,6 @@ import java.io.InputStream;
 
 import org.apache.maven.model.Model;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -26,6 +25,7 @@ import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.utils.io.FilesUtils;
 import org.talend.core.PluginChecker;
 import org.talend.designer.maven.template.MavenTemplateManager;
+import org.talend.designer.maven.utils.PomUtil;
 
 /**
  * created by ggu on 2 Feb 2015 Detailled comment
@@ -158,19 +158,21 @@ public class CreateMavenBundleTemplatePom extends CreateMaven {
         // }
 
         // curPomFile.getParent().refreshLocal(IResource.DEPTH_ONE, monitor);
-
-        try {
-            checkCreatingFile(monitor, curPomFile);
-        } catch (Exception e) {
-            ExceptionHandler.process(e);
-            return;
-        }
+        
+        // don't delete pom file.
+//        try {
+//            checkCreatingFile(monitor, curPomFile);
+//        } catch (Exception e) {
+//            ExceptionHandler.process(e);
+//            return;
+//        }
 
         Model model = createModel();
         if (model == null) {
             throw new Exception("Can't create the maven pom in file:" + curPomFile);
         }
-        MODEL_MANAGER.createMavenModel(curPomFile, model);
+        PomUtil.savePom(monitor, model, curPomFile);
+        // MODEL_MANAGER.createMavenModel(curPomFile, model);
 
         afterCreate(monitor);
     }

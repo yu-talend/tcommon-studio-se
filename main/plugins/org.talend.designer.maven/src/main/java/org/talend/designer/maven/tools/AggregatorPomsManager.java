@@ -20,6 +20,9 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.talend.core.model.general.Project;
 import org.talend.designer.maven.template.MavenTemplateManager;
+import org.talend.designer.maven.tools.creator.CreateMavenBeanPom;
+import org.talend.designer.maven.tools.creator.CreateMavenPigUDFPom;
+import org.talend.designer.maven.tools.creator.CreateMavenRoutinePom;
 import org.talend.designer.maven.utils.PomUtil;
 
 /**
@@ -45,6 +48,21 @@ public class AggregatorPomsManager {
         Model model = MavenTemplateManager.getAggregatorFolderTemplateModel(pomFile, groupId, folderName,
                 project.getTechnicalLabel());
         PomUtil.savePom(monitor, model, pomFile);
+    }
+
+    public void createRoutinesPom(IFile pomFile, IProgressMonitor monitor) throws Exception {
+        CreateMavenRoutinePom createTemplatePom = new CreateMavenRoutinePom(pomFile);
+        createTemplatePom.create(monitor);
+    }
+
+    public void createPigUDFsPom(IFile pomFile, IProgressMonitor monitor) throws Exception {
+        CreateMavenPigUDFPom createTemplatePom = new CreateMavenPigUDFPom(pomFile);
+        createTemplatePom.create(monitor);
+    }
+
+    public void createBeansPom(IFile pomFile, IProgressMonitor monitor) throws Exception {
+        CreateMavenBeanPom createTemplatePom = new CreateMavenBeanPom(pomFile);
+        createTemplatePom.create(monitor);
     }
     
     public void createUserDefinedFolderPom(IFile pomFile, String folderName, String groupId, IProgressMonitor monitor) {

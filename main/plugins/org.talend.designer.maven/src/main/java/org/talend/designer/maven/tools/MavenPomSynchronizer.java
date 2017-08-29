@@ -15,6 +15,7 @@ package org.talend.designer.maven.tools;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +41,9 @@ import org.talend.core.model.process.ProcessUtils;
 import org.talend.core.model.properties.Property;
 import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.runtime.process.ITalendProcessJavaProject;
+import org.talend.core.runtime.process.TalendProcessArgumentConstant;
 import org.talend.core.runtime.projectsetting.IProjectSettingPreferenceConstants;
 import org.talend.core.runtime.projectsetting.IProjectSettingTemplateConstants;
-import org.talend.designer.maven.launch.MavenPomCommandLauncher;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.template.MavenTemplateManager;
 import org.talend.designer.maven.tools.creator.CreateMavenBeanPom;
@@ -78,44 +79,53 @@ public class MavenPomSynchronizer {
     /**
      * generate routine pom.
      */
-    public void syncRoutinesPom(Property property, boolean overwrite) throws Exception {
-        IFile routinesPomFile = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.ROUTINES).getProjectPom();
+    public void syncRoutinesPom(Property property, boolean overwrite, boolean install) throws Exception {
+        ITalendProcessJavaProject routineProject = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.ROUTINES);
+        IFile routinesPomFile = routineProject.getProjectPom();
         // generate new one
         CreateMavenRoutinePom createTemplatePom = new CreateMavenRoutinePom(routinesPomFile);
         createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
-        if (true) { //TODO check file changes
-            new MavenPomCommandLauncher(routinesPomFile, TalendMavenConstants.GOAL_INSTALL).execute(new NullProgressMonitor());
+        if (install) {
+            buildAndInstallCodesProject(routineProject);
         }
     }
 
-    public void syncBeansPom(Property property, boolean overwrite) throws Exception {
-        IFile beansPomFile = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.valueOf("BEANS")).getProjectPom(); //$NON-NLS-1$
+    public void syncBeansPom(Property property, boolean overwrite, boolean install) throws Exception {
+        ITalendProcessJavaProject beansProject = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.valueOf("BEANS")); //$NON-NLS-1$
+        IFile beansPomFile = beansProject.getProjectPom();
         // generate new one
         CreateMavenBeanPom createTemplatePom = new CreateMavenBeanPom(beansPomFile);
         createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
-        if (true) { //TODO check file changes
-            new MavenPomCommandLauncher(beansPomFile, TalendMavenConstants.GOAL_INSTALL).execute(new NullProgressMonitor());
+        if (install) {
+            buildAndInstallCodesProject(beansProject);
         }
     }
 
-    public void syncPigUDFsPom(Property property, boolean overwrite) throws Exception {
-        IFile pigudfPomFile = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.PIG_UDF).getProjectPom();
+    public void syncPigUDFsPom(Property property, boolean overwrite, boolean install) throws Exception {
+        ITalendProcessJavaProject pigudfsProject = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.PIG_UDF);
+        IFile pigudfPomFile = pigudfsProject.getProjectPom();
         // generate new one
         CreateMavenPigUDFPom createTemplatePom = new CreateMavenPigUDFPom(pigudfPomFile);
         createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
-        if (true) { //TODO check file changes
-            new MavenPomCommandLauncher(pigudfPomFile, TalendMavenConstants.GOAL_INSTALL).execute(new NullProgressMonitor());
+        if (install) {
+            buildAndInstallCodesProject(pigudfsProject);
         }
     }
 
-
-
+    private void buildAndInstallCodesProject(ITalendProcessJavaProject codeProject) throws Exception {
+        codeProject.buildModules(new NullProgressMonitor(), null, null);
+        Map<String, Object> argumentsMap = new HashMap<>();
+        argumentsMap.put(TalendProcessArgumentConstant.ARG_GOAL, TalendMavenConstants.GOAL_INSTALL);
+        argumentsMap.put(TalendProcessArgumentConstant.ARG_PROGRAM_ARGUMENTS, "-Dmaven.main.skip=true"); //$NON-NLS-1$
+        codeProject.buildModules(new NullProgressMonitor(), null, argumentsMap);
+    }
+    
     /**
      * 
      * sync the bat/sh/jobInfo to resources template folder.
@@ -265,17 +275,17 @@ public class MavenPomSynchronizer {
         }
     }
 
-    public void syncCodesPoms(IProgressMonitor monitor, IProcessor processor, boolean overwrite) throws Exception {
-        final IProcess process =processor!=null? processor.getProcess():null;
-        //TODO NPE doing cleanMavenFiles
-        syncRoutinesPom(processor.getProperty(), overwrite);
+    public void syncCodesPoms(IProgressMonitor monitor, IProcessor processor, boolean overwrite, boolean install) throws Exception {
+        final IProcess process = processor != null ? processor.getProcess() : null;
+
+        syncRoutinesPom(processor.getProperty(), overwrite, install);
         // PigUDFs
         if (ProcessUtils.isRequiredPigUDFs(process)) {
-            syncPigUDFsPom(processor.getProperty(), overwrite);
+            syncPigUDFsPom(processor.getProperty(), overwrite, install);
         }
         // Beans
         if (ProcessUtils.isRequiredBeans(process)) {
-            syncBeansPom(processor.getProperty(), overwrite);
+            syncBeansPom(processor.getProperty(), overwrite, install);
         }
     }
 
@@ -321,16 +331,4 @@ public class MavenPomSynchronizer {
         return null;
     }
     
-    //TODO to remove
-    private void updateCodesPomWithProject(IProgressMonitor monitor) throws Exception {
-        syncCodesPoms(monitor, null, true);
-        // finally, update project
-        regenerateMainProjectPom(monitor, null);
-    }
-
-    public void regenerateMainProjectPom(IProgressMonitor monitor, IProcessor processor) throws Exception {
-        // ProjectPomManager projectManager = new ProjectPomManager(codeProject.getProject());
-        // projectManager.update(monitor, processor);
-    }
-
 }

@@ -1951,7 +1951,6 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                     }
                     JavaUtils.updateProjectJavaVersion(newVersion);
                     
-                    // coreService.deleteAllJobs(false);
                     TimeMeasure.step("logOnProject", "clean Java project"); //$NON-NLS-1$ //$NON-NLS-2$     
 
                     if (workspace instanceof Workspace) {

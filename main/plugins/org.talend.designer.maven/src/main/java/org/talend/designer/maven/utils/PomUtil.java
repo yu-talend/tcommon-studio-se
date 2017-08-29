@@ -46,7 +46,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMaven;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
@@ -101,6 +100,7 @@ public class PomUtil {
         MavenPlugin.getMaven().writeModel(model, buf);
 
         ByteArrayInputStream source = new ByteArrayInputStream(buf.toByteArray());
+        // TODO should surround by workunit
         if (pomFile.exists()) {
             pomFile.setContents(source, true, false, monitor);
         } else {
@@ -189,16 +189,18 @@ public class PomUtil {
         parent.setGroupId(codeProjectTemplateModel.getGroupId());
         parent.setArtifactId(codeProjectTemplateModel.getArtifactId());
         parent.setVersion(codeProjectTemplateModel.getVersion());
-        String relativePath = getPomRelativePath(curPomFile.getParent(), "poms"); //$NON-NLS-1$
+        
+        File pomFolder = curPomFile.getLocation().toFile().getParentFile();
+        String relativePath = getPomRelativePath(pomFolder.getParentFile(), "poms"); //$NON-NLS-1$
         parent.setRelativePath(relativePath);
 
     }
 
-    public static String getPomRelativePath(IContainer container, String baseFolder) {
+    public static String getPomRelativePath(File file, String baseFolder) {
         String path = "../"; //$NON-NLS-1$
         // TODO should not allow user-defined folder named poms.
-        if (container != null && !container.getName().equals(baseFolder)) {
-            path += getPomRelativePath(container.getParent(), baseFolder);
+        if (file != null && !file.getName().equals(baseFolder)) {
+            path += getPomRelativePath(file.getParentFile(), baseFolder);
         }
         return path;
     }

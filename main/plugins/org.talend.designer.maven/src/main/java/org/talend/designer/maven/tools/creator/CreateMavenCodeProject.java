@@ -89,7 +89,7 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
         // temp model.
         Model templateModel = new Model();
         templateModel.setGroupId(PomIdsHelper.getJobGroupId(project.getName()));
-        templateModel.setArtifactId(project.getName());
+        templateModel.setArtifactId("talend"); //$NON-NLS-1$
         templateModel.setVersion(PomIdsHelper.getProjectVersion());
         templateModel.setPackaging(TalendMavenConstants.PACKAGING_JAR);
         return templateModel;
@@ -146,7 +146,7 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
             p.open(monitor);
         }
         addTalendNature(p, TalendJobNature.ID, monitor);
-        convertJavaProjectToPom(monitor, p);
+        //convertJavaProjectToPom(monitor, p);
         PomUtil.addToParentModules(pomFile);
         changeClasspath(monitor, p);
 
@@ -202,6 +202,7 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
         }
     }
 
+    //TODO remove?
     private void convertJavaProjectToPom(IProgressMonitor monitor, IProject p) {
         IFile pomFile = p.getFile(TalendMavenConstants.POM_FILE_NAME);
         if (pomFile.exists()) {
@@ -391,6 +392,7 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
         monitor.subTask(Messages.ProjectConfigurationManager_task_creating_pom);
         IFile pomFile = p.getFile(TalendMavenConstants.POM_FILE_NAME);
         if (!pomFile.exists()) {
+            // TODO surround by workunit.
             MavenPlugin.getMavenModelManager().createMavenModel(pomFile, model);
         }
         monitor.worked(1);

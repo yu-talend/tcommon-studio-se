@@ -112,11 +112,11 @@ public abstract class AbstractRoutineSynchronizer implements ITalendSynchronizer
     }
 
     protected IFile getRoutineFile(RoutineItem routineItem) throws SystemException {
-        ITalendProcessJavaProject mavenCodeProject = getRunProcessService().getTalendCodeJavaProject(ERepositoryObjectType.ROUTINES);
-        if (mavenCodeProject == null) {
+        ITalendProcessJavaProject talendProcessJavaProject = getRunProcessService().getTalendCodeJavaProject(ERepositoryObjectType.ROUTINES);
+        if (talendProcessJavaProject == null) {
             return null;
         }
-        IFolder routineFolder = mavenCodeProject.getSrcSubFolder(null, routineItem.getPackageType());
+        IFolder routineFolder = talendProcessJavaProject.getSrcSubFolder(null, routineItem.getPackageType());
         IFile file = routineFolder.getFile(routineItem.getProperty().getLabel() + JavaUtils.JAVA_EXTENSION);
         return file;
     }
