@@ -12,8 +12,15 @@
 // ============================================================================
 package org.talend.core.model.general;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.PlatformUI;
+import org.talend.commons.exception.BusinessException;
+import org.talend.commons.exception.ExceptionHandler;
+import org.talend.commons.exception.InvalidProjectException;
+import org.talend.commons.exception.PersistenceException;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.context.Context;
 import org.talend.core.context.RepositoryContext;
@@ -21,10 +28,13 @@ import org.talend.core.hadoop.IHadoopClusterService;
 import org.talend.core.language.ECodeLanguage;
 import org.talend.core.model.process.IElement;
 import org.talend.core.model.properties.ExchangeUser;
+import org.talend.core.model.properties.ProjectReference;
 import org.talend.core.model.properties.PropertiesFactory;
 import org.talend.core.model.properties.User;
 import org.talend.core.runtime.CoreRuntimePlugin;
+import org.talend.repository.IReferenceProjectProvider;
 import org.talend.repository.ProjectManager;
+import org.talend.repository.ReferenceProjectProvider;
 
 /**
  * DOC smallet class global comment. Detailled comment <br/>
@@ -45,6 +55,8 @@ public class Project {
     private boolean isSandboxProject;
 
     private boolean mainProject = true;
+    
+    private IReferenceProjectProvider referenceProjectProvider;
 
     /**
      * Getter for mainProject.
@@ -224,6 +236,7 @@ public class Project {
 
     public void setEmfProject(org.talend.core.model.properties.Project project) {
         this.project = project;
+        referenceProjectProvider = null;
     }
 
     public String getMasterJobId() {
@@ -338,5 +351,32 @@ public class Project {
 
     public void setExchangeUser(ExchangeUser exchangeUser) {
         // project.setExchangeUser(exchangeUser);
+    }
+    
+    public List<ProjectReference> getProjectReferenceList() {
+        if (referenceProjectProvider == null) {
+            referenceProjectProvider = new ReferenceProjectProvider(project);
+            try {
+                referenceProjectProvider.initSettings();
+            } catch (InvalidProjectException | PersistenceException | BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
+        List<ProjectReference> projectReferenceList = new ArrayList<ProjectReference>();
+        projectReferenceList.addAll(referenceProjectProvider.getProjectReference());
+        return projectReferenceList;
+    }
+
+    public void saveProjectReferenceList(List<ProjectReference> projectReferenceList) throws Exception {
+        if (referenceProjectProvider == null) {
+            referenceProjectProvider = new ReferenceProjectProvider(project);
+            try {
+                referenceProjectProvider.initSettings();
+            } catch (InvalidProjectException | PersistenceException | BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
+        referenceProjectProvider.setProjectReference(projectReferenceList);
+        referenceProjectProvider.saveSettings();
     }
 }

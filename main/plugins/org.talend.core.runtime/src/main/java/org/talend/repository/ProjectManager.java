@@ -164,7 +164,7 @@ public final class ProjectManager {
         if (p != null && ctx != null) {
             String parentBranch = ProjectManager.getInstance().getMainProjectBranch(p);
             if (parentBranch != null) {
-                for (ProjectReference pr : (List<ProjectReference>) p.getReferencedProjects()) {
+                for (ProjectReference pr : new Project(p).getProjectReferenceList()) {
                     if (ProjectManager.validReferenceProject(p, pr)) {
                         resolveRefProject(pr.getReferencedProject()); // only to resolve all
                     }
@@ -178,7 +178,7 @@ public final class ProjectManager {
         if (ctx != null && p != null) {
             String parentBranch = ProjectManager.getInstance().getMainProjectBranch(p);
             if (parentBranch != null) {
-                for (ProjectReference pr : (List<ProjectReference>) p.getReferencedProjects()) {
+                for (ProjectReference pr : new Project(p).getProjectReferenceList()) {
                     if (ProjectManager.validReferenceProject(p, pr)) {
                         Project project = new Project(pr.getReferencedProject(), false);
                         allReferencedprojects.add(project);
@@ -270,7 +270,7 @@ public final class ProjectManager {
                         .getReferencedProjects(this.getCurrentProject());
                 if (rProjects != null) {
                     for (org.talend.core.model.properties.Project p : rProjects) {
-                        Project project = new Project(p, false);
+                        Project project = new Project(p);
                         allReferencedprojects.add(project);
                         resolveSubRefProject(p, allReferencedprojects);
                     }
@@ -292,9 +292,9 @@ public final class ProjectManager {
                 return getReferencedProjects();
             }
             List<Project> refProjects = new ArrayList<Project>();
-            for (ProjectReference refProject : (List<ProjectReference>) project.getEmfProject().getReferencedProjects()) {
+            for (ProjectReference refProject :project.getProjectReferenceList()) {
                 if (ProjectManager.validReferenceProject(project.getEmfProject(), refProject)) {
-                    refProjects.add(new Project(refProject.getReferencedProject(), false));
+                    refProjects.add(new Project(getProject(refProject), false));
                 }
             }
             return refProjects;
@@ -935,7 +935,7 @@ public final class ProjectManager {
     public Set<Object> getUpdatedRemoteHandlerRecords() {
         return this.updatedRemoteHandlerRecords;
     }
-
+    
     public Map<String, List<ProjectReference>> getAllTACProjectProjectReferenceSetting() {
         return allTACProjectProjectReferenceSetting;
     }
@@ -952,5 +952,5 @@ public final class ProjectManager {
         }
 
         return list;
-    }    
+    } 
 }

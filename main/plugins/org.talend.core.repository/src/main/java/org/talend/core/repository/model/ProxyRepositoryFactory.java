@@ -19,9 +19,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
@@ -161,7 +164,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
 
     private final ProjectManager projectManager;
     
-    private List<org.talend.core.model.properties.Project> allAvailableProjects = new ArrayList<org.talend.core.model.properties.Project>();
+    private Map<String, org.talend.core.model.properties.Project> emfProjectMap = new HashMap<String,org.talend.core.model.properties.Project>();
 
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener l) {
@@ -656,14 +659,24 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
         if (dqModelService != null) {
             dqModelService.initTDQEMFResource();
         }
-        allAvailableProjects.clear();
-        Project[] projects = this.repositoryFactoryFromProvider.readProject();  
+
+        Project[] projects = this.repositoryFactoryFromProvider.readProject();
         if (projects != null && projects.length > 0) {
-            for (Project project : projects) {
-                allAvailableProjects.add(project.getEmfProject());
+            Set<String> allAvaliableProjectSet = new HashSet<String>();
+            for (Project p : projects) {
+                allAvaliableProjectSet.add(p.getTechnicalLabel());
+                if (!emfProjectMap.containsKey(p.getTechnicalLabel())) {
+                    emfProjectMap.put(p.getTechnicalLabel(), p.getEmfProject());
+                }
+            }
+            if (allAvaliableProjectSet.size() != emfProjectMap.size()) {
+                for (Iterator iterator = emfProjectMap.keySet().iterator(); iterator.hasNext();) {
+                    if (!allAvaliableProjectSet.contains(iterator.next())) {
+                        iterator.remove();
+                    }
+                }
             }
         }
-        
         return projects;
     }
 
@@ -2333,7 +2346,11 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
         return repositoryFactoryFromProvider.getAllRemoteLocks();
     }
 
-    public List<org.talend.core.model.properties.Project> getAllAvailableProjects() {
-        return allAvailableProjects;
+    public void updateEmfProjectContent(org.talend.core.model.properties.Project project) {
+        emfProjectMap.put(project.getTechnicalLabel(), project);
+    }
+
+    public org.talend.core.model.properties.Project getEmfProjectContent(String technicalLabel) {
+        return emfProjectMap.get(technicalLabel);
     }
 }

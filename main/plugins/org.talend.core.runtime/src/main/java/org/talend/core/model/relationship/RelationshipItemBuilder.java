@@ -289,6 +289,12 @@ public class RelationshipItemBuilder {
         }
         return new ArrayList<Relation>(relations);
     }
+    
+    public void load() {
+        if (!loaded) {
+            loadRelations();
+        }
+    }
 
     /**
      * 

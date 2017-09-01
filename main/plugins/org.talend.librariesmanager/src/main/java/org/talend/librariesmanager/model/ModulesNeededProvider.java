@@ -523,7 +523,7 @@ public class ModulesNeededProvider {
             ERepositoryObjectType type) {
         if (service != null) {
             IProxyRepositoryFactory repositoryFactory = service.getProxyRepositoryFactory();
-            getRefRoutines(routines, ProjectManager.getInstance().getCurrentProject().getEmfProject(), type);
+            getRefRoutines(routines, ProjectManager.getInstance().getCurrentProject(), type);
             for (IRepositoryViewObject current : routines) {
                 if (repositoryFactory.getStatus(current) != ERepositoryStatus.DELETED) {
                     Item item = current.getProperty().getItem();
@@ -651,7 +651,7 @@ public class ModulesNeededProvider {
             IProxyRepositoryFactory repositoryFactory = service.getProxyRepositoryFactory();
             try {
                 List<IRepositoryViewObject> routines = repositoryFactory.getAll(type, true);
-                getRefRoutines(routines, ProjectManager.getInstance().getCurrentProject().getEmfProject(), type);
+                getRefRoutines(routines, ProjectManager.getInstance().getCurrentProject(), type);
                 for (IRepositoryViewObject current : routines) {
                     if (!current.isDeleted()) {
                         Item item = current.getProperty().getItem();
@@ -667,11 +667,11 @@ public class ModulesNeededProvider {
     }
 
     private static void getRefRoutines(List<IRepositoryViewObject> routines,
-            org.talend.core.model.properties.Project mainProject, ERepositoryObjectType type) {
+             Project mainProject, ERepositoryObjectType type) {
         if (service != null) {
             IProxyRepositoryFactory repositoryFactory = service.getProxyRepositoryFactory();
             try {
-                if (mainProject.getReferencedProjects() != null) {
+                if (mainProject.getProjectReferenceList().size() > 0) {
                     for (Project referencedProject : ProjectManager.getInstance().getAllReferencedProjects()) {
                         routines.addAll(repositoryFactory.getAll(referencedProject, type, true));
                     }

@@ -1,4 +1,4 @@
-package org.talend.repository.localprovider.model;
+package org.talend.repository;
 
 // ============================================================================
 //
@@ -29,9 +29,8 @@ import org.talend.core.model.properties.Project;
 import org.talend.core.model.properties.ProjectReference;
 import org.talend.core.model.properties.PropertiesFactory;
 import org.talend.core.model.properties.impl.PropertiesFactoryImpl;
-import org.talend.repository.ProjectManager;
 
-public class BaseReferenceProjectProviderTest {
+public class ReferenceProjectProviderTest {
 
     private String refProjectName1 = "PROJECT_R";
 
@@ -45,7 +44,7 @@ public class BaseReferenceProjectProviderTest {
     public void testLoadProjectReferenceSetting() throws Exception {
         Project project = getTestProject();
         String branchName = "master";
-        BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
+        ReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
         provider.loadSettings();
         if (provider.getProjectReference().size() == 0) {
             testSaveProjectReferenceSetting();
@@ -57,7 +56,7 @@ public class BaseReferenceProjectProviderTest {
     public void testSaveProjectReferenceSetting() throws Exception {
         Project project = getTestProject();
         String branchName = "master";
-        BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
+        ReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
         List<ProjectReference> projectReferenceList = getDefaultProjectReferenceList();
         provider.setProjectReference(projectReferenceList);
         provider.saveSettings();
@@ -67,7 +66,7 @@ public class BaseReferenceProjectProviderTest {
     public void testGetProjectReference() throws Exception {
         Project project = getTestProject();
         String branchName = "master";
-        BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
+        ReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
         provider.loadSettings();
         if (provider.getProjectReference().size() == 0) {
             testSaveProjectReferenceSetting();
@@ -86,7 +85,7 @@ public class BaseReferenceProjectProviderTest {
     public void testSetProjectReference() throws Exception {
         Project project = getTestProject();
         String branchName = "master";
-        BaseReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
+        ReferenceProjectProvider provider = new TestBaseReferenceProjectProvider(project, branchName);
         provider.loadSettings();
         List<ProjectReference> projectReferenceList = getDefaultProjectReferenceList();
         provider.setProjectReference(projectReferenceList);
@@ -122,14 +121,14 @@ public class BaseReferenceProjectProviderTest {
     }
 }
 
-class TestBaseReferenceProjectProvider extends BaseReferenceProjectProvider {
+class TestBaseReferenceProjectProvider extends ReferenceProjectProvider {
 
     public TestBaseReferenceProjectProvider(Project project, String branchName) {
         super(project);
     }
 
     protected File getConfigurationFile() throws PersistenceException, Exception {
-        Bundle bundle = Platform.getBundle("org.talend.repository.localprovider.test"); //$NON-NLS-1$
+        Bundle bundle = Platform.getBundle("org.talend.core.runtime.test"); //$NON-NLS-1$
         URL confEntry = bundle.getEntry("resources/reference_projects.settings"); //$NON-NLS-1$
         return new File(FileLocator.toFileURL(confEntry).getFile());
     }

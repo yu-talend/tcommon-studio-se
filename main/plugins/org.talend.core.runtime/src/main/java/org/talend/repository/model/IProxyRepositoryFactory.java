@@ -525,4 +525,7 @@ public interface IProxyRepositoryFactory {
 
     public abstract HashMap<String, Boolean> getFolderItems(ERepositoryObjectType type) throws PersistenceException;
 
+    public void updateEmfProjectContent(org.talend.core.model.properties.Project project);
+
+    public org.talend.core.model.properties.Project getEmfProjectContent(String technicalLabel);
 }
