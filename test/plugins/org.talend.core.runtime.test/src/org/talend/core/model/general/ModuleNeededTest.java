@@ -37,26 +37,26 @@ public class ModuleNeededTest {
     public void testEquals() {
         Set<ModuleNeeded> modules = new HashSet<ModuleNeeded>();
         ModuleNeeded module1 = new ModuleNeeded("tMysqlInput", "test1.jar", "description", false, null, null,
-                "mvn:org.talend.libraries/test1/6.0.0", ELibraryInstallStatus.INSTALLED);
+                "mvn:org.talend.libraries/test1/6.0.0");
         ModuleNeeded module2 = new ModuleNeeded("tMysqlConnection", "test1.jar", "description", false, null, null,
-                "mvn:org.talend.libraries/test1/6.0.0", ELibraryInstallStatus.INSTALLED);
+                "mvn:org.talend.libraries/test1/6.0.0");
         Assert.assertFalse(module1.equals(module2));
         modules.add(module1);
         modules.add(module2);
         Assert.assertEquals(modules.size(), 2);
         ModuleNeeded module3 = new ModuleNeeded("tMysqlInput", "test2.jar", "description", false, null, null,
-                "mvn:org.talend.libraries/test2/6.0.0", ELibraryInstallStatus.INSTALLED);
+                "mvn:org.talend.libraries/test2/6.0.0");
         Assert.assertFalse(module1.equals(module3));
         modules.add(module3);
         Assert.assertEquals(modules.size(), 3);
         ModuleNeeded module4 = new ModuleNeeded("tMysqlInput", "test1.jar", "description", false, null, null,
-                "mvn:org.talend.libraries/test1/6.1.0", ELibraryInstallStatus.INSTALLED);
+                "mvn:org.talend.libraries/test1/6.1.0");
         Assert.assertFalse(module1.equals(module4));
         modules.add(module4);
         Assert.assertEquals(modules.size(), 4);
 
         ModuleNeeded module5 = new ModuleNeeded("tMysqlInput", "test1.jar", "description 1", true, null, "version = 'MYSQL_5'",
-                "mvn:org.talend.libraries/test1/6.0.0", ELibraryInstallStatus.NOT_INSTALLED);
+                "mvn:org.talend.libraries/test1/6.0.0");
         Assert.assertTrue(module1.equals(module5));
         modules.add(module5);
         Assert.assertEquals(modules.size(), 4);
@@ -66,7 +66,7 @@ public class ModuleNeededTest {
     @Test
     public void getGetMavenUri() {
         ModuleNeeded module1 = new ModuleNeeded("tMysqlInput", "test1.exe", "description", false, null, null,
-                "mvn:org.talend.libraries/test1/6.1.0", ELibraryInstallStatus.INSTALLED);
+                "mvn:org.talend.libraries/test1/6.1.0");
         Assert.assertEquals(module1.getMavenUri(false), "mvn:org.talend.libraries/test1/6.1.0/exe");
         Assert.assertEquals(module1.getMavenUri(true), "mvn:org.talend.libraries/test1/6.1.0/exe");
 
@@ -85,7 +85,7 @@ public class ModuleNeededTest {
         URI testFileToDeploy = FileLocator.toFileURL(this.getClass().getClassLoader().getResource("resources/tRowGenerator.xml"))
                 .toURI();
         ModuleNeeded module1 = new ModuleNeeded("tMysqlInput", "tRowGenerator.xml", "description", false, null, null,
-                "mvn:org.talend.libraries/tRowGenerator/6.0.0", ELibraryInstallStatus.INSTALLED);
+                "mvn:org.talend.libraries/tRowGenerator/6.0.0");
         ILibraryManagerService libService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
                 ILibraryManagerService.class);
         libService.deploy(testFileToDeploy, module1.getMavenUri());
@@ -99,6 +99,7 @@ public class ModuleNeededTest {
 
         // change back the status
         module1.setCustomMavenUri(null);
+        libService.saveCustomMavenURIMap();
         String jarPathFromMaven = libService.getJarPathFromMaven("mvn:org.talend.libraries/tRowGenerator/6.0.0/xml");
         File file = new File(jarPathFromMaven);
         if (file.exists()) {

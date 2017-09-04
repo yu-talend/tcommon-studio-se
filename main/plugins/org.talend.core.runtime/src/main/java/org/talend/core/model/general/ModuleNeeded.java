@@ -15,7 +15,6 @@ package org.talend.core.model.general;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.runtime.Path;
@@ -23,7 +22,6 @@ import org.osgi.framework.Version;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.ILibraryManagerService;
 import org.talend.core.model.process.IElementParameter;
-import org.talend.core.nexus.TalendMavenResolver;
 import org.talend.core.runtime.CoreRuntimePlugin;
 import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenConstants;
@@ -57,10 +55,10 @@ public class ModuleNeeded {
 
     private String bundleVersion;
 
-    private ELibraryInstallStatus status = ELibraryInstallStatus.UNKNOWN;
+    private ELibraryInstallStatus status = ELibraryInstallStatus.NOT_INSTALLED;
 
     // status installed in maven
-    private ELibraryInstallStatus installStatus = ELibraryInstallStatus.UNKNOWN;
+    private ELibraryInstallStatus installStatus = ELibraryInstallStatus.NOT_DEPLOYED;
 
     private boolean isShow = true;
 
@@ -78,6 +76,8 @@ public class ModuleNeeded {
 
     public static final String QUOTATION_MARK = "\""; //$NON-NLS-1$
 
+    public static final String UNKNOWN = "Unknown";
+
     ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
             ILibraryManagerService.class);
 
@@ -88,9 +88,7 @@ public class ModuleNeeded {
      *
      */
     public enum ELibraryInstallStatus {
-        UNKNOWN,
         INSTALLED,
-        UNUSED,
         NOT_INSTALLED,
         DEPLOYED,
         NOT_DEPLOYED;
@@ -108,16 +106,7 @@ public class ModuleNeeded {
      * @param status
      */
     public ModuleNeeded(String context, String moduleName, String informationMsg, boolean required) {
-        this(context, moduleName, informationMsg, required, null, null, null, ELibraryInstallStatus.UNKNOWN);
-    }
-
-    public ModuleNeeded(String context, String moduleName, String informationMsg, boolean required, ELibraryInstallStatus status) {
-        this(context, moduleName, informationMsg, required, null, null, null, status);
-    }
-
-    public ModuleNeeded(String context, String moduleName, String informationMsg, boolean required, List<String> installURL,
-            String requiredIf, String mavenUrl) {
-        this(context, moduleName, informationMsg, required, installURL, requiredIf, mavenUrl, ELibraryInstallStatus.UNKNOWN);
+        this(context, moduleName, informationMsg, required, null, null, null);
     }
 
     /**
@@ -129,7 +118,7 @@ public class ModuleNeeded {
      * @param mvnUri
      */
     public ModuleNeeded(String context, String informationMsg, boolean required, String mvnUri) {
-        this(context, null, informationMsg, required, null, null, mvnUri, ELibraryInstallStatus.UNKNOWN);
+        this(context, null, informationMsg, required, null, null, mvnUri);
         MavenArtifact mavenArtifact = MavenUrlHelper.parseMvnUrl(mvnUri);
         if (MavenConstants.DEFAULT_LIB_GROUP_ID.equals(mavenArtifact.getGroupId())
                 || StringUtils.isEmpty(mavenArtifact.getVersion())) {
@@ -141,7 +130,7 @@ public class ModuleNeeded {
     }
 
     public ModuleNeeded(String context, String moduleName, String informationMsg, boolean required, List<String> installURL,
-            String requiredIf, String mavenUrl, ELibraryInstallStatus status) {
+            String requiredIf, String mavenUrl) {
         super();
         this.context = context;
         setModuleName(moduleName);
@@ -149,7 +138,6 @@ public class ModuleNeeded {
         this.required = required;
         this.installURL = installURL;
         this.requiredIf = requiredIf;
-        this.status = status;
         setMavenUri(mavenUrl);
     }
 
@@ -252,57 +240,27 @@ public class ModuleNeeded {
     }
 
     public ELibraryInstallStatus getStatus() {
+        ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+                ILibraryManagerService.class);
+        libManagerService.checkModuleStatus(this);
         String mvnUriStatusKey = getCustomMavenUri();
         if (mvnUriStatusKey == null) {
             mvnUriStatusKey = getMavenUri();
         }
-        final ELibraryInstallStatus eLibraryInstallStatus = ModuleStatusProvider.getStatusMap().get(mvnUriStatusKey);
-        if (eLibraryInstallStatus != null) {
-            return eLibraryInstallStatus;
-        } else if (mvnUriStatusKey != null) {
-            // compute the status of the lib.
-            // first use the Library manager service
-            ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
-                    ILibraryManagerService.class);
-            Set<String> existLibraries = libManagerService.list();
-            if (existLibraries.contains(getModuleName())) {
-                status = ELibraryInstallStatus.INSTALLED;
-                ModuleStatusProvider.getStatusMap().put(mvnUriStatusKey, status);
-            } else {// then try to resolve locally
-                resolveStatusLocally(mvnUriStatusKey);
-            }
-
-        }
+        this.status = ModuleStatusProvider.getStatusMap().get(mvnUriStatusKey);
         return this.status;
     }
 
     public ELibraryInstallStatus getDeployStatus() {
+        ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+                ILibraryManagerService.class);
+        libManagerService.checkModuleStatus(this);
         String mvnUriStatusKey = getCustomMavenUri();
         if (mvnUriStatusKey == null) {
             mvnUriStatusKey = getMavenUri();
         }
-        final ELibraryInstallStatus eLibraryDeployStatus = ModuleStatusProvider.getDeployStatusMap().get(mvnUriStatusKey);
-        if (eLibraryDeployStatus != null) {
-            return eLibraryDeployStatus;
-        } else if (mvnUriStatusKey != null) {
-            resolveStatusLocally(mvnUriStatusKey);
-        }
+        this.installStatus = ModuleStatusProvider.getDeployStatusMap().get(mvnUriStatusKey);
         return this.installStatus;
-    }
-
-    private void resolveStatusLocally(String mvnUriStatusKey) {
-        // then try to resolve locally
-        String localMavenUri = mvnUriStatusKey.replace("mvn:", "mvn:" + MavenConstants.LOCAL_RESOLUTION_URL + "!"); //$NON-NLS-1$ //$NON-NLS-2$
-        try {
-            TalendMavenResolver.getMavenResolver().resolve(localMavenUri);
-            status = ELibraryInstallStatus.INSTALLED;
-            installStatus = ELibraryInstallStatus.DEPLOYED;
-        } catch (Exception e) {
-            status = ELibraryInstallStatus.NOT_INSTALLED;
-            installStatus = ELibraryInstallStatus.NOT_DEPLOYED;
-        }
-        ModuleStatusProvider.getStatusMap().put(mvnUriStatusKey, status);
-        ModuleStatusProvider.getDeployStatusMap().put(mvnUriStatusKey, installStatus);
     }
 
     /**
@@ -585,7 +543,12 @@ public class ModuleNeeded {
 
     public String getCustomMavenUri() {
         String originalURI = getMavenUri();
-        return libManagerService.getCustomMavenURI(originalURI);
+        String customURI = libManagerService.getCustomMavenURI(originalURI);
+        if (!originalURI.equals(customURI)) {
+            return libManagerService.getCustomMavenURI(originalURI);
+        } else {
+            return null;
+        }
     }
 
     public void setCustomMavenUri(String customURI) {

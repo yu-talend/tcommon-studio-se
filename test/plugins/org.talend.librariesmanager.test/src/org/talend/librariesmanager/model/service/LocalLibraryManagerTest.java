@@ -44,6 +44,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.emf.common.util.EMap;
 import org.eclipse.m2e.core.MavenPlugin;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -68,7 +69,6 @@ import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenUrlHelper;
 import org.talend.librariesmanager.emf.librariesindex.LibrariesIndex;
 import org.talend.librariesmanager.maven.MavenArtifactsHandler;
-import org.talend.librariesmanager.model.ModulesNeededProvider;
 import org.talend.librariesmanager.prefs.LibrariesManagerUtils;
 import org.talend.repository.ProjectManager;
 
@@ -309,58 +309,6 @@ public class LocalLibraryManagerTest {
             throw new RuntimeException(buffer.toString());
         }
         assertTrue(missJars.size() == 0);
-    }
-
-    @Test
-    @Ignore
-    public void testUnusedJars() throws URISyntaxException {
-
-        Bundle currentBundle = Platform.getBundle("org.talend.librariesmanager"); //$NON-NLS-1$
-        Bundle[] bundles = currentBundle.getBundleContext().getBundles();
-        Long totalSize = 0L;
-        StringBuffer strBuff = new StringBuffer();
-        List<String> neededJars = new ArrayList<String>();
-        ModulesNeededProvider.reset();
-        for (ModuleNeeded module : ModulesNeededProvider.getModulesNeeded()) {
-            if (module.getStatus() != ELibraryInstallStatus.UNUSED) {
-                neededJars.add(module.getModuleName());
-            }
-        }
-        for (Bundle bundle : bundles) {
-            String name = bundle.getSymbolicName();
-            if (name.startsWith("org.talend.libraries")) {
-                String classpath = bundle.getHeaders().get("Bundle-ClassPath");
-                List<URL> urls = FilesUtils.getFilesFromFolder(bundle, "/lib", ".jar", true, true);
-                for (URL url : urls) {
-                    String jarFile = new Path(url.getFile()).lastSegment();
-                    if (!neededJars.contains(jarFile) && (classpath == null || !classpath.contains(jarFile))) {
-                        File file = new File(url.toURI());
-                        Long fileSize = file.length();
-                        String path = url.getPath().substring(url.getPath().indexOf("/plugins/") + 9);
-                        strBuff.append(path + " : " + fileSize + "\n");
-                        totalSize += fileSize;
-                    }
-
-                }
-            }
-            if (name.contains(".components.")) {
-                List<URL> urls = FilesUtils.getFilesFromFolder(bundle, "/components", ".jar", true, true);
-                for (URL url : urls) {
-                    String jarFile = new Path(url.getFile()).lastSegment();
-                    if (!neededJars.contains(jarFile)) {
-                        File file = new File(url.toURI());
-                        Long fileSize = file.length();
-                        String path = url.getPath().substring(url.getPath().indexOf("/plugins/") + 9);
-                        strBuff.append(path + " : " + fileSize + "\n");
-                        totalSize += fileSize;
-                    }
-                }
-            }
-        }
-
-        if (strBuff.length() != 0) {
-            fail("Unused jars still in product (total byte size: " + totalSize + "):\n" + strBuff);
-        }
     }
 
     /**
@@ -808,6 +756,26 @@ public class LocalLibraryManagerTest {
         tmpFolderPath = tmpFolderPath + "/testLib"; //$NON-NLS-1$
 
         return new File(tmpFolderPath);
+    }
+
+    @Test
+    public void testCheckModuleStatus() throws URISyntaxException, IOException {
+        // test a existing apach jar
+        String urlPath = "platform:/plugin/org.talend.libraries.apache.common/lib/commons-lang3-3.0.jar";
+        String mvnURI = "mvn:org.talend.libraries/commons-lang3-3.0/6.0.0/jar";
+        ModuleNeeded module = new ModuleNeeded("test", "commons-lang3-3.0.jar", "test", true, null, null, mvnURI);
+        module.setModuleLocaion(urlPath);
+        localLibraryManager.checkModuleStatus(module);
+        Assert.assertEquals(module.getStatus(), ELibraryInstallStatus.INSTALLED);
+
+        Bundle bundle = Platform.getBundle("org.talend.librariesmanager.test");
+        URL entry = bundle.getEntry("/lib/test_jar1.jar");
+        ModuleNeeded module2 = new ModuleNeeded("module context", "test_jar1.jar", "test", true, null, null,
+                "mvn:org.apache/test_jar1/6.0.0-SNAPSHOT/jar");
+        localLibraryManager.deploy(FileLocator.toFileURL(entry).toURI(), module2.getMavenUri());
+        Assert.assertEquals(module2.getStatus(), ELibraryInstallStatus.INSTALLED);
+        Assert.assertEquals(module2.getDeployStatus(), ELibraryInstallStatus.DEPLOYED);
+
     }
 
 }

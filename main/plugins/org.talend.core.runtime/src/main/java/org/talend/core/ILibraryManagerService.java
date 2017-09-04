@@ -146,13 +146,6 @@ public interface ILibraryManagerService extends IService {
     public boolean checkJarInstalledFromPlatform(String uriPath);
 
     /**
-     * By default the return value from the list function will be refreshed only if any new jar is deployed or deleted.<br>
-     * Call this function will force the list update on the next call.<br>
-     * Mostly usefull for SVN libraries, after a SVN Update, this will force to refresh the current list of jars
-     */
-    public void forceListUpdate();
-
-    /**
      * @return true if svn share lib folder are set, otherwise return false.
      */
     public boolean isSvnLibSetup();
@@ -209,5 +202,7 @@ public interface ILibraryManagerService extends IService {
      * @return
      */
     public boolean isJarNeedToBeDeployed(File jarFile);
+
+    public void checkModuleStatus(ModuleNeeded module);
 
 }

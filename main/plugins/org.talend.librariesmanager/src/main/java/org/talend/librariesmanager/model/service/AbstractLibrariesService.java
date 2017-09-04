@@ -69,8 +69,6 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
 
     private static Logger log = Logger.getLogger(AbstractLibrariesService.class);
 
-    private final List<IChangedLibrariesListener> listeners = new ArrayList<IChangedLibrariesListener>();
-
     private ILibraryManagerService localLibraryManager = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
             ILibraryManagerService.class);
 
@@ -115,8 +113,6 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
             decode = source.getFile();
         }
         final File sourceFile = new File(decode);
-        final File targetFile = new File(LibrariesManagerUtils.getLibrariesPath(ECodeLanguage.JAVA) + File.separatorChar
-                + sourceFile.getName());
 
         if (!localLibraryManager.contains(source.getFile())) {
             localLibraryManager.deploy(sourceFile.toURI(), mavenUri);
@@ -129,9 +125,8 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
             }
         }
 
-        ModulesNeededProvider.userAddImportModules(targetFile.getPath(), sourceFile.getName(), ELibraryInstallStatus.INSTALLED);
         if (refresh) {
-            resetAndRefreshLocal(new String[] { sourceFile.getName() });
+            refreshLocal(new String[] { sourceFile.getName() });
         }
 
     }
@@ -144,7 +139,7 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
             namse[i] = new File(url.toString()).getName();
             deployLibrary(url, false);
         }
-        resetAndRefreshLocal(namse);
+        refreshLocal(namse);
     }
 
     private RepositoryContext getRepositoryContext() {
@@ -152,8 +147,8 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
         return (RepositoryContext) ctx.getProperty(Context.REPOSITORY_CONTEXT_KEY);
     }
 
-    private void resetAndRefreshLocal(final String names[]) {
-        refreshModulesNeeded();
+    private void refreshLocal(final String names[]) {
+        checkLibraries();
 
         // for feature 12877
         Project currentProject = ProjectManager.getInstance().getCurrentProject();
@@ -274,36 +269,21 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
 
     @Override
     public void checkLibraries() {
-        this.checkInstalledLibraries();
         fireLibrariesChanges();
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.talend.core.model.general.ILibrariesService#refreshModulesNeeded()
-     */
-    @Override
-    public void refreshModulesNeeded() {
-        fireLibrariesChanges();
-    }
-
-    public abstract void checkInstalledLibraries();
 
     @Override
     public void addChangeLibrariesListener(IChangedLibrariesListener listener) {
-        listeners.add(listener);
+        ModulesNeededProvider.addChangeLibrariesListener(listener);
     }
 
     @Override
     public void removeChangeLibrariesListener(IChangedLibrariesListener listener) {
-        listeners.remove(listener);
+        ModulesNeededProvider.removeChangeLibrariesListener(listener);
     }
 
     private void fireLibrariesChanges() {
-        for (IChangedLibrariesListener current : listeners) {
-            current.afterChangingLibraries();
-        }
+        ModulesNeededProvider.fireLibrariesChanges();
     }
 
     /*

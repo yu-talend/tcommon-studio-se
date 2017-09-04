@@ -156,16 +156,6 @@ public class LibrariesService implements ILibrariesService {
     /*
      * (non-Javadoc)
      * 
-     * @see org.talend.core.model.general.ILibrariesService#refreshModulesNeeded()
-     */
-    @Override
-    public void refreshModulesNeeded() {
-        this.getLibrariesService().refreshModulesNeeded();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see org.talend.core.model.general.ILibrariesService#undeployLibrary(java.net.URL)
      */
     @Override
@@ -216,17 +206,6 @@ public class LibrariesService implements ILibrariesService {
     @Override
     public void syncLibrariesFromLibs(IProgressMonitor... monitorWrap) {
         this.getLibrariesService().syncLibrariesFromLibs(monitorWrap);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.talend.core.model.general.ILibrariesService#syncLibrariesFromApp(org.eclipse.core.runtime.IProgressMonitor[])
-     */
-    @Override
-    public void syncLibrariesFromApp(IProgressMonitor... monitorWrap) {
-        this.getLibrariesService().syncLibrariesFromApp(monitorWrap);
     }
 
     /*

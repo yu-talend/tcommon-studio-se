@@ -585,7 +585,7 @@ public class ExternalModulesInstallDialog extends TitleAreaDialog implements IMo
                                             service.refreshComponentView();
                                         }
                                     }
-                                    LibManagerUiPlugin.getDefault().getLibrariesService().refreshModulesNeeded();
+                                    LibManagerUiPlugin.getDefault().getLibrariesService().checkLibraries();
                                 }
                             }
                         });
@@ -935,7 +935,7 @@ public class ExternalModulesInstallDialog extends TitleAreaDialog implements IMo
                     service.refreshComponentView();
                 }
             }
-            LibManagerUiPlugin.getDefault().getLibrariesService().refreshModulesNeeded();
+            LibManagerUiPlugin.getDefault().getLibrariesService().checkLibraries();
         }
     }
 

@@ -12,30 +12,24 @@
 // ============================================================================
 package org.talend.librariesmanager.model.service;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.Writer;
+import java.util.Set;
+
+import net.sf.json.JSONObject;
 
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.emf.common.util.URI;
-import org.eclipse.emf.ecore.resource.Resource;
-import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.emf.ecore.xmi.XMLResource;
-import org.eclipse.emf.ecore.xmi.impl.XMLParserPoolImpl;
-import org.talend.commons.exception.CommonExceptionHandler;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.exception.LoginException;
 import org.talend.commons.exception.PersistenceException;
-import org.talend.commons.runtime.model.emf.EmfHelper;
 import org.talend.commons.utils.workbench.resources.ResourceUtils;
 import org.talend.core.model.general.Project;
 import org.talend.core.runtime.CoreRuntimePlugin;
-import org.talend.librariesmanager.emf.librariesindex.CustomURIMap;
-import org.talend.librariesmanager.emf.librariesindex.LibrariesindexFactory;
-import org.talend.librariesmanager.emf.librariesindex.LibrariesindexPackage;
-import org.talend.librariesmanager.emf.librariesindex.util.LibrariesindexResourceFactoryImpl;
 import org.talend.repository.ProjectManager;
 import org.talend.repository.RepositoryWorkUnit;
 import org.talend.repository.model.IProxyRepositoryFactory;
@@ -46,51 +40,54 @@ import org.talend.repository.model.IProxyRepositoryFactory;
  */
 public class CustomUriManager {
 
-    private CustomURIMap customURIMap;
+    private JSONObject customURIObject;
 
     private static CustomUriManager manager = new CustomUriManager();;
 
-    private static final String CUSTOM_URI_MAP = "CustomURIMap.xml";
+    private static final String CUSTOM_URI_MAP = "CustomURIMapping.json";
 
     private CustomUriManager() {
-        customURIMap = loadResources(getResourcePath(), CUSTOM_URI_MAP, true);
+        try {
+            customURIObject = loadResources(getResourcePath(), CUSTOM_URI_MAP, true);
+        } catch (Exception e) {
+            ExceptionHandler.process(e);
+        }
     }
 
     public static CustomUriManager getInstance() {
         return manager;
     }
 
-    private synchronized CustomURIMap loadResources(String path, String fileName, boolean create) {
-        CustomURIMap customURIMap = null;
-        if (create && !new File(path + "/" + fileName).exists()) {
-            customURIMap = LibrariesindexFactory.eINSTANCE.createCustomURIMap();
-        } else {
-            try {
-                Resource resource = createLibrariesIndexResource(path, fileName);
-                Map optionMap = new HashMap();
-                optionMap.put(XMLResource.OPTION_DEFER_ATTACHMENT, Boolean.TRUE);
-                optionMap.put(XMLResource.OPTION_DEFER_IDREF_RESOLUTION, Boolean.TRUE);
-                optionMap.put(XMLResource.OPTION_USE_PARSER_POOL, new XMLParserPoolImpl());
-                optionMap.put(XMLResource.OPTION_USE_XML_NAME_TO_FEATURE_MAP, new HashMap());
-                optionMap.put(XMLResource.OPTION_USE_DEPRECATED_METHODS, Boolean.FALSE);
-                resource.load(optionMap);
-                customURIMap = (CustomURIMap) EcoreUtil.getObjectByType(resource.getContents(),
-                        LibrariesindexPackage.eINSTANCE.getCustomURIMap());
-            } catch (IOException e) {
-                CommonExceptionHandler.process(e);
+    private synchronized JSONObject loadResources(String path, String fileName, boolean create) throws IOException {
+        BufferedReader br = null;
+        JSONObject jsonObj = new JSONObject();
+        try {
+            File file = new File(path, fileName);
+            if (file.exists()) {
+                br = new BufferedReader(new FileReader(file));
+                StringBuffer buffer = new StringBuffer();
+                String line = null;
+                while ((line = br.readLine()) != null) {
+                    buffer.append(line);
+                }
+                jsonObj = JSONObject.fromObject(buffer.toString());
+            }
+        } finally {
+            if (br != null) {
+                br.close();
             }
         }
-        return customURIMap;
-
+        return jsonObj;
     }
 
-    private void saveResource(CustomURIMap customMap, String filePath, String fileName) {
+    private void saveResource(JSONObject customMap, String filePath, String fileName) {
         try {
-            Resource resource = createLibrariesIndexResource(filePath, fileName);
-            resource.getContents().add(customMap);
-            EmfHelper.saveResource(customMap.eResource());
-        } catch (PersistenceException e1) {
-            CommonExceptionHandler.process(e1);
+            FileWriter fileWriter = new FileWriter(new File(filePath, fileName));
+            Writer writer = customMap.write(fileWriter);
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            ExceptionHandler.process(e);
         }
     }
 
@@ -100,18 +97,12 @@ public class CustomUriManager {
 
             @Override
             public void run() throws PersistenceException, LoginException {
-                saveResource(customURIMap, getResourcePath(), CUSTOM_URI_MAP);
+                saveResource(customURIObject, getResourcePath(), CUSTOM_URI_MAP);
             }
         };
         IProxyRepositoryFactory factory = CoreRuntimePlugin.getInstance().getProxyRepositoryFactory();
         factory.executeRepositoryWorkUnit(repositoryWorkUnit);
 
-    }
-
-    private Resource createLibrariesIndexResource(String installLocation, String fileName) {
-        URI uri = URI.createFileURI(installLocation).appendSegment(fileName);
-        LibrariesindexResourceFactoryImpl indexFact = new LibrariesindexResourceFactoryImpl();
-        return indexFact.createResource(uri);
     }
 
     private String getResourcePath() {
@@ -128,28 +119,33 @@ public class CustomUriManager {
 
     public void put(String key, String value) {
         if (value != null) {
-            customURIMap.getUriMap().put(key, value);
+            customURIObject.put(key, value);
         } else {
-            customURIMap.getUriMap().remove(key);
+            customURIObject.remove(key);
         }
     }
 
     public String get(String key) {
-        return customURIMap.getUriMap().get(key);
+        if (customURIObject.containsKey(key)) {
+            return customURIObject.getString(key);
+        }
+        return null;
+    }
+
+    public Set<String> keySet() {
+        return customURIObject.keySet();
     }
 
     public void importSettings(String filePath, String fileName) throws Exception {
-        CustomURIMap loadResources = loadResources(filePath, fileName, false);
+        JSONObject loadResources = loadResources(filePath, fileName, false);
         if (loadResources != null) {
-            customURIMap.getUriMap().putAll(loadResources.getUriMap());
-        } else {
-            throw new Exception("Can't load the settings file :" + fileName);
+            customURIObject.putAll(loadResources);
         }
         saveCustomURIMap();
     }
 
     public void exportSettings(String filePath, String fileName) {
-        saveResource(customURIMap, filePath, fileName);
+        saveResource(customURIObject, filePath, fileName);
     }
 
 }

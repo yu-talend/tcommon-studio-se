@@ -82,9 +82,6 @@ public interface ILibrariesService extends IService {
     public void syncLibraries(IProgressMonitor... monitorWrap);
 
     @Deprecated
-    public void syncLibrariesFromApp(IProgressMonitor... monitorWrap);
-
-    @Deprecated
     public void syncLibrariesFromLibs(IProgressMonitor... monitorWrap);
 
     public void checkLibraries();
@@ -94,8 +91,6 @@ public interface ILibrariesService extends IService {
     public void removeChangeLibrariesListener(IChangedLibrariesListener listener);
 
     public void resetModulesNeeded();
-
-    public void refreshModulesNeeded();
 
     public void updateModulesNeededForCurrentJob(IProcess process);
 

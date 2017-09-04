@@ -103,16 +103,13 @@ public class ModulesViewComposite extends Composite {
 
             @Override
             public String get(ModuleNeeded bean) {
-                String str = null;
+                String str = bean.getContext();
                 switch (bean.getStatus()) {
                 case INSTALLED:
                     str = Messages.getString("ModulesViewComposite.hint.installed"); //$NON-NLS-1$
                     break;
                 case NOT_INSTALLED:
                     str = Messages.getString("ModulesViewComposite.hint.notInstalled"); //$NON-NLS-1$
-                    break;
-                case UNUSED:
-                    str = "Unused"; //$NON-NLS-1$
                     break;
                 default:
                     str = Messages.getString("ModulesViewComposite.hint.unknown"); //$NON-NLS-1$
@@ -302,8 +299,7 @@ public class ModulesViewComposite extends Composite {
      */
     public void refresh() {
         List<ModuleNeeded> modulesNeeded = new ArrayList<ModuleNeeded>();
-        modulesNeeded.addAll(ModulesNeededProvider.getModulesNeeded());
-        modulesNeeded.addAll(ModulesNeededProvider.getUnUsedModules());
+        modulesNeeded.addAll(ModulesNeededProvider.getAllManagedModules());
         ModulesViewComposite.getTableViewerCreator().init(modulesNeeded);
         tableViewerCreator.getTableViewer().refresh();
     }

@@ -43,9 +43,6 @@ public class StatusImageProvider implements IColumnImageProvider {
                 eImage = ECoreImage.MODULE_WARNING_ICON;
             }
             break;
-        case UNUSED:
-            eImage = ECoreImage.MODULE_UNKNOWN_ICON;
-            break;
         default:
             eImage = ECoreImage.MODULE_UNKNOWN_ICON;
             break;
