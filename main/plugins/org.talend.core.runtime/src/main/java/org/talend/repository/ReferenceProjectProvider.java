@@ -46,12 +46,8 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
 
     private List<ProjectReference> referenceProjectList = new ArrayList<ProjectReference>();
 
-    private String name;
-
     public ReferenceProjectProvider(Project project) {
         this.project = project;
-        this.name = project.getTechnicalLabel();
-
     }
 
     public void initSettings() throws InvalidProjectException, PersistenceException, BusinessException {

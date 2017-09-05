@@ -150,7 +150,7 @@ public final class ProjectManager {
             if (repositoryContext != null) {
                 currentProject = repositoryContext.getProject();
                 if (currentProject != null) {
-                    resolveRefProject(currentProject.getEmfProject());
+                    resolveRefProject(currentProject.getEmfProject(), new HashSet<String>());
                 }
                 return;
             }
@@ -158,31 +158,32 @@ public final class ProjectManager {
         currentProject = null;
     }
 
-    @SuppressWarnings("unchecked")
-    private void resolveRefProject(org.talend.core.model.properties.Project p) {
+    private void resolveRefProject(org.talend.core.model.properties.Project p, Set<String> resolvedProjectLabels) {
         Context ctx = CoreRuntimePlugin.getInstance().getContext();
         if (p != null && ctx != null) {
             String parentBranch = ProjectManager.getInstance().getMainProjectBranch(p);
             if (parentBranch != null) {
+                resolvedProjectLabels.add(p.getTechnicalLabel());
                 for (ProjectReference pr : new Project(p).getProjectReferenceList()) {
-                    if (ProjectManager.validReferenceProject(p, pr)) {
-                        resolveRefProject(pr.getReferencedProject()); // only to resolve all
+                    if (ProjectManager.validReferenceProject(p, pr) && !resolvedProjectLabels.contains(pr.getReferencedProject().getTechnicalLabel())) {
+                        resolveRefProject(pr.getReferencedProject(), resolvedProjectLabels); // only to resolve all
                     }
                 }
             }
         }
     }
 
-    private void resolveSubRefProject(org.talend.core.model.properties.Project p, List<Project> allReferencedprojects) {
+    private void resolveSubRefProject(org.talend.core.model.properties.Project p, List<Project> allReferencedprojects, Set<String> resolvedProjectLabels) {
         Context ctx = CoreRuntimePlugin.getInstance().getContext();
         if (ctx != null && p != null) {
             String parentBranch = ProjectManager.getInstance().getMainProjectBranch(p);
             if (parentBranch != null) {
+                resolvedProjectLabels.add(p.getTechnicalLabel());
                 for (ProjectReference pr : new Project(p).getProjectReferenceList()) {
-                    if (ProjectManager.validReferenceProject(p, pr)) {
+                    if (ProjectManager.validReferenceProject(p, pr) && !resolvedProjectLabels.contains(pr.getReferencedProject().getTechnicalLabel())) {
                         Project project = new Project(pr.getReferencedProject(), false);
                         allReferencedprojects.add(project);
-                        resolveSubRefProject(pr.getReferencedProject(), allReferencedprojects); // only to resolve all
+                        resolveSubRefProject(pr.getReferencedProject(), allReferencedprojects, resolvedProjectLabels); // only to resolve all
                     }
                 }
             }
@@ -213,7 +214,7 @@ public final class ProjectManager {
             if (rProjects != null) {
                 for (org.talend.core.model.properties.Project p : rProjects) {
                     Project project = new Project(p);
-                    resolveRefProject(p);
+                    resolveRefProject(p, new HashSet<String>());
                     referencedprojects.add(project);
                 }
             }
@@ -272,7 +273,7 @@ public final class ProjectManager {
                     for (org.talend.core.model.properties.Project p : rProjects) {
                         Project project = new Project(p);
                         allReferencedprojects.add(project);
-                        resolveSubRefProject(p, allReferencedprojects);
+                        resolveSubRefProject(p, allReferencedprojects, new HashSet<String>());
                     }
                 }
             }
@@ -284,7 +285,6 @@ public final class ProjectManager {
      *
      * return the referenced projects of the project.
      */
-    @SuppressWarnings("unchecked")
     public List<Project> getReferencedProjects(Project project) {
         Context ctx = CoreRuntimePlugin.getInstance().getContext();
         if (project != null && ctx != null) {
@@ -840,7 +840,7 @@ public final class ProjectManager {
                 projectRefSetting = allLocalRefBranchSetting.getJSONObject(projectBranchId);
                 if (projectRefSetting != null
                         && !projectRefSetting.isNull(projectReference.getReferencedProject().getTechnicalLabel())) {
-                    return projectRefSetting.getString(projectReference.getProject().getTechnicalLabel());
+                    return projectRefSetting.getString(mainProject.getTechnicalLabel());
                 }
             }
         } catch (JSONException e) {

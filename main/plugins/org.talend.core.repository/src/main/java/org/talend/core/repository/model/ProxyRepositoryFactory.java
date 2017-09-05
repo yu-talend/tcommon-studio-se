@@ -19,12 +19,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
@@ -164,7 +161,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
 
     private final ProjectManager projectManager;
     
-    private Map<String, org.talend.core.model.properties.Project> emfProjectMap = new HashMap<String,org.talend.core.model.properties.Project>();
+    private Map<String, org.talend.core.model.properties.Project> emfProjectContentMap = new HashMap<String,org.talend.core.model.properties.Project>();
 
     @Override
     public synchronized void addPropertyChangeListener(PropertyChangeListener l) {
@@ -660,24 +657,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
             dqModelService.initTDQEMFResource();
         }
 
-        Project[] projects = this.repositoryFactoryFromProvider.readProject();
-        if (projects != null && projects.length > 0) {
-            Set<String> allAvaliableProjectSet = new HashSet<String>();
-            for (Project p : projects) {
-                allAvaliableProjectSet.add(p.getTechnicalLabel());
-                if (!emfProjectMap.containsKey(p.getTechnicalLabel())) {
-                    emfProjectMap.put(p.getTechnicalLabel(), p.getEmfProject());
-                }
-            }
-            if (allAvaliableProjectSet.size() != emfProjectMap.size()) {
-                for (Iterator iterator = emfProjectMap.keySet().iterator(); iterator.hasNext();) {
-                    if (!allAvaliableProjectSet.contains(iterator.next())) {
-                        iterator.remove();
-                    }
-                }
-            }
-        }
-        return projects;
+        return this.repositoryFactoryFromProvider.readProject();
     }
 
     @Override
@@ -1851,6 +1831,17 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
         return this.repositoryFactoryFromProvider.getModulesNeededForJobs();
     }
 
+    private void initEmfProjectContent() throws PersistenceException, BusinessException {
+        getRepositoryContext().setProject(null);
+        Project[] projects = readProject();
+        emfProjectContentMap.clear();
+        if (projects != null && projects.length > 0) {
+            for (Project p : projects) {
+                emfProjectContentMap.put(p.getTechnicalLabel(), p.getEmfProject());
+            }
+        }
+    }
+
     /**
      * DOC tang Comment method "logOnProject".
      * 
@@ -1884,8 +1875,8 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                 fullLogonFinished = false;
                 SubMonitor subMonitor = SubMonitor.convert(monitor, MAX_TASKS);
                 SubMonitor currentMonitor = subMonitor.newChild(1, SubMonitor.SUPPRESS_NONE);
-
                 currentMonitor.beginTask(Messages.getString("ProxyRepositoryFactory.logonInProgress"), 1); //$NON-NLS-1$
+                initEmfProjectContent();
                 getRepositoryContext().setProject(project);
 
                 currentMonitor = subMonitor.newChild(1, SubMonitor.SUPPRESS_NONE);
@@ -2032,6 +2023,9 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
         } catch (PersistenceException e) {
             logOffProject();
             throw e;
+        } catch (BusinessException e) {
+            logOffProject();
+            throw new PersistenceException(e);
         } catch (RuntimeException e) {
             logOffProject();
             throw e;
@@ -2347,10 +2341,10 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
     }
 
     public void updateEmfProjectContent(org.talend.core.model.properties.Project project) {
-        emfProjectMap.put(project.getTechnicalLabel(), project);
+        emfProjectContentMap.put(project.getTechnicalLabel(), project);
     }
 
     public org.talend.core.model.properties.Project getEmfProjectContent(String technicalLabel) {
-        return emfProjectMap.get(technicalLabel);
+        return emfProjectContentMap.get(technicalLabel);
     }
 }
