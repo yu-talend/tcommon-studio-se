@@ -116,7 +116,6 @@ Require-Bundle: org.eclipse.jdt.core,
  org.ops4j.pax.url.mvn,
  org.talend.components.api,
  org.apache.servicemix.bundles.avro,
- jackson-core-asl,
  org.talend.libraries.jackson
 Bundle-Activator: org.talend.core.runtime.CoreRuntimePlugin
 Bundle-ActivationPolicy: lazy
