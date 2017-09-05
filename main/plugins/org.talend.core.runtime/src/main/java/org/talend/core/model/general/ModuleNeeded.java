@@ -66,6 +66,8 @@ public class ModuleNeeded {
 
     private String moduleLocaion;
 
+    private String mavenUriFromConfiguration;
+
     private String mavenUri;
 
     private boolean dynamic;
@@ -247,7 +249,7 @@ public class ModuleNeeded {
         if (mvnUriStatusKey == null) {
             mvnUriStatusKey = getMavenUri();
         }
-        this.status = ModuleStatusProvider.getStatusMap().get(mvnUriStatusKey);
+        this.status = ModuleStatusProvider.getStatus(mvnUriStatusKey);
         return this.status;
     }
 
@@ -259,7 +261,7 @@ public class ModuleNeeded {
         if (mvnUriStatusKey == null) {
             mvnUriStatusKey = getMavenUri();
         }
-        this.installStatus = ModuleStatusProvider.getDeployStatusMap().get(mvnUriStatusKey);
+        this.installStatus = ModuleStatusProvider.getDeployStatus(mvnUriStatusKey);
         return this.installStatus;
     }
 
@@ -458,50 +460,45 @@ public class ModuleNeeded {
 
     }
 
-    public String getMavenUri(boolean autoGenerate) {
-        if (autoGenerate && (mavenUri == null || "".equals(mavenUri))) { //$NON-NLS-1$
-            // get the latest snapshot maven uri from index as default
-            String mvnUrisFromIndex = libManagerService.getMavenUriFromIndex(getModuleName());
-            if (mvnUrisFromIndex != null) {
-                final String[] split = mvnUrisFromIndex.split(MavenUrlHelper.MVN_INDEX_SPLITER);
-                String maxVerstion = null;
-                for (String mvnUri : split) {
-                    if (maxVerstion == null) {
-                        maxVerstion = mvnUri;
-                    } else {
-                        MavenArtifact lastArtifact = MavenUrlHelper.parseMvnUrl(maxVerstion);
-                        MavenArtifact currentArtifact = MavenUrlHelper.parseMvnUrl(mvnUri);
-                        if (lastArtifact != null && currentArtifact != null) {
-                            String lastV = lastArtifact.getVersion();
-                            lastV = lastV.replace(MavenConstants.SNAPSHOT, "");
-                            String currentV = currentArtifact.getVersion();
-                            currentV = currentV.replace(MavenConstants.SNAPSHOT, "");
-                            if (!lastV.equals(currentV)) {
-                                Version lastVersion = new Version(lastV);
-                                Version currentVersion = new Version(currentV);
-                                if (currentVersion.compareTo(lastVersion) > 0) {
-                                    maxVerstion = mvnUri;
+    public String getMavenUri() {
+        if (mavenUri == null) {
+            if (StringUtils.isEmpty(mavenUriFromConfiguration)) {
+                // get the latest snapshot maven uri from index as default
+                String mvnUrisFromIndex = libManagerService.getMavenUriFromIndex(getModuleName());
+                if (mvnUrisFromIndex != null) {
+                    final String[] split = mvnUrisFromIndex.split(MavenUrlHelper.MVN_INDEX_SPLITER);
+                    String maxVerstion = null;
+                    for (String mvnUri : split) {
+                        if (maxVerstion == null) {
+                            maxVerstion = mvnUri;
+                        } else {
+                            MavenArtifact lastArtifact = MavenUrlHelper.parseMvnUrl(maxVerstion);
+                            MavenArtifact currentArtifact = MavenUrlHelper.parseMvnUrl(mvnUri);
+                            if (lastArtifact != null && currentArtifact != null) {
+                                String lastV = lastArtifact.getVersion();
+                                lastV = lastV.replace(MavenConstants.SNAPSHOT, "");
+                                String currentV = currentArtifact.getVersion();
+                                currentV = currentV.replace(MavenConstants.SNAPSHOT, "");
+                                if (!lastV.equals(currentV)) {
+                                    Version lastVersion = new Version(lastV);
+                                    Version currentVersion = new Version(currentV);
+                                    if (currentVersion.compareTo(lastVersion) > 0) {
+                                        maxVerstion = mvnUri;
+                                    }
                                 }
                             }
                         }
-                    }
 
+                    }
+                    mavenUri = addTypeForMavenUri(maxVerstion, getModuleName());
+                } else {
+                    mavenUri = MavenUrlHelper.generateMvnUrlForJarName(getModuleName(), true, true);
                 }
-                mavenUri = addTypeForMavenUri(maxVerstion, getModuleName());
             } else {
-                mavenUri = MavenUrlHelper.generateMvnUrlForJarName(getModuleName(), true, true);
+                mavenUri = mavenUriFromConfiguration;
             }
         }
         return mavenUri;
-    }
-
-    /**
-     * Getter for mavenUriSnapshot.
-     *
-     * @return the mavenUriSnapshot
-     */
-    public String getMavenUri() {
-        return getMavenUri(true);
     }
 
     /**
@@ -510,7 +507,7 @@ public class ModuleNeeded {
      * @param mavenUrl the mavenUrl to set
      */
     public void setMavenUri(String mavenUri) {
-        this.mavenUri = addTypeForMavenUri(mavenUri, getModuleName());
+        this.mavenUriFromConfiguration = addTypeForMavenUri(mavenUri, getModuleName());
     }
 
     private String addTypeForMavenUri(String uri, String moduleName) {
@@ -553,6 +550,15 @@ public class ModuleNeeded {
 
     public void setCustomMavenUri(String customURI) {
         libManagerService.setCustomMavenURI(getMavenUri(), customURI);
+    }
+
+    /**
+     * Getter for mavenUriFromConfiguration.
+     * 
+     * @return the mavenUriFromConfiguration
+     */
+    public String getMavenUriFromConfiguration() {
+        return this.mavenUriFromConfiguration;
     }
 
 }

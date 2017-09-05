@@ -67,17 +67,17 @@ public class ModuleNeededTest {
     public void getGetMavenUri() {
         ModuleNeeded module1 = new ModuleNeeded("tMysqlInput", "test1.exe", "description", false, null, null,
                 "mvn:org.talend.libraries/test1/6.1.0");
-        Assert.assertEquals(module1.getMavenUri(false), "mvn:org.talend.libraries/test1/6.1.0/exe");
-        Assert.assertEquals(module1.getMavenUri(true), "mvn:org.talend.libraries/test1/6.1.0/exe");
+        Assert.assertEquals(module1.getMavenUriFromConfiguration(), "mvn:org.talend.libraries/test1/6.1.0/exe");
+        Assert.assertEquals(module1.getMavenUri(), "mvn:org.talend.libraries/test1/6.1.0/exe");
 
         ModuleNeeded module2 = new ModuleNeeded("tMysqlInput", "mysql-connector-java-5.1.30-bin.jar", null, false);
-        Assert.assertEquals(module2.getMavenUri(false), null);
-        Assert.assertEquals(module2.getMavenUri(true), "mvn:org.talend.libraries/mysql-connector-java-5.1.30-bin/6.0.0/jar");
+        Assert.assertEquals(module2.getMavenUriFromConfiguration(), null);
+        Assert.assertEquals(module2.getMavenUri(), "mvn:org.talend.libraries/mysql-connector-java-5.1.30-bin/6.0.0/jar");
 
         // jar not in configuration
         ModuleNeeded module3 = new ModuleNeeded("tMysqlInput", "ModuleNeededTest.jar", null, false);
-        Assert.assertEquals(module3.getMavenUri(false), null);
-        Assert.assertEquals(module3.getMavenUri(true), "mvn:org.talend.libraries/ModuleNeededTest/6.0.0-SNAPSHOT/jar");
+        Assert.assertEquals(module3.getMavenUriFromConfiguration(), null);
+        Assert.assertEquals(module3.getMavenUri(), "mvn:org.talend.libraries/ModuleNeededTest/6.0.0-SNAPSHOT/jar");
     }
 
     @Test

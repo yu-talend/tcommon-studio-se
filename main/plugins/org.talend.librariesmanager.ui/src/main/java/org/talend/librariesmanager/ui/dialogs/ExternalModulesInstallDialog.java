@@ -951,7 +951,7 @@ public class ExternalModulesInstallDialog extends TitleAreaDialog implements IMo
         for (ModuleToInstall module : theInputList) {
             if (!MavenConstants.DOWNLOAD_MANUAL.equals(module.getDistribution())
                     && !jarsInstalledSuccuss.contains(module.getName())
-                    && ELibraryInstallStatus.INSTALLED != ModuleStatusProvider.getStatusMap().get(module.getMavenUri())) {
+                    && ELibraryInstallStatus.INSTALLED != ModuleStatusProvider.getStatus(module.getMavenUri())) {
                 toInstall.add(module);
             }
         }

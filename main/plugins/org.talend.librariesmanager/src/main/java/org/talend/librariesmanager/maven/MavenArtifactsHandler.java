@@ -88,8 +88,8 @@ public class MavenArtifactsHandler {
             TalendMavenResolver.upload(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifactType,
                     artifact.getVersion(), libFile);
 
-            ModuleStatusProvider.getDeployStatusMap().put(mavenUri, ELibraryInstallStatus.DEPLOYED);
-            ModuleStatusProvider.getStatusMap().put(mavenUri, ELibraryInstallStatus.INSTALLED);
+            ModuleStatusProvider.putDeployStatus(mavenUri, ELibraryInstallStatus.DEPLOYED);
+            ModuleStatusProvider.putStatus(mavenUri, ELibraryInstallStatus.INSTALLED);
 
             // pom
             boolean generated = false;

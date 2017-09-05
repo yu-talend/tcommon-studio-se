@@ -39,7 +39,12 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.ui.runtime.expressionbuilder.ICellEditorDialog;
+import org.talend.core.GlobalServiceRegister;
+import org.talend.core.ILibraryManagerService;
 import org.talend.core.model.general.ModuleNeeded;
+import org.talend.core.nexus.TalendLibsServerManager;
+import org.talend.core.runtime.maven.MavenArtifact;
+import org.talend.core.runtime.maven.MavenUrlHelper;
 import org.talend.librariesmanager.ui.LibManagerUiPlugin;
 import org.talend.librariesmanager.ui.i18n.Messages;
 
@@ -57,18 +62,20 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
 
     private Button useCustomBtn;
 
+    private Label errorLabel;
+
     private ModuleNeeded module;
 
     private CustomURITextCellEditor cellEditor;
 
     // match mvn:group-id/artifact-id/version/type/classifier
-    private String expression1 = "(mvn:(\\w+.*/)(\\w+.*/)(([0-9]+\\.)+[0-9]/)(\\w+/)(\\w+))";
+    private String expression1 = "(mvn:(\\w+.*/)(\\w+.*/)(([0-9]+\\.)+[0-9](-SNAPSHOT){0,1}/)(\\w+/)(\\w+))";
 
     // match mvn:group-id/artifact-id/version/type
-    private String expression2 = "(mvn:(\\w+.*/)(\\w+.*/)(([0-9]+\\.)+[0-9]/)\\w+)";
+    private String expression2 = "(mvn:(\\w+.*/)(\\w+.*/)(([0-9]+\\.)+[0-9](-SNAPSHOT){0,1}/)\\w+)";
 
     // match mvn:group-id/artifact-id/version
-    private String expression3 = "(mvn:(\\w+.*/)(\\w+.*/)([0-9]+\\.)+[0-9])";
+    private String expression3 = "(mvn:(\\w+.*/)(\\w+.*/)(([0-9]+\\.)+[0-9](-SNAPSHOT){0,1}))";
 
     private PatternMatcherInput patternMatcherInput;
 
@@ -172,8 +179,8 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
             customUriText.setText(customMavenUri);
         }
 
-        final Label errorLabel = new Label(container, SWT.NONE);
-        gdData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+        errorLabel = new Label(container, SWT.WRAP);
+        gdData = new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL);
         gdData.horizontalSpan = 3;
         errorLabel.setLayoutData(gdData);
         errorLabel.setForeground(getShell().getDisplay().getSystemColor(SWT.COLOR_RED));
@@ -263,6 +270,8 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
      */
     @Override
     protected void okPressed() {
+        ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+                ILibraryManagerService.class);
         if (useCustomBtn.getSelection()) {
             if (customUriText.getText() != null && !useCustomBtn.getText().equals(module.getCustomMavenUri())) {
                 if (cellEditor != null) {
@@ -275,23 +284,46 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
         } else {
             if (cellEditor != null) {
                 cellEditor.setConsumerExpression(originalUriTxt.getText());
+                cellEditor.fireApplyEditorValue();
             }
         }
+        String mvnUri = module.getCustomMavenUri();
+        if (mvnUri == null) {
+            mvnUri = module.getMavenUri();
+        }
+        String jarPathFromMaven = libManagerService.getJarPathFromMaven(mvnUri);
         if (jarPathTxt.getText() != null) {
             File file = new File(jarPathTxt.getText().trim());
             if (file.exists()) {
-                String mvnUri = module.getCustomMavenUri();
-                if (mvnUri == null) {
-                    mvnUri = module.getMavenUri();
-                }
                 try {
+                    MavenArtifact parseMvnUrl = MavenUrlHelper.parseMvnUrl(mvnUri);
+                    // TODO not allow to re-deploy only for remote repository now . maybe need to do the same as local
+                    // latter ?
+                    if (TalendLibsServerManager.getInstance().getCustomNexusServer() != null
+                            && !parseMvnUrl.getVersion().endsWith(MavenUrlHelper.VERSION_SNAPSHOT)) {
+                        boolean exist = false;
+                        if (jarPathFromMaven == null) {
+                            File resolveJar = libManagerService.resolveJar(TalendLibsServerManager.getInstance(),
+                                    TalendLibsServerManager.getInstance().getCustomNexusServer(), mvnUri);
+                            if (resolveJar != null) {
+                                exist = true;
+                            }
+                        } else {
+                            exist = true;
+                        }
+                        if (exist) {
+                            getButton(IDialogConstants.OK_ID).setEnabled(false);
+                            errorLabel.setText(Messages.getString("InstallModuleDialog.error.exsit"));
+                            return;
+                        }
+                    }
                     LibManagerUiPlugin.getDefault().getLibrariesService().deployLibrary(file.toURL(), mvnUri);
                 } catch (Exception e) {
                     ExceptionHandler.process(e);
                 }
             }
         }
-
         super.okPressed();
+        LibManagerUiPlugin.getDefault().getLibrariesService().checkLibraries();
     }
 }

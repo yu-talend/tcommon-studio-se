@@ -148,8 +148,8 @@ public class MavenArtifactsHandlerTest {
         final String mavenUri = "mvn:org.talend.libraries/mytest/6.0.0/jar";
         new MavenArtifactsHandler().install(mavenUri, localJarFile.getAbsolutePath(), localPomFile.getAbsolutePath(), false);
 
-        Assert.assertEquals(ELibraryInstallStatus.DEPLOYED, ModuleStatusProvider.getDeployStatusMap().get(mavenUri));
-        Assert.assertEquals(ELibraryInstallStatus.INSTALLED, ModuleStatusProvider.getStatusMap().get(mavenUri));
+        Assert.assertEquals(ELibraryInstallStatus.DEPLOYED, ModuleStatusProvider.getDeployStatus(mavenUri));
+        Assert.assertEquals(ELibraryInstallStatus.INSTALLED, ModuleStatusProvider.getStatus(mavenUri));
 
         Assert.assertTrue(repoJarFile.exists());
         Assert.assertTrue(repoPomFile.exists());
@@ -164,8 +164,8 @@ public class MavenArtifactsHandlerTest {
         final String mavenUri = "mvn:org.talend.libraries/mytest/6.0.0";
         new MavenArtifactsHandler().install(mavenUri, localJarFile.getAbsolutePath(), localPomFile.getAbsolutePath(), false);
 
-        Assert.assertEquals(ELibraryInstallStatus.DEPLOYED, ModuleStatusProvider.getDeployStatusMap().get(mavenUri));
-        Assert.assertEquals(ELibraryInstallStatus.INSTALLED, ModuleStatusProvider.getStatusMap().get(mavenUri));
+        Assert.assertEquals(ELibraryInstallStatus.DEPLOYED, ModuleStatusProvider.getDeployStatus(mavenUri));
+        Assert.assertEquals(ELibraryInstallStatus.INSTALLED, ModuleStatusProvider.getStatus(mavenUri));
 
         Assert.assertTrue(repoJarFile.exists());
         Assert.assertTrue(repoPomFile.exists());
@@ -180,8 +180,8 @@ public class MavenArtifactsHandlerTest {
         final String mavenUri = "mvn:org.talend.libraries/mytest_jar/6.4.1/zip";
         new MavenArtifactsHandler().install(mavenUri, localZipFile.getAbsolutePath(), null, false);
 
-        Assert.assertEquals(ELibraryInstallStatus.DEPLOYED, ModuleStatusProvider.getDeployStatusMap().get(mavenUri));
-        Assert.assertEquals(ELibraryInstallStatus.INSTALLED, ModuleStatusProvider.getStatusMap().get(mavenUri));
+        Assert.assertEquals(ELibraryInstallStatus.DEPLOYED, ModuleStatusProvider.getDeployStatus(mavenUri));
+        Assert.assertEquals(ELibraryInstallStatus.INSTALLED, ModuleStatusProvider.getStatus(mavenUri));
 
         final String localRepositoryPath = MavenPlugin.getMaven().getLocalRepositoryPath();
         Assert.assertNotNull(localRepositoryPath);
@@ -202,8 +202,8 @@ public class MavenArtifactsHandlerTest {
         Assert.assertNull(customURIManager.get(mavenUri));
 
         new MavenArtifactsHandler().install(mavenUri, localJarFile.getAbsolutePath(), null, false);
-        Assert.assertEquals(ELibraryInstallStatus.DEPLOYED, ModuleStatusProvider.getDeployStatusMap().get(mavenUri));
-        Assert.assertEquals(ELibraryInstallStatus.INSTALLED, ModuleStatusProvider.getStatusMap().get(mavenUri));
+        Assert.assertEquals(ELibraryInstallStatus.DEPLOYED, ModuleStatusProvider.getDeployStatus(mavenUri));
+        Assert.assertEquals(ELibraryInstallStatus.INSTALLED, ModuleStatusProvider.getStatus(mavenUri));
         Assert.assertEquals(customURIManager.get(mavenUri), mavenUri);
 
         String localMavenUri = mavenUri.replace("mvn:", "mvn:" + MavenConstants.LOCAL_RESOLUTION_URL + "!");
