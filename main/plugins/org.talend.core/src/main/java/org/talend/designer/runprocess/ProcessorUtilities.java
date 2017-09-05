@@ -377,8 +377,8 @@ public class ProcessorUtilities {
         }
 
         boolean isMainJob = false;
+        List<IClasspathAdjuster> classPathAdjusters = ClasspathAdjusterProvider.getClasspathAdjuster();
         if (jobInfo.getFatherJobInfo() == null) {
-
             // In order to avoid eclipse to compile the code at each change in the workspace, we deactivate the
             // auto-build feature during the whole build time.
             // It will be reactivated at the end if the auto-build is activated in the workspace preferences.
@@ -405,6 +405,10 @@ public class ProcessorUtilities {
             // if it's the father, reset the processMap to ensure to have a good
             // code generation
             ItemCacheManager.clearCache();
+
+            for (IClasspathAdjuster adjuster : classPathAdjusters) {
+                adjuster.initialize();
+            }
         }
 
         IProcess currentProcess = null;
@@ -445,11 +449,6 @@ public class ProcessorUtilities {
             }
         } else {
             currentProcess = jobInfo.getProcess();
-        }
-
-        List<IClasspathAdjuster> classPathAdjusters = ClasspathAdjusterProvider.getClasspathAdjuster();
-        for (IClasspathAdjuster adjuster : classPathAdjusters) {
-            adjuster.initialize();
         }
 
         IProcessor processor = null;
@@ -778,6 +777,7 @@ public class ProcessorUtilities {
                 return null;
             }
             boolean isMainJob = false;
+            List<IClasspathAdjuster> classPathAdjusters = ClasspathAdjusterProvider.getClasspathAdjuster();
             if (jobInfo.getFatherJobInfo() == null) {
                 isMainJob = true;
                 codeModified = false;
@@ -792,6 +792,10 @@ public class ProcessorUtilities {
                 // if it's the father, reset the processMap to ensure to have a good
                 // code generation
                 ItemCacheManager.clearCache();
+
+                for (IClasspathAdjuster adjuster : classPathAdjusters) {
+                    adjuster.initialize();
+                }
             }
 
             IProcess currentProcess = null;
@@ -832,11 +836,6 @@ public class ProcessorUtilities {
                 }
             } else {
                 currentProcess = jobInfo.getProcess();
-            }
-
-            List<IClasspathAdjuster> classPathAdjusters = ClasspathAdjusterProvider.getClasspathAdjuster();
-            for (IClasspathAdjuster adjuster : classPathAdjusters) {
-                adjuster.initialize();
             }
 
             IProcessor processor = null;
