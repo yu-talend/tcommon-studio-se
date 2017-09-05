@@ -6,13 +6,13 @@ Bundle-Version: 6.5.0.qualifier
 Bundle-Activator: org.talend.maven.aether.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
- org.eclipse.aether.api;bundle-version="1.0.1",
- org.eclipse.aether.connector.basic;bundle-version="1.0.1",
- org.eclipse.aether.impl;bundle-version="1.0.1",
- org.eclipse.aether.spi;bundle-version="1.0.1",
- org.eclipse.aether.transport.file;bundle-version="1.0.1",
- org.eclipse.aether.transport.http;bundle-version="1.0.1",
- org.eclipse.aether.util;bundle-version="1.0.1"
+ org.eclipse.aether.api,
+ org.eclipse.aether.connector.basic,
+ org.eclipse.aether.impl,
+ org.eclipse.aether.spi,
+ org.eclipse.aether.transport.file,
+ org.eclipse.aether.transport.http,
+ org.eclipse.aether.util
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/maven-aether-provider-3.2.1.jar,
