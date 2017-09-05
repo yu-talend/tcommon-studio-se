@@ -53,6 +53,7 @@ public class CoreServiceTest {
             IRunProcessService runProcessService = (IRunProcessService) GlobalServiceRegister.getDefault()
                     .getService(IRunProcessService.class);
             talendProcessJavaProject = runProcessService.getTalendProcessJavaProject();
+            //TODO create a temp job code project
         }
     }
 
@@ -80,11 +81,11 @@ public class CoreServiceTest {
         IFolder resourceMappingFolder = talendProcessJavaProject.getResourceSubFolder(null, JavaUtils.JAVA_XML_MAPPING);
         String projectMappingFolder = MetadataTalendType.getProjectForderURLOfMappingsFile().getPath();
 
-        service.synchronizeMapptingXML();
+        service.synchronizeMapptingXML(talendProcessJavaProject);
 
         modifyTargetFolder(resourceMappingFolder);
 
-        service.synchronizeMapptingXML();
+        service.synchronizeMapptingXML(talendProcessJavaProject);
 
         validateConsistence(projectMappingFolder, resourceMappingFolder.getLocation().toPortableString());
     }
@@ -106,7 +107,7 @@ public class CoreServiceTest {
         log4jStrFromSettings = getFileContent(tmpFile);
         tmpFile.delete(true, null);
 
-        service.syncLog4jSettings();
+        service.syncLog4jSettings(talendProcessJavaProject);
 
         IFolder resourceFolder = talendProcessJavaProject.getResourcesFolder();
         IFile log4jFile = resourceFolder.getFile("log4j.xml");
@@ -116,7 +117,7 @@ public class CoreServiceTest {
             log4jFile.setContents(in, true, false, null);
         }
 
-        service.syncLog4jSettings();
+        service.syncLog4jSettings(talendProcessJavaProject);
 
         String log4jStrFromResouce = getFileContent(log4jFile);
         

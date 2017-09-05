@@ -15,6 +15,7 @@ package org.talend.designer.runprocess;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -47,6 +48,7 @@ import org.talend.commons.utils.generation.JavaUtils;
 import org.talend.commons.utils.time.TimeMeasure;
 import org.talend.core.CorePlugin;
 import org.talend.core.GlobalServiceRegister;
+import org.talend.core.ICoreService;
 import org.talend.core.PluginChecker;
 import org.talend.core.context.Context;
 import org.talend.core.context.RepositoryContext;
@@ -57,6 +59,7 @@ import org.talend.core.model.components.ComponentCategory;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.core.model.metadata.IMetadataColumn;
 import org.talend.core.model.metadata.IMetadataTable;
+import org.talend.core.model.metadata.MetadataTalendType;
 import org.talend.core.model.process.IContext;
 import org.talend.core.model.process.IElementParameter;
 import org.talend.core.model.process.INode;
@@ -585,9 +588,23 @@ public class ProcessorUtilities {
      * This method is used when export job or joblet , check if one of the database component node use dynamic metadata
      */
     private static void checkMetadataDynamic(IProcess currentProcess, JobInfo jobInfo) {
-        if (exportConfig && !LastGenerationInfo.getInstance().isUseDynamic(jobInfo.getJobId(), jobInfo.getJobVersion())) {
+        if (!LastGenerationInfo.getInstance().isUseDynamic(jobInfo.getJobId(), jobInfo.getJobVersion())) {
             boolean hasDynamicMetadata = hasMetadataDynamic(currentProcess, jobInfo);
             LastGenerationInfo.getInstance().setUseDynamic(jobInfo.getJobId(), jobInfo.getJobVersion(), hasDynamicMetadata);
+            if (hasDynamicMetadata) {
+                try {
+                    URL url = MetadataTalendType.getProjectForderURLOfMappingsFile();
+                    if (url != null) {
+                        IFolder xmlMappingFolder = jobInfo.getProcessor().getTalendJavaProject().getResourceSubFolder(null, JavaUtils.JAVA_XML_MAPPING);
+                        if (xmlMappingFolder.members().length == 0 && GlobalServiceRegister.getDefault().isServiceRegistered(ICoreService.class)) {
+                            ICoreService coreService = (ICoreService) GlobalServiceRegister.getDefault().getService(ICoreService.class);
+                            coreService.synchronizeMapptingXML(jobInfo.getProcessor().getTalendJavaProject());
+                        }
+                    }
+                } catch (Exception e) {
+                    ExceptionHandler.process(e);
+                }
+            }
         }
     }
 

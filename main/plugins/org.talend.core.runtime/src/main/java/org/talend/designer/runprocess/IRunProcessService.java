@@ -174,7 +174,7 @@ public interface IRunProcessService extends IService {
      *
      * @param project
      */
-    public void updateLogFiles(IProject project, boolean isLogForJob);
+    public void updateLogFiles(ITalendProcessJavaProject talendJavaProject, boolean isLogForJob);
 
     public String getLogTemplate(String path);
 

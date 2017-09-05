@@ -572,7 +572,6 @@ public class MetadataTalendTypeEditor extends FieldEditor {
                 coreService = (ICoreService) GlobalServiceRegister.getDefault().getService(ICoreService.class);
                 coreService.syncMappingsFileFromSystemToProject();
                 tmpFileManager.reload();
-                coreService.synchronizeMapptingXML();
             }
             super.load();
         }
@@ -687,10 +686,6 @@ public class MetadataTalendTypeEditor extends FieldEditor {
         }
         if (needReload) {
             tmpFileManager.reload();
-            if (GlobalServiceRegister.getDefault().isServiceRegistered(ICoreService.class)) {
-                ICoreService coreService = (ICoreService) GlobalServiceRegister.getDefault().getService(ICoreService.class);
-                coreService.synchronizeMapptingXML();
-            }
         }
     }
 

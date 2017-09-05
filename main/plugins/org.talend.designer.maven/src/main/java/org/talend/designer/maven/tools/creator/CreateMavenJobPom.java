@@ -39,8 +39,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.utils.VersionUtils;
-import org.talend.core.GlobalServiceRegister;
-import org.talend.core.ICoreService;
 import org.talend.core.model.process.IContext;
 import org.talend.core.model.process.IProcess;
 import org.talend.core.model.process.IProcess2;
@@ -398,11 +396,6 @@ public class CreateMavenJobPom extends AbstractMavenProcessorPom {
         if (isOptionChecked(TalendProcessArgumentConstant.ARG_NEED_XMLMAPPINGS)) {
             setDefaultActivationForProfile(model, TalendMavenConstants.PROFILE_INCLUDE_XMLMAPPINGS, true);
             setDefaultActivationForProfile(model, TalendMavenConstants.PROFILE_INCLUDE_RUNNING_XMLMAPPINGS, true);
-            if (GlobalServiceRegister.getDefault().isServiceRegistered(ICoreService.class)) {
-                ICoreService coreService = (ICoreService) GlobalServiceRegister.getDefault().getService(ICoreService.class);
-                coreService.synchronizeMapptingXML();
-                coreService.syncLog4jSettings();
-            }
         }
         // rules
         if (isOptionChecked(TalendProcessArgumentConstant.ARG_NEED_RULES)) {

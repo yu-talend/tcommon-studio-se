@@ -397,6 +397,22 @@ public class PomUtil {
         }
         return artifactPath;
     }
+    
+    public static String getRelativeClassPathOfArtifact(MavenArtifact artifact) {
+        String path = getArtifactPath(artifact);
+        String repoPath = MavenPlugin.getMaven().getLocalRepositoryPath();
+        String repoName = repoPath.substring(repoPath.lastIndexOf("/") + 1); //$NON-NLS-1$
+        path = repoName + "/" + path; //$NON-NLS-1$
+        return path;
+    }
+    
+    public static String getExecLocationForClassPath() {
+        File repository = new File(MavenPlugin.getMaven().getLocalRepositoryPath());
+        if (repository.exists() && repository.isDirectory()) {
+            return repository.getParentFile().getAbsolutePath();
+        }
+        return null;
+    }
 
     public static String getAbsArtifactPath(MavenArtifact artifact) {
         if (artifact == null) {
