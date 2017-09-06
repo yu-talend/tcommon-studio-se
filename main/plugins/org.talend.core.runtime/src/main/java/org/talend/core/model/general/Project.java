@@ -18,6 +18,7 @@ import java.util.List;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.PlatformUI;
 import org.talend.commons.exception.BusinessException;
+import org.talend.commons.exception.CycleReferenceException;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.exception.InvalidProjectException;
 import org.talend.commons.exception.PersistenceException;
@@ -284,7 +285,7 @@ public class Project {
                 return false;
             }
         } else if (!this.project.equals(other.project)) {
-        	if(this.project.getTechnicalLabel().equals(other.project.getTechnicalLabel())) {
+            if(this.project.getTechnicalLabel().equals(other.project.getTechnicalLabel())) {
                 return true;
             }
             return false;
@@ -358,7 +359,7 @@ public class Project {
             referenceProjectProvider = new ReferenceProjectProvider(project);
             try {
                 referenceProjectProvider.initSettings();
-            } catch (InvalidProjectException | PersistenceException | BusinessException e) {
+            } catch (InvalidProjectException | PersistenceException  e) {
                 ExceptionHandler.process(e);
             }
         }
@@ -372,7 +373,7 @@ public class Project {
             referenceProjectProvider = new ReferenceProjectProvider(project);
             try {
                 referenceProjectProvider.initSettings();
-            } catch (InvalidProjectException | PersistenceException | BusinessException e) {
+            } catch (InvalidProjectException | PersistenceException e) {
                 ExceptionHandler.process(e);
             }
         }
