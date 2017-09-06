@@ -28,8 +28,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.talend.commons.exception.ExceptionHandler;
-import org.talend.commons.exception.PersistenceException;
-import org.talend.core.GlobalServiceRegister;
 import org.talend.core.model.process.IProcess;
 import org.talend.core.model.process.JobInfo;
 import org.talend.core.model.properties.Item;
@@ -39,7 +37,6 @@ import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.model.utils.JavaResourcesHelper;
 import org.talend.core.runtime.projectsetting.IProjectSettingTemplateConstants;
 import org.talend.core.runtime.repository.build.IMavenPomCreator;
-import org.talend.core.ui.ITestContainerProviderService;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.template.ETalendMavenVariables;
 import org.talend.designer.maven.tools.ProcessorDependenciesManager;
@@ -175,9 +172,6 @@ public abstract class AbstractMavenProcessorPom extends CreateMavenBundleTemplat
                     String groupId = model.getGroupId();
                     String artifactId = PomIdsHelper.getJobArtifactId(jobInfo);
                     String version = PomIdsHelper.getJobVersion(jobInfo);
-                    if (getDeployVersion() != null) {
-                        version = getDeployVersion();
-                    }
 
                     // try to get the pom version of children job and load from the pom file.
                     String childPomFileName = PomUtil.getPomFileName(jobInfo.getJobName(), jobInfo.getJobVersion());

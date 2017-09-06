@@ -77,7 +77,7 @@ public class ProjectPomProjectSettingPage extends AbstractPersistentProjectSetti
                         IRunProcessService.class);
                 ITalendProcessJavaProject talendJavaProject = service.getTalendProcessJavaProject();
                 if (talendJavaProject != null) {
-                    ProjectPomManager projectPomManager = new ProjectPomManager(talendJavaProject.getProject());
+                    ProjectPomManager projectPomManager = new ProjectPomManager();
                     try {
                         projectPomManager.updateFromTemplate(null);
                     } catch (Exception e) {

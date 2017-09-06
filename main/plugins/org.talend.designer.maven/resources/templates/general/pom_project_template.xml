@@ -18,10 +18,6 @@
 		<encoding>UTF-8</encoding>
 	</properties>
 
-	<dependencies>
-		<!-- some dependencies will be here to resolve the compile errors. -->
-	</dependencies>
-
 	<build>
 		<pluginManagement>
 			<plugins>
