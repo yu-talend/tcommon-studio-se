@@ -80,6 +80,7 @@ public class Nexus3RepositoryHandler extends AbstractArtifactRepositoryHandler {
             }
         } catch (Exception e) {
             ExceptionHandler.process(e);
+            connectionOk = false;
         }
         return connectionOk;
     }
