@@ -22,7 +22,6 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.talend.commons.exception.BusinessException;
 import org.talend.commons.exception.InvalidProjectException;
 import org.talend.commons.exception.PersistenceException;
 import org.talend.commons.utils.workbench.resources.ResourceUtils;
@@ -50,7 +49,7 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
         this.project = project;
     }
 
-    public void initSettings() throws InvalidProjectException, PersistenceException, BusinessException {
+    public void initSettings() throws InvalidProjectException, PersistenceException {
         ReferenceProjectProblemManager.getInstance().clearAll();
         IProxyRepositoryFactory proxyRepositoryFactory = CoreRuntimePlugin.getInstance().getProxyRepositoryFactory();
 

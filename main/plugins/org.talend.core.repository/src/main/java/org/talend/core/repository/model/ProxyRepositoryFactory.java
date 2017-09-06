@@ -58,6 +58,7 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.talend.commons.CommonsPlugin;
 import org.talend.commons.exception.BusinessException;
+import org.talend.commons.exception.CycleReferenceException;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.exception.LoginException;
 import org.talend.commons.exception.PersistenceException;
@@ -127,6 +128,7 @@ import org.talend.cwm.helper.SubItemHelper;
 import org.talend.cwm.helper.TableHelper;
 import org.talend.designer.runprocess.IRunProcessService;
 import org.talend.repository.ProjectManager;
+import org.talend.repository.ReferenceProjectProblemManager;
 import org.talend.repository.RepositoryWorkUnit;
 import org.talend.repository.documentation.ERepositoryActionName;
 import org.talend.repository.model.IProxyRepositoryFactory;
@@ -1887,6 +1889,9 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                 ProjectManager.getInstance().getBeforeLogonRecords().clear();
                 ProjectManager.getInstance().getUpdatedRemoteHandlerRecords().clear();
 
+                if (!ReferenceProjectProblemManager.checkCycleReference(project)) {
+                    throw new CycleReferenceException("The cycle project reference find."); //$NON-NLS-1$
+                }
                 // monitorWrap.worked(1);
                 TimeMeasure.step("logOnProject", "beforeLogon"); //$NON-NLS-1$ //$NON-NLS-2$
 
