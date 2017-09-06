@@ -46,9 +46,11 @@ public class CustomUriManager {
 
     private static final String CUSTOM_URI_MAP = "CustomURIMapping.json";
 
+    private static long lastModified = 0;
+
     private CustomUriManager() {
         try {
-            customURIObject = loadResources(getResourcePath(), CUSTOM_URI_MAP, true);
+            customURIObject = loadResources(getResourcePath(), CUSTOM_URI_MAP);
         } catch (Exception e) {
             ExceptionHandler.process(e);
         }
@@ -58,7 +60,7 @@ public class CustomUriManager {
         return manager;
     }
 
-    private synchronized JSONObject loadResources(String path, String fileName, boolean create) throws IOException {
+    private synchronized JSONObject loadResources(String path, String fileName) throws IOException {
         BufferedReader br = null;
         JSONObject jsonObj = new JSONObject();
         try {
@@ -80,12 +82,14 @@ public class CustomUriManager {
         return jsonObj;
     }
 
-    private void saveResource(JSONObject customMap, String filePath, String fileName) {
+    private void saveResource(JSONObject customMap, String filePath, String fileName, boolean isExport) {
         try {
-            FileWriter fileWriter = new FileWriter(new File(filePath, fileName));
+            File file = new File(filePath, fileName);
+            FileWriter fileWriter = new FileWriter(file);
             Writer writer = customMap.write(fileWriter);
             writer.flush();
             writer.close();
+            lastModified = file.lastModified();
         } catch (IOException e) {
             ExceptionHandler.process(e);
         }
@@ -97,10 +101,13 @@ public class CustomUriManager {
 
             @Override
             public void run() throws PersistenceException, LoginException {
-                saveResource(customURIObject, getResourcePath(), CUSTOM_URI_MAP);
+                saveResource(customURIObject, getResourcePath(), CUSTOM_URI_MAP, false);
             }
         };
         IProxyRepositoryFactory factory = CoreRuntimePlugin.getInstance().getProxyRepositoryFactory();
+        repositoryWorkUnit.setAvoidUnloadResources(true);
+        repositoryWorkUnit.setFilesModifiedOutsideOfRWU(true);
+        repositoryWorkUnit.setForceTransaction(true);
         factory.executeRepositoryWorkUnit(repositoryWorkUnit);
 
     }
@@ -118,6 +125,7 @@ public class CustomUriManager {
     }
 
     public void put(String key, String value) {
+        reloadCustomMapping();
         if (value != null) {
             customURIObject.put(key, value);
         } else {
@@ -126,6 +134,7 @@ public class CustomUriManager {
     }
 
     public String get(String key) {
+        reloadCustomMapping();
         if (customURIObject.containsKey(key)) {
             return customURIObject.getString(key);
         }
@@ -137,7 +146,7 @@ public class CustomUriManager {
     }
 
     public void importSettings(String filePath, String fileName) throws Exception {
-        JSONObject loadResources = loadResources(filePath, fileName, false);
+        JSONObject loadResources = loadResources(filePath, fileName);
         if (loadResources != null) {
             customURIObject.putAll(loadResources);
         }
@@ -145,7 +154,21 @@ public class CustomUriManager {
     }
 
     public void exportSettings(String filePath, String fileName) {
-        saveResource(customURIObject, filePath, fileName);
+        saveResource(customURIObject, filePath, fileName, true);
+    }
+
+    public void reloadCustomMapping() {
+        try {
+            File file = new File(getResourcePath(), CUSTOM_URI_MAP);
+            long modifyDate = file.lastModified();
+            if (modifyDate > lastModified) {
+                JSONObject loadResources = loadResources(getResourcePath(), CUSTOM_URI_MAP);
+                customURIObject.putAll(loadResources);
+                lastModified = modifyDate;
+            }
+        } catch (IOException e) {
+            ExceptionHandler.process(e);
+        }
     }
 
 }

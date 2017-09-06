@@ -164,7 +164,6 @@ public class ModulesNeededProvider {
                     }
                 }
                 // Custom URI Mapping
-                boolean customMapModified = false;
                 Set<String> modulesNeededMVNURIs = getModulesNeededMVNURIs();
                 for (String mvnURIKey : new HashSet<String>(CustomUriManager.getInstance().keySet())) {
                     String mvnURI = CustomUriManager.getInstance().get(mvnURIKey);
@@ -172,14 +171,8 @@ public class ModulesNeededProvider {
                         if (libManagerService.getJarPathFromMaven(mvnURI) != null) {
                             MavenArtifact artifact = MavenUrlHelper.parseMvnUrl(mvnURI);
                             addUnknownModules(artifact.getArtifactId() + "." + artifact.getType(), mvnURI, false);
-                        } else {
-                            customMapModified = true;
-                            CustomUriManager.getInstance().put(mvnURI, null);
                         }
                     }
-                }
-                if (customMapModified) {
-                    CustomUriManager.getInstance().saveCustomURIMap();
                 }
             } catch (MalformedURLException e) {
                 ExceptionHandler.process(e);
