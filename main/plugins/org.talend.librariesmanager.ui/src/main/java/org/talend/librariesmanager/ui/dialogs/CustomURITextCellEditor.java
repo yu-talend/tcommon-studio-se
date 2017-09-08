@@ -15,12 +15,15 @@ package org.talend.librariesmanager.ui.dialogs;
 import org.eclipse.swt.widgets.Composite;
 import org.talend.commons.ui.runtime.swt.tableviewer.celleditor.CellEditorDialogBehavior;
 import org.talend.commons.ui.runtime.swt.tableviewer.celleditor.ExtendedTextCellEditor;
+import org.talend.core.model.general.ModuleNeeded;
 
 /**
  * created by wchen on Aug 24, 2017 Detailled comment
  *
  */
 public class CustomURITextCellEditor extends ExtendedTextCellEditor {
+
+    private ModuleNeeded module;
 
     /**
      * DOC wchen CustomURITextCellEditor constructor comment.
@@ -51,5 +54,23 @@ public class CustomURITextCellEditor extends ExtendedTextCellEditor {
     public void activate() {
         super.activate();
         getTextControl().setEditable(false);
+    }
+
+    /**
+     * Getter for module.
+     * 
+     * @return the module
+     */
+    public ModuleNeeded getModule() {
+        return this.module;
+    }
+
+    /**
+     * Sets the module.
+     * 
+     * @param module the module to set
+     */
+    public void setModule(ModuleNeeded module) {
+        this.module = module;
     }
 }

@@ -238,4 +238,14 @@ public class LibrariesService implements ILibrariesService {
         getLibrariesService().deployLibrary(source, mavenUri);
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.core.model.general.ILibrariesService#deployLibrary(java.net.URL, java.lang.String, boolean)
+     */
+    @Override
+    public void deployLibrary(URL source, String mavenUri, boolean refresh) throws IOException {
+        getLibrariesService().deployLibrary(source, mavenUri, refresh);
+    }
+
 }

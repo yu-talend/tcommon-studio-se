@@ -109,8 +109,7 @@ public interface ILibraryManagerService extends IService {
      * @throws Exception
      * @throws IOException
      */
-    public File resolveJar(TalendLibsServerManager manager, final NexusServerBean customNexusServer, String uri)
-            throws Exception, IOException;
+    public File resolveJar(final NexusServerBean customNexusServer, String uri) throws Exception, IOException;
 
     /**
      * List all the jars (or other files) available.

@@ -63,6 +63,8 @@ public interface ILibrariesService extends IService {
 
     public void deployLibrary(URL source, String mavenUri) throws IOException;
 
+    public void deployLibrary(URL source, String mavenUri, boolean refresh) throws IOException;
+
     public void deployLibrarys(URL[] source) throws IOException;
 
     public void undeployLibrary(String jarName) throws IOException;

@@ -15,7 +15,6 @@ package org.talend.librariesmanager.maven;
 import java.io.File;
 import java.util.Map;
 
-import org.eclipse.emf.common.util.EMap;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
 import org.talend.core.model.general.ModuleStatusProvider;
@@ -28,9 +27,6 @@ import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenUrlHelper;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.utils.PomUtil;
-import org.talend.librariesmanager.model.ModulesNeededProvider;
-import org.talend.librariesmanager.model.service.CustomUriManager;
-import org.talend.librariesmanager.model.service.LibrariesIndexManager;
 import org.talend.utils.io.FilesUtils;
 
 /**
@@ -116,16 +112,6 @@ public class MavenArtifactsHandler {
             }
             if (generated) { // only for generate pom
                 FilesUtils.deleteFolder(pomFile.getParentFile(), true);
-            }
-
-            // TUP-18405, record the custom module to custom uri mapping if not exist in any index
-            EMap<String, String> libIndex = LibrariesIndexManager.getInstance().getStudioLibIndex().getJarsToRelativePath();
-            EMap<String, String> mavenIndex = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath();
-            String installedName = artifact.getArtifactId() + "." + artifact.getType();
-            if (!libIndex.contains(installedName) && !mavenIndex.contains(installedName)) {
-                CustomUriManager.getInstance().put(mavenUri, mavenUri);
-                CustomUriManager.getInstance().saveCustomURIMap();
-                ModulesNeededProvider.addUnknownModules(installedName, mavenUri, true);
             }
 
         }

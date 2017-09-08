@@ -54,7 +54,7 @@ public class NexusDownloadHelperWithProgress extends DownloadHelperWithProgress 
                         + customNexusServer.getServer());
                 ILibraryManagerService libManager = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
                         ILibraryManagerService.class);
-                resolved = libManager.resolveJar(manager, customNexusServer, mvnUri);
+                resolved = libManager.resolveJar(customNexusServer, mvnUri);
             }
         }
         if (resolved != null && resolved.exists()) {

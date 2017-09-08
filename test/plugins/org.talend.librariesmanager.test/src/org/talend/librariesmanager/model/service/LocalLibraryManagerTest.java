@@ -589,7 +589,7 @@ public class LocalLibraryManagerTest {
                 artifact.getArtifactId(), artifact.getVersion(), artifact.getType());
         assertEquals(newJarSHA1, remoteSha1);
 
-        File resolvedFile = localLibraryManager.resolveJar(manager, customNexusServer, uri);
+        File resolvedFile = localLibraryManager.resolveJar(customNexusServer, uri);
         assertNotNull(resolvedFile);
         String finalJarSHA1 = getSha1(resolvedFile);
         assertEquals(newJarSHA1, finalJarSHA1);
@@ -628,7 +628,7 @@ public class LocalLibraryManagerTest {
         // jar should not exist still on local
         assertNull(localLibraryManager.getJarPathFromMaven(uri));
 
-        File resolvedFile = localLibraryManager.resolveJar(manager, customNexusServer, uri);
+        File resolvedFile = localLibraryManager.resolveJar(customNexusServer, uri);
         assertNotNull(resolvedFile);
         String finalJarSHA1 = getSha1(resolvedFile);
         assertEquals(originalSHA1, finalJarSHA1);

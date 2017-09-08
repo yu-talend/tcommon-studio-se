@@ -105,7 +105,8 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
         deployLibrary(source, null, refresh);
     }
 
-    private void deployLibrary(URL source, String mavenUri, boolean refresh) throws IOException {
+    @Override
+    public void deployLibrary(URL source, String mavenUri, boolean refresh) throws IOException {
         String decode = null;
         if (source.getFile().contains("%20")) {
             decode = URLDecoder.decode(source.getFile(), "UTF-8");
@@ -116,17 +117,11 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
 
         if (!localLibraryManager.contains(source.getFile())) {
             localLibraryManager.deploy(sourceFile.toURI(), mavenUri);
-            if (PluginChecker.isSVNProviderPluginLoaded()) {
-                ISVNProviderServiceInCoreRuntime svnService = (ISVNProviderServiceInCoreRuntime) GlobalServiceRegister
-                        .getDefault().getService(ISVNProviderServiceInCoreRuntime.class);
-                if (svnService != null && svnService.isSvnLibSetupOnTAC()) {
-                    svnService.syncLibs(null);
-                }
-            }
         }
 
+        refreshLocal(new String[] { sourceFile.getName() });
         if (refresh) {
-            refreshLocal(new String[] { sourceFile.getName() });
+            checkLibraries();
         }
 
     }
@@ -140,6 +135,7 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
             deployLibrary(url, false);
         }
         refreshLocal(namse);
+        checkLibraries();
     }
 
     private RepositoryContext getRepositoryContext() {
@@ -148,8 +144,6 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
     }
 
     private void refreshLocal(final String names[]) {
-        checkLibraries();
-
         // for feature 12877
         Project currentProject = ProjectManager.getInstance().getCurrentProject();
         final String projectLabel = currentProject.getTechnicalLabel();

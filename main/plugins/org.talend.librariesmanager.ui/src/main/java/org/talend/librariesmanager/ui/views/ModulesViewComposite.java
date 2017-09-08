@@ -224,7 +224,7 @@ public class ModulesViewComposite extends Composite {
             public void focusGained(FocusEvent e) {
                 ModuleNeeded currentModifiedEntry = (ModuleNeeded) tableViewerCreator.getModifiedObjectInfo()
                         .getCurrentModifiedBean();
-                dialog.setModule(currentModifiedEntry);
+                cellEditor.setModule(currentModifiedEntry);
             }
         });
 

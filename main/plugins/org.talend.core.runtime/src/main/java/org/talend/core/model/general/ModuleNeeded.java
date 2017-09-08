@@ -490,7 +490,7 @@ public class ModuleNeeded {
                         }
 
                     }
-                    mavenUri = addTypeForMavenUri(maxVerstion, getModuleName());
+                    mavenUri = MavenUrlHelper.addTypeForMavenUri(maxVerstion, getModuleName());
                 } else {
                     mavenUri = MavenUrlHelper.generateMvnUrlForJarName(getModuleName(), true, true);
                 }
@@ -507,23 +507,7 @@ public class ModuleNeeded {
      * @param mavenUrl the mavenUrl to set
      */
     public void setMavenUri(String mavenUri) {
-        this.mavenUriFromConfiguration = addTypeForMavenUri(mavenUri, getModuleName());
-    }
-
-    private String addTypeForMavenUri(String uri, String moduleName) {
-        // make sure that mvn uri have the package
-        MavenArtifact parseMvnUrl = MavenUrlHelper.parseMvnUrl(uri, false);
-        if (parseMvnUrl != null && parseMvnUrl.getType() == null) {
-            if (moduleName != null && moduleName.lastIndexOf(".") != -1) {
-                parseMvnUrl.setType(moduleName.substring(moduleName.lastIndexOf(".") + 1, moduleName.length()));
-            } else {
-                // set jar by default
-                parseMvnUrl.setType(MavenConstants.TYPE_JAR);
-            }
-            uri = MavenUrlHelper.generateMvnUrl(parseMvnUrl.getGroupId(), parseMvnUrl.getArtifactId(), parseMvnUrl.getVersion(),
-                    parseMvnUrl.getType(), parseMvnUrl.getClassifier());
-        }
-        return uri;
+        this.mavenUriFromConfiguration = MavenUrlHelper.addTypeForMavenUri(mavenUri, getModuleName());
     }
 
     public boolean isDynamic() {
@@ -549,7 +533,8 @@ public class ModuleNeeded {
     }
 
     public void setCustomMavenUri(String customURI) {
-        libManagerService.setCustomMavenURI(getMavenUri(), customURI);
+        String customURIWithType = MavenUrlHelper.addTypeForMavenUri(customURI, getModuleName());
+        libManagerService.setCustomMavenURI(getMavenUri(), customURIWithType);
     }
 
     /**

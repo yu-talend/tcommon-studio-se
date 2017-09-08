@@ -339,7 +339,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
                         if (isResolveAllowed(uri)) {
                             MavenArtifact parseMvnUrl = MavenUrlHelper.parseMvnUrl(uri);
                             if (jarFile == null || parseMvnUrl.getVersion().endsWith(MavenUrlHelper.VERSION_SNAPSHOT)) {
-                                File resolvedJar = resolveJar(manager, customNexusServer, uri);
+                                File resolvedJar = resolveJar(customNexusServer, uri);
                                 if (resolvedJar != null) {
                                     jarFile = resolvedJar;
                                     break;
@@ -403,7 +403,6 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
      * 
      * @param jarNeeded
      * @param jarFile
-     * @param manager
      * @param customNexusServer
      * @param uri
      * @return
@@ -411,8 +410,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
      * @throws IOException
      */
     @Override
-    public File resolveJar(TalendLibsServerManager manager, final NexusServerBean customNexusServer, String uri)
-            throws Exception, IOException {
+    public File resolveJar(final NexusServerBean customNexusServer, String uri) throws Exception, IOException {
         File resolvedFile = null;
         resolvedFile = TalendMavenResolver.resolve(uri);
         if (resolvedFile != null) {
