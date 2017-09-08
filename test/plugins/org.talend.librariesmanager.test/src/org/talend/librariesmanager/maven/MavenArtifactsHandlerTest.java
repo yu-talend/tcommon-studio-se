@@ -25,9 +25,6 @@ import org.junit.Test;
 import org.talend.commons.utils.resource.BundleFileUtil;
 import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
 import org.talend.core.model.general.ModuleStatusProvider;
-import org.talend.core.nexus.TalendMavenResolver;
-import org.talend.core.runtime.maven.MavenConstants;
-import org.talend.librariesmanager.model.service.CustomUriManager;
 import org.talend.utils.io.FilesUtils;
 
 /**
@@ -194,20 +191,4 @@ public class MavenArtifactsHandlerTest {
         Assert.assertTrue(repoPomFile.exists());
     }
 
-    @Test
-    public void test_install_custom_jar() throws Exception {
-        final String mavenUri = "mvn:org.talend.libraries/test_install_custom_jar/6.5.0/jar";
-        CustomUriManager customURIManager = CustomUriManager.getInstance();
-        customURIManager.put(mavenUri, null);
-        Assert.assertNull(customURIManager.get(mavenUri));
-
-        new MavenArtifactsHandler().install(mavenUri, localJarFile.getAbsolutePath(), null, false);
-        Assert.assertEquals(ELibraryInstallStatus.DEPLOYED, ModuleStatusProvider.getDeployStatus(mavenUri));
-        Assert.assertEquals(ELibraryInstallStatus.INSTALLED, ModuleStatusProvider.getStatus(mavenUri));
-        Assert.assertEquals(customURIManager.get(mavenUri), mavenUri);
-
-        String localMavenUri = mavenUri.replace("mvn:", "mvn:" + MavenConstants.LOCAL_RESOLUTION_URL + "!");
-        File resolve = TalendMavenResolver.getMavenResolver().resolve(localMavenUri);
-        Assert.assertNotNull(resolve);
-    }
 }
