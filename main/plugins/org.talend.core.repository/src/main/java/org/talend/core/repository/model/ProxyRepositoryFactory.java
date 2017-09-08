@@ -1878,6 +1878,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                 SubMonitor subMonitor = SubMonitor.convert(monitor, MAX_TASKS);
                 SubMonitor currentMonitor = subMonitor.newChild(1, SubMonitor.SUPPRESS_NONE);
                 currentMonitor.beginTask(Messages.getString("ProxyRepositoryFactory.logonInProgress"), 1); //$NON-NLS-1$
+                project.setReferenceProjectProvider(null);
                 initEmfProjectContent();
                 getRepositoryContext().setProject(project);
 
@@ -1890,7 +1891,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                 ProjectManager.getInstance().getUpdatedRemoteHandlerRecords().clear();
 
                 if (!ReferenceProjectProblemManager.checkCycleReference(project)) {
-                    throw new CycleReferenceException("The cycle project reference find."); //$NON-NLS-1$
+                    throw new CycleReferenceException(Messages.getString("ProxyRepositoryFactory.CycleReferenceError")); //$NON-NLS-1$
                 }
                 // monitorWrap.worked(1);
                 TimeMeasure.step("logOnProject", "beforeLogon"); //$NON-NLS-1$ //$NON-NLS-2$

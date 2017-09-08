@@ -52,7 +52,7 @@ public class ReferenceProjectProblemManager {
     public static boolean checkCycleReference(Project project) {
         List<ProjectReference> referenceList = project.getProjectReferenceList();
         if (referenceList.size() == 0) {
-            return false;
+            return true;
         }
         Map<String, List<String>> referenceMap = new HashMap<String, List<String>>();
         List<String> list = new ArrayList<String>();

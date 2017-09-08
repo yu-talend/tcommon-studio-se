@@ -380,4 +380,10 @@ public class Project {
         referenceProjectProvider.setProjectReference(projectReferenceList);
         referenceProjectProvider.saveSettings();
     }
+
+    
+    public void setReferenceProjectProvider(IReferenceProjectProvider referenceProjectProvider) {
+        this.referenceProjectProvider = referenceProjectProvider;
+    }
+
 }

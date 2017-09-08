@@ -294,7 +294,7 @@ public final class ProjectManager {
             List<Project> refProjects = new ArrayList<Project>();
             for (ProjectReference refProject :project.getProjectReferenceList()) {
                 if (ProjectManager.validReferenceProject(project.getEmfProject(), refProject)) {
-                    refProjects.add(new Project(getProject(refProject), false));
+                    refProjects.add(new Project(getProject(refProject.getReferencedProject()), false));
                 }
             }
             return refProjects;

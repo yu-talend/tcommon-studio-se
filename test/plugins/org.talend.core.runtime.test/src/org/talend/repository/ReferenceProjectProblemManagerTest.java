@@ -34,7 +34,7 @@ public class ReferenceProjectProblemManagerTest {
         referenceMap.put("R", rList);
 
         List<String> r1List = new ArrayList<String>();
-        rList.add("R2");
+        r1List.add("R2");
         referenceMap.put("R1", r1List);
 
         assertTrue(ReferenceProjectProblemManager.checkCycleReference(referenceMap));
