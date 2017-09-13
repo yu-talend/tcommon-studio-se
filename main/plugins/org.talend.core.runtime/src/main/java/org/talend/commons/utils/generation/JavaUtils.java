@@ -56,7 +56,7 @@ public final class JavaUtils {
 
     public static final String DEFAULT_VERSION = JavaCore.VERSION_1_8;
 
-    public static final List<String> AVAILABLE_VERSIONS = Arrays.asList( JavaCore.VERSION_1_7, JavaCore.VERSION_1_8 );
+    public static final List<String> AVAILABLE_VERSIONS = Arrays.asList(JavaCore.VERSION_1_8 );
     
     public static final String PROCESSOR_TYPE = "javaProcessor"; //$NON-NLS-1$
 
