@@ -252,7 +252,7 @@ public abstract class AbstractRoutineSynchronizer implements ITalendSynchronizer
     public void deleteRoutinefile(IRepositoryViewObject objToDelete) {
         Item item = objToDelete.getProperty().getItem();
         try {
-            ITalendProcessJavaProject talendProcessJavaProject = getRunProcessService().getTalendProcessJavaProject();
+            ITalendProcessJavaProject talendProcessJavaProject = getRunProcessService().getTalendCodeJavaProject(ERepositoryObjectType.ROUTINES);
             if (talendProcessJavaProject == null) {
                 return;
             }

@@ -106,6 +106,7 @@ import org.talend.core.utils.ProductUtils;
 import org.talend.core.views.IComponentSettingsView;
 import org.talend.designer.business.diagram.custom.IDiagramModelService;
 import org.talend.designer.core.ui.editor.palette.TalendPaletteHelper;
+import org.talend.designer.runprocess.java.TalendJavaProjectManager;
 import org.talend.rcp.Activator;
 import org.talend.rcp.i18n.Messages;
 import org.talend.rcp.intro.starting.StartingEditorInput;
@@ -275,6 +276,8 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
             CommonExceptionHandler.process(e1);
         }
 
+        TalendJavaProjectManager.installRootPom(null);
+        
         // if (!JavaHomeUtil.isJDKSetup()) {
         // MessageDialog.openWarning(DisplayUtils.getDefaultShell(),
         //                    Messages.getString("ApplicationWorkbenchWindowAdvisor.wrongJavaSetup"), //$NON-NLS-1$

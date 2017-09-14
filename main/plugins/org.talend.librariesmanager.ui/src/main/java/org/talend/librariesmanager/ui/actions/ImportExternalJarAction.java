@@ -36,7 +36,6 @@ import org.talend.commons.utils.workbench.resources.ResourceUtils;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.model.general.ModuleToInstall;
 import org.talend.core.model.general.Project;
-import org.talend.core.runtime.process.ITalendProcessJavaProject;
 import org.talend.designer.runprocess.IRunProcessService;
 import org.talend.librariesmanager.ui.LibManagerUiPlugin;
 import org.talend.librariesmanager.ui.i18n.Messages;
@@ -144,13 +143,13 @@ public class ImportExternalJarAction extends Action {
     // }
 
     public static void cleanupLib(Set<String> installedModule) {
-        for (String jarName : installedModule) {
-            if (GlobalServiceRegister.getDefault().isServiceRegistered(IRunProcessService.class)) {
-                IRunProcessService runProcessService = (IRunProcessService) GlobalServiceRegister.getDefault().getService(
-                        IRunProcessService.class);
-                ITalendProcessJavaProject talendProcessJavaProject = runProcessService.getTalendProcessJavaProject();
-                if (talendProcessJavaProject != null) {
-                    IFile jarFile = talendProcessJavaProject.getLibFolder().getFile(jarName);
+        if (GlobalServiceRegister.getDefault().isServiceRegistered(IRunProcessService.class)) {
+            IRunProcessService runProcessService = (IRunProcessService) GlobalServiceRegister.getDefault().getService(
+                    IRunProcessService.class);
+            IFolder libFolder = runProcessService.getJavaProjectLibFolder();
+            if (libFolder != null && libFolder.exists()) {
+                for (String jarName : installedModule) {
+                    IFile jarFile = libFolder.getFile(jarName);
                     if (jarFile.exists()) {
                         try {
                             jarFile.delete(true, null);
@@ -162,4 +161,5 @@ public class ImportExternalJarAction extends Action {
             }
         }
     }
+
 }

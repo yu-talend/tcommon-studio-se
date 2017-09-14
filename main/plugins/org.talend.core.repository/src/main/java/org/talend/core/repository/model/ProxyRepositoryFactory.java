@@ -1933,6 +1933,9 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                 if (monitor != null && monitor.isCanceled()) {
                     throw new OperationCanceledException(""); //$NON-NLS-1$
                 }
+                
+                getRunProcessService().initMavenJavaProject(project);
+                
                 ICoreService coreService = getCoreService();
                 if (coreService != null) {
                     // clean workspace
@@ -1949,6 +1952,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                     } else {
                         newVersion = specifiedVersion;
                     }
+
                     JavaUtils.updateProjectJavaVersion(newVersion);
                     
                     TimeMeasure.step("logOnProject", "clean Java project"); //$NON-NLS-1$ //$NON-NLS-2$     
@@ -1961,11 +1965,6 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                     currentMonitor = subMonitor.newChild(1, SubMonitor.SUPPRESS_NONE);
                     currentMonitor.beginTask(Messages.getString("ProxyRepositoryFactory.synch.repo.items"), 1); //$NON-NLS-1$
 
-                    // for commandline to clear routines,pigudf,beans.
-                    if (CommonsPlugin.isHeadless()) {
-                        deleteAllRoutinesAndBeans();
-                    }
-                    getRunProcessService().initMavenJavaProject(project);
                     try {
                         coreService.syncAllRoutines();
                         // PTODO need refactor later, this is not good, I think
@@ -1986,6 +1985,10 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                 }
                 TimeMeasure.step("logOnProject", "sync repository (routines/rules/beans)"); //$NON-NLS-1$ //$NON-NLS-2$
 
+                // log4j prefs
+                if (coreUiService != null) {
+                    coreService.syncLog4jSettings(null);
+                }
                 TimeMeasure.step("logOnProject", "sync log4j"); //$NON-NLS-1$ //$NON-NLS-2$
 
                 if (GlobalServiceRegister.getDefault().isServiceRegistered(ITDQRepositoryService.class)) {
@@ -2297,30 +2300,6 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
     public RootContainer<String, IRepositoryViewObject> getObjectFromFolder(Project project, ERepositoryObjectType type,
             String folderName, int options) throws PersistenceException {
         return repositoryFactoryFromProvider.getObjectFromFolder(project, type, folderName, options);
-    }
-
-    private void deleteAllRoutinesAndBeans() {
-        if (GlobalServiceRegister.getDefault().isServiceRegistered(IRunProcessService.class)) {
-            IRunProcessService runProcessService = (IRunProcessService) GlobalServiceRegister.getDefault().getService(
-                    IRunProcessService.class);
-            ITalendProcessJavaProject project = runProcessService.getTalendProcessJavaProject();
-            if (project != null) {
-                IFolder src = project.getSrcFolder();
-                try {
-                    IResource[] childrenResources = src.members();
-                    for (IResource child : childrenResources) {
-                        Object folderName = child.getName();
-                        if ("routines".equals(folderName) //$NON-NLS-1$
-                                || "pigudf".equals(folderName) //$NON-NLS-1$
-                                || "beans".equals(folderName)) { //$NON-NLS-1$
-                            child.delete(true, null);
-                        }
-                    }
-                } catch (CoreException e) {
-                    ExceptionHandler.process(e);
-                }
-            }
-        }
     }
 
     public List<ILockBean> getAllRemoteLocks() {

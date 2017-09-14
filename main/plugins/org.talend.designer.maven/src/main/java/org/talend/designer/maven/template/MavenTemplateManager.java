@@ -365,6 +365,7 @@ public class MavenTemplateManager {
     public static Model getAggregatorFolderTemplateModel(IFile pomFile, String groupId, String artifactId, String projectTechName)
             throws Exception {
         Model model = new Model();
+        model.setModelVersion("4.0.0"); //$NON-NLS-1$
         model.setGroupId(groupId);
         model.setArtifactId(artifactId);
         model.setVersion(PomIdsHelper.getProjectVersion());

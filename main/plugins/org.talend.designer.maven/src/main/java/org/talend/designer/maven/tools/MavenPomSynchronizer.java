@@ -79,7 +79,7 @@ public class MavenPomSynchronizer {
     /**
      * generate routine pom.
      */
-    public void syncRoutinesPom(Property property, boolean overwrite, boolean install) throws Exception {
+    public void syncRoutinesPom(Property property, boolean overwrite) throws Exception {
         ITalendProcessJavaProject routineProject = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.ROUTINES);
         IFile routinesPomFile = routineProject.getProjectPom();
         // generate new one
@@ -87,12 +87,12 @@ public class MavenPomSynchronizer {
         createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
-        if (install) {
+        if (runProcessService.isExportConfig()) {
             buildAndInstallCodesProject(routineProject);
         }
     }
 
-    public void syncBeansPom(Property property, boolean overwrite, boolean install) throws Exception {
+    public void syncBeansPom(Property property, boolean overwrite) throws Exception {
         ITalendProcessJavaProject beansProject = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.valueOf("BEANS")); //$NON-NLS-1$
         IFile beansPomFile = beansProject.getProjectPom();
         // generate new one
@@ -100,12 +100,12 @@ public class MavenPomSynchronizer {
         createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
-        if (install) {
+        if (runProcessService.isExportConfig()) {
             buildAndInstallCodesProject(beansProject);
         }
     }
 
-    public void syncPigUDFsPom(Property property, boolean overwrite, boolean install) throws Exception {
+    public void syncPigUDFsPom(Property property, boolean overwrite) throws Exception {
         ITalendProcessJavaProject pigudfsProject = runProcessService.getTalendCodeJavaProject(ERepositoryObjectType.PIG_UDF);
         IFile pigudfPomFile = pigudfsProject.getProjectPom();
         // generate new one
@@ -113,7 +113,7 @@ public class MavenPomSynchronizer {
         createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
-        if (install) {
+        if (runProcessService.isExportConfig()) {
             buildAndInstallCodesProject(pigudfsProject);
         }
     }
@@ -208,8 +208,6 @@ public class MavenPomSynchronizer {
         if (!jProject.isOpen()) {
             jProject.open(monitor);
         }
-        // TODO should remove .classpath and .project?
-
         // empty the src/main/java...
         IFolder srcFolder = codeProject.getSrcFolder();
         codeProject.cleanFolder(monitor, srcFolder);
@@ -275,17 +273,17 @@ public class MavenPomSynchronizer {
         }
     }
 
-    public void syncCodesPoms(IProgressMonitor monitor, IProcessor processor, boolean overwrite, boolean install) throws Exception {
+    public void syncCodesPoms(IProgressMonitor monitor, IProcessor processor, boolean overwrite) throws Exception {
         final IProcess process = processor != null ? processor.getProcess() : null;
 
-        syncRoutinesPom(processor.getProperty(), overwrite, install);
+        syncRoutinesPom(processor.getProperty(), overwrite);
         // PigUDFs
         if (ProcessUtils.isRequiredPigUDFs(process)) {
-            syncPigUDFsPom(processor.getProperty(), overwrite, install);
+            syncPigUDFsPom(processor.getProperty(), overwrite);
         }
         // Beans
         if (ProcessUtils.isRequiredBeans(process)) {
-            syncBeansPom(processor.getProperty(), overwrite, install);
+            syncBeansPom(processor.getProperty(), overwrite);
         }
     }
 

@@ -12,10 +12,10 @@
 // ============================================================================
 package org.talend.designer.runprocess;
 
-import java.io.File;
 import java.util.Set;
 
 import org.apache.log4j.Level;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -192,7 +192,7 @@ public interface IRunProcessService extends IService {
     
     void storeProjectPreferences(IPreferenceStore preferenceStore);
 
-    public File getJavaProjectLibFolder();
+    public IFolder getJavaProjectLibFolder();
     
     void initMavenJavaProject(Project project);
     
@@ -201,5 +201,7 @@ public interface IRunProcessService extends IService {
     ITalendProcessJavaProject getTalendJobJavaProject(Property property);
     
     void deleteEclipseProjects();
+
+    boolean isExportConfig();
 
 }

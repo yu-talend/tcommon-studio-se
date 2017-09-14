@@ -55,10 +55,7 @@ import org.talend.commons.CommonsPlugin;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.runtime.debug.TalendDebugHandler;
 import org.talend.commons.ui.runtime.CommonUIPlugin;
-import org.talend.core.GlobalServiceRegister;
-import org.talend.core.runtime.process.ITalendProcessJavaProject;
 import org.talend.core.runtime.process.TalendProcessArgumentConstant;
-import org.talend.designer.runprocess.IRunProcessService;
 
 /**
  * DOC ggu class global comment. Detailled comment
@@ -66,7 +63,7 @@ import org.talend.designer.runprocess.IRunProcessService;
  * most codes are copied from @see ExecutePomAction. just in order to set the debug is in foreground.
  */
 @SuppressWarnings("restriction")
-public class MavenCommandLauncher {
+public abstract class MavenCommandLauncher {
 
     private String mavenArgs = "mavenArgs"; //$NON-NLS-1$
 
@@ -247,18 +244,7 @@ public class MavenCommandLauncher {
         return null;
     }
 
-    protected ILaunchConfiguration createLaunchConfiguration() {
-        if (GlobalServiceRegister.getDefault().isServiceRegistered(IRunProcessService.class)) {
-            IRunProcessService processService = (IRunProcessService) GlobalServiceRegister.getDefault()
-                    .getService(IRunProcessService.class);
-            ITalendProcessJavaProject talendProcessJavaProject = processService.getTalendProcessJavaProject();
-            if (talendProcessJavaProject != null) {
-                IProject project = talendProcessJavaProject.getProject();
-                return createLaunchConfiguration(project, goals);
-            }
-        }
-        return null;
-    }
+    abstract protected ILaunchConfiguration createLaunchConfiguration();
 
     public void execute(IProgressMonitor monitor) throws Exception {
 

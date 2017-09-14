@@ -71,7 +71,6 @@ import org.talend.core.runtime.maven.MavenUrlHelper;
 import org.talend.core.ui.branding.IBrandingService;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.template.MavenTemplateManager;
-import org.talend.designer.maven.tools.repo.LocalRepositoryManager;
 import org.talend.designer.runprocess.IProcessor;
 import org.talend.repository.ProjectManager;
 import org.w3c.dom.Attr;
@@ -345,13 +344,6 @@ public class PomUtil {
             return artifact;
         }
         return null;
-    }
-
-    public static void installJar(LocalRepositoryManager repoManager, File libFile, MavenArtifact artifact) throws Exception {
-        // in lib/java, and not existed in m2/repo
-        if (libFile.exists() && !PomUtil.isAvailable(artifact)) {
-            repoManager.install(libFile, artifact);
-        }
     }
 
     /**
@@ -705,7 +697,7 @@ public class PomUtil {
                 modules = new ArrayList<>();
                 model.setModules(modules);
             }
-            if (!modules.contains(relativePath)) {
+            if (!modules.contains(relativePath.toPortableString())) {
                 modules.add(relativePath.toPortableString());
                 savePom(null, model, parentPom);
             }

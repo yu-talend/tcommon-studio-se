@@ -484,7 +484,7 @@ public class CreateMavenJobPom extends AbstractMavenProcessorPom {
         boolean outofSync = true;
         if (needSyncCodesPoms()) {
             // only sync pom for main job
-            pomSync.syncCodesPoms(monitor, getJobProcessor(), true, outofSync);
+            pomSync.syncCodesPoms(monitor, getJobProcessor(), outofSync);
         }
         // because need update the latest content for templates.
         pomSync.syncTemplates(true);
@@ -527,6 +527,7 @@ public class CreateMavenJobPom extends AbstractMavenProcessorPom {
         IFile assemblyFile = this.getAssemblyFile();
         if (assemblyFile != null) {
 
+            // TODO remove
             try {
                 checkCreatingFile(monitor, assemblyFile);
             } catch (Exception e) {

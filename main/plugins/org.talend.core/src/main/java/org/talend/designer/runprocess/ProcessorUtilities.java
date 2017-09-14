@@ -587,22 +587,20 @@ public class ProcessorUtilities {
      * This method is used when export job or joblet , check if one of the database component node use dynamic metadata
      */
     private static void checkMetadataDynamic(IProcess currentProcess, JobInfo jobInfo) {
-        if (!LastGenerationInfo.getInstance().isUseDynamic(jobInfo.getJobId(), jobInfo.getJobVersion())) {
-            boolean hasDynamicMetadata = hasMetadataDynamic(currentProcess, jobInfo);
-            LastGenerationInfo.getInstance().setUseDynamic(jobInfo.getJobId(), jobInfo.getJobVersion(), hasDynamicMetadata);
-            if (hasDynamicMetadata) {
-                try {
-                    URL url = MetadataTalendType.getProjectForderURLOfMappingsFile();
-                    if (url != null) {
-                        IFolder xmlMappingFolder = jobInfo.getProcessor().getTalendJavaProject().getResourceSubFolder(null, JavaUtils.JAVA_XML_MAPPING);
-                        if (xmlMappingFolder.members().length == 0 && GlobalServiceRegister.getDefault().isServiceRegistered(ICoreService.class)) {
-                            ICoreService coreService = (ICoreService) GlobalServiceRegister.getDefault().getService(ICoreService.class);
-                            coreService.synchronizeMapptingXML(jobInfo.getProcessor().getTalendJavaProject());
-                        }
+        boolean hasDynamicMetadata = hasMetadataDynamic(currentProcess, jobInfo);
+        LastGenerationInfo.getInstance().setUseDynamic(jobInfo.getJobId(), jobInfo.getJobVersion(), hasDynamicMetadata);
+        if (hasDynamicMetadata) {
+            try {
+                URL url = MetadataTalendType.getProjectForderURLOfMappingsFile();
+                if (url != null) {
+                    IFolder xmlMappingFolder = jobInfo.getProcessor().getTalendJavaProject().getResourceSubFolder(null, JavaUtils.JAVA_XML_MAPPING);
+                    if (xmlMappingFolder.members().length == 0 && GlobalServiceRegister.getDefault().isServiceRegistered(ICoreService.class)) {
+                        ICoreService coreService = (ICoreService) GlobalServiceRegister.getDefault().getService(ICoreService.class);
+                        coreService.synchronizeMapptingXML(jobInfo.getProcessor().getTalendJavaProject());
                     }
-                } catch (Exception e) {
-                    ExceptionHandler.process(e);
                 }
+            } catch (Exception e) {
+                ExceptionHandler.process(e);
             }
         }
     }
@@ -1834,7 +1832,7 @@ public class ProcessorUtilities {
         if (GlobalServiceRegister.getDefault().isServiceRegistered(IRunProcessService.class)) {
             IRunProcessService processService = (IRunProcessService) GlobalServiceRegister.getDefault().getService(
                     IRunProcessService.class);
-            return processService.getJavaProjectLibFolder();
+            return processService.getJavaProjectLibFolder().getLocation().toFile();
         }
         return null;
     }

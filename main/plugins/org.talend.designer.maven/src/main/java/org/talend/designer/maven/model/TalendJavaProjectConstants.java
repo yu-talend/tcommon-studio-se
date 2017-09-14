@@ -36,5 +36,9 @@ public class TalendJavaProjectConstants {
     public static final String DIR_PROCESS_MR = ERepositoryObjectType.PROCESS_MR.getFolder();
 
     public static final String DIR_PROCESS_STORM = ERepositoryObjectType.PROCESS_STORM.getFolder();
+    
+    public static final String CLASSPATH_FILE_NAME = ".classpath"; //$NON-NLS-1$
+
+    public static final String PROJECT_FILE_NAME = ".project"; //$NON-NLS-1$
 
 }

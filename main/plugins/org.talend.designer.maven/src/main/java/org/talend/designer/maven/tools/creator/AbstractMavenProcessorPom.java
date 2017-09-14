@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.Path;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.core.model.process.IProcess;
 import org.talend.core.model.process.JobInfo;
+import org.talend.core.model.process.ProcessUtils;
 import org.talend.core.model.properties.Item;
 import org.talend.core.model.properties.Project;
 import org.talend.core.model.properties.Property;
@@ -153,13 +154,29 @@ public abstract class AbstractMavenProcessorPom extends CreateMavenBundleTemplat
 
             // add codes to dependencies
             String projectTechName = ProjectManager.getInstance().getProject(getJobProcessor().getProperty()).getTechnicalLabel();
-            String routineGroupId = PomIdsHelper.getCodesGroupId(projectTechName, TalendMavenConstants.DEFAULT_CODE);
-            String routineArtifactId = TalendMavenConstants.DEFAULT_ROUTINES_ARTIFACT_ID;
-            String routineVersion = PomIdsHelper.getCodesVersion();
-            Dependency routineDependency = PomUtil.createDependency(routineGroupId, routineArtifactId, routineVersion, null);
-            dependencies.add(routineDependency);
+            String codeVersion = PomIdsHelper.getCodesVersion();
             
-            //TODO pigudf, beans....
+            // routines
+            String routinesGroupId = PomIdsHelper.getCodesGroupId(projectTechName, TalendMavenConstants.DEFAULT_CODE);
+            String routinesArtifactId = TalendMavenConstants.DEFAULT_ROUTINES_ARTIFACT_ID;
+            Dependency routinesDependency = PomUtil.createDependency(routinesGroupId, routinesArtifactId, codeVersion, null);
+            dependencies.add(routinesDependency);
+            
+            // pigudfs
+            if (ProcessUtils.isRequiredPigUDFs(jobProcessor.getProcess())) {
+                String pigudfsGroupId = PomIdsHelper.getCodesGroupId(projectTechName, TalendMavenConstants.DEFAULT_PIGUDF);
+                String pigudfsArtifactId = TalendMavenConstants.DEFAULT_PIGUDFS_ARTIFACT_ID;
+                Dependency pigudfsDependency = PomUtil.createDependency(pigudfsGroupId, pigudfsArtifactId, codeVersion, null);
+                dependencies.add(pigudfsDependency);
+            }
+            
+            // beans
+            if (ProcessUtils.isRequiredBeans(jobProcessor.getProcess())) {
+                String beansGroupId = PomIdsHelper.getCodesGroupId(projectTechName, TalendMavenConstants.DEFAULT_BEAN);
+                String beansArtifactId = TalendMavenConstants.DEFAULT_BEANS_ARTIFACT_ID;
+                Dependency beansDependency = PomUtil.createDependency(beansGroupId, beansArtifactId, codeVersion, null);
+                dependencies.add(beansDependency);
+            }
             
             // add children jobs in dependencies
             String parentId = getJobProcessor().getProperty().getId();

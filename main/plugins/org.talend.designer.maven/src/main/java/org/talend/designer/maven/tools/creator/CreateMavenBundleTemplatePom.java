@@ -153,26 +153,12 @@ public class CreateMavenBundleTemplatePom extends CreateMaven {
         if (curPomFile == null) {
             return;
         }
-        // if (!curPomFile.getName().equals(MavenConstants.POM_FILE_NAME)) {
-        // throw new IOException("Must be pom.xml, shouldn't be specially like: " + curPomFile);
-        // }
-
-        // curPomFile.getParent().refreshLocal(IResource.DEPTH_ONE, monitor);
-        
-        // don't delete pom file.
-//        try {
-//            checkCreatingFile(monitor, curPomFile);
-//        } catch (Exception e) {
-//            ExceptionHandler.process(e);
-//            return;
-//        }
 
         Model model = createModel();
         if (model == null) {
             throw new Exception("Can't create the maven pom in file:" + curPomFile);
         }
         PomUtil.savePom(monitor, model, curPomFile);
-        // MODEL_MANAGER.createMavenModel(curPomFile, model);
 
         afterCreate(monitor);
     }

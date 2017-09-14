@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -317,16 +318,17 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
     @Override
     public void cleanLibs() {
         if (GlobalServiceRegister.getDefault().isServiceRegistered(IRunProcessService.class)) {
-            IRunProcessService processService = (IRunProcessService) GlobalServiceRegister.getDefault().getService(
-                    IRunProcessService.class);
-            ITalendProcessJavaProject talendProcessJavaProject = processService.getTalendProcessJavaProject();
-            if (talendProcessJavaProject != null) {
-                IFolder libFolder = talendProcessJavaProject.getLibFolder();
-                try {
-                    talendProcessJavaProject.cleanFolder(null, libFolder);
-                } catch (CoreException e) {
-                    ExceptionHandler.process(e);
+            IRunProcessService processService = (IRunProcessService) GlobalServiceRegister.getDefault()
+                    .getService(IRunProcessService.class);
+            IFolder libFolder = processService.getJavaProjectLibFolder();
+            try {
+                if (libFolder != null && libFolder.exists()) {
+                    for (IResource file : libFolder.members()) {
+                        file.delete(true, null);
+                    }
                 }
+            } catch (CoreException e) {
+                ExceptionHandler.process(e);
             }
         }
     }

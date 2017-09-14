@@ -14,8 +14,10 @@ package org.talend.designer.maven.tools.creator;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,9 +39,11 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.core.IClasspathAttribute;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.core.ClasspathAttribute;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMaven;
@@ -88,6 +92,7 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
     protected Model createModel() {
         // temp model.
         Model templateModel = new Model();
+        templateModel.setModelVersion("4.0.0"); //$NON-NLS-1$
         templateModel.setGroupId(PomIdsHelper.getJobGroupId(project.getName()));
         templateModel.setArtifactId("talend"); //$NON-NLS-1$
         templateModel.setVersion(PomIdsHelper.getProjectVersion());
@@ -165,12 +170,13 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
         IProgressMonitor subMonitor = new SubProgressMonitor(pMoniter, 100);
         
         Model model;
-        if (pomFile.exists()) {
-            model = MavenPlugin.getMavenModelManager().readMavenModel(pomFile);
-        } else {
-            // first time create, use temp model.
-            model = createModel();
-        }
+//        if (pomFile.exists()) {
+//            model = MavenPlugin.getMavenModelManager().readMavenModel(pomFile);
+//        } else {
+//            // first time create, use temp model.
+//        }
+        // always use temp model to avoid classpath problem?
+        model = createModel();
 
         final ProjectImportConfiguration importConfiguration = new ProjectImportConfiguration();
         IProject p = ResourcesPlugin.getWorkspace().getRoot().getProject(project.getName());
@@ -238,6 +244,7 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
             IJavaProject javaProject = JavaCore.create(p);
             IClasspathEntry[] rawClasspathEntries = javaProject.getRawClasspath();
             boolean changed = false;
+            boolean foundResources = false;
 
             for (int index = 0; index < rawClasspathEntries.length; index++) {
                 IClasspathEntry entry = rawClasspathEntries[index];
@@ -251,6 +258,7 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
 
                     // src/main/resources, in order to removing the 'excluding="**"'.
                     if (MavenSystemFolders.RESOURCES.getPath().equals(path.toString())) {
+                        foundResources = true;
                         newEntry = JavaCore.newSourceEntry(entry.getPath(), new IPath[0], new IPath[0], //
                                 entry.getOutputLocation(), entry.getExtraAttributes());
                     }
@@ -275,6 +283,17 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
                     changed = true;
                 }
 
+            }
+            if (!foundResources) {
+                List<IClasspathEntry> list = new LinkedList<>(Arrays.asList(rawClasspathEntries));
+                IFolder resources = p.getFolder("src/main/resources");
+                IFolder output = p.getFolder("target/classes");
+                ClasspathAttribute attribute = new ClasspathAttribute("maven.pomderived", Boolean.TRUE.toString());
+                IClasspathEntry newEntry = JavaCore.newSourceEntry(resources.getFullPath(), new IPath[0], new IPath[0],
+                        output.getFullPath(), new IClasspathAttribute[]{attribute});
+                list.add(1, newEntry);
+                rawClasspathEntries = list.toArray(new IClasspathEntry[]{});
+                changed = true;
             }
             if (changed) {
                 javaProject.setRawClasspath(rawClasspathEntries, monitor);
