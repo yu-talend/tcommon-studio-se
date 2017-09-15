@@ -36,7 +36,7 @@ import org.talend.commons.exception.ExceptionHandler;
 import org.talend.core.nexus.IRepositoryArtifactHandler;
 import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenUrlHelper;
-import org.talend.maven.aether.RepositorySystemFactory;
+import org.talend.designer.maven.aether.RepositorySystemFactory;
 
 /**
  * created by wchen on Aug 2, 2017 Detailled comment

@@ -1,4 +1,4 @@
-package org.talend.maven.aether;
+package org.talend.designer.maven.aether;
 
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;

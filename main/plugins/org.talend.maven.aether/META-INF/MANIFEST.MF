@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Aether
-Bundle-SymbolicName: org.talend.maven.aether
+Bundle-SymbolicName: org.talend.designer.maven.aether
 Bundle-Version: 6.5.0.qualifier
-Bundle-Activator: org.talend.maven.aether.Activator
+Bundle-Activator: org.talend.designer.maven.aether.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.aether.api,
@@ -21,5 +21,5 @@ Bundle-ClassPath: .,
  lib/plexus-utils-3.0.17.jar,
  lib/plexus-interpolation-1.19.jar,
  lib/maven-repository-metadata-3.2.1.jar
-Export-Package: org.talend.maven.aether
+Export-Package: org.talend.designer.maven.aether
 Bundle-Vendor: .Talend SA.

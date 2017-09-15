@@ -10,7 +10,7 @@
 // 9 rue Pages 92150 Suresnes, France
 //
 // ============================================================================
-package org.talend.maven.aether;
+package org.talend.designer.maven.aether;
 
 import java.io.File;
 import java.util.HashMap;
@@ -110,11 +110,4 @@ public class RepositorySystemFactory {
         system.deploy(session, deployRequest);
     }
 
-    public static boolean checkConnection(String repositoryId, String repositoryUrl, String userName, String password) {
-        Authentication auth = new AuthenticationBuilder().addUsername(userName).addPassword(password).build();
-        RemoteRepository distRepo = new RemoteRepository.Builder(repositoryId, "default", repositoryUrl).setAuthentication(auth)
-                .build();
-
-        return true;
-    }
 }
