@@ -1,6 +1,6 @@
 // ============================================================================
 //
-// Copyright (C) 2006-2016 Talend Inc. - www.talend.com
+// Copyright (C) 2006-2017 Talend Inc. - www.talend.com
 //
 // This source code is available under agreement available at
 // %InstallDIR%\features\org.talend.rcp.branding.%PRODUCTNAME%\%PRODUCTNAME%license.txt
@@ -122,6 +122,8 @@ public class ProcessorUtilities {
     private static boolean needContextInCurrentGeneration = true;
 
     private static boolean exportAsOSGI = false;
+
+    private static boolean exportJobAsMicroService = false;
 
     private static IDesignerCoreService designerCoreService = (IDesignerCoreService) GlobalServiceRegister.getDefault()
             .getService(IDesignerCoreService.class);
@@ -1843,6 +1845,14 @@ public class ProcessorUtilities {
 
     public static void setExportAsOSGI(boolean toOSGI) {
         exportAsOSGI = toOSGI;
+    }
+
+    public static boolean isExportJobAsMicroService() {
+        return exportJobAsMicroService;
+    }
+
+    public static void setExportJobAsMicroSerivce(boolean toMicroService) {
+        exportJobAsMicroService = toMicroService;
     }
 
     /**

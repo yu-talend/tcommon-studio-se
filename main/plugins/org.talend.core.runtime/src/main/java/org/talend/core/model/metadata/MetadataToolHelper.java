@@ -1,6 +1,6 @@
 // ============================================================================
 //
-// Copyright (C) 2006-2016 Talend Inc. - www.talend.com
+// Copyright (C) 2006-2017 Talend Inc. - www.talend.com
 //
 // This source code is available under agreement available at
 // %InstallDIR%\features\org.talend.rcp.branding.%PRODUCTNAME%\%PRODUCTNAME%license.txt
@@ -547,8 +547,8 @@ public final class MetadataToolHelper {
      * @param target
      */
     public static void copyTable(String dbmsId, IMetadataTable source, IMetadataTable target) {
-        setDBType(source, dbmsId);
         copyTable(source, target);
+        setDBType(target, dbmsId);
     }
 
     /**
