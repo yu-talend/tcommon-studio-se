@@ -1,6 +1,6 @@
 // ============================================================================
 //
-// Copyright (C) 2006-2016 Talend Inc. - www.talend.com
+// Copyright (C) 2006-2017 Talend Inc. - www.talend.com
 //
 // This source code is available under agreement available at
 // %InstallDIR%\features\org.talend.rcp.branding.%PRODUCTNAME%\%PRODUCTNAME%license.txt
@@ -122,6 +122,8 @@ public class ProcessorUtilities {
     private static boolean needContextInCurrentGeneration = true;
 
     private static boolean exportAsOSGI = false;
+
+    private static boolean exportJobAsMicroService = false;
 
     private static IDesignerCoreService designerCoreService = (IDesignerCoreService) GlobalServiceRegister.getDefault()
             .getService(IDesignerCoreService.class);
@@ -374,8 +376,8 @@ public class ProcessorUtilities {
         }
 
         boolean isMainJob = false;
+        List<IClasspathAdjuster> classPathAdjusters = ClasspathAdjusterProvider.getClasspathAdjuster();
         if (jobInfo.getFatherJobInfo() == null) {
-
             // In order to avoid eclipse to compile the code at each change in the workspace, we deactivate the
             // auto-build feature during the whole build time.
             // It will be reactivated at the end if the auto-build is activated in the workspace preferences.
@@ -402,6 +404,10 @@ public class ProcessorUtilities {
             // if it's the father, reset the processMap to ensure to have a good
             // code generation
             ItemCacheManager.clearCache();
+
+            for (IClasspathAdjuster adjuster : classPathAdjusters) {
+                adjuster.initialize();
+            }
         }
 
         IProcess currentProcess = null;
@@ -442,11 +448,6 @@ public class ProcessorUtilities {
             }
         } else {
             currentProcess = jobInfo.getProcess();
-        }
-
-        List<IClasspathAdjuster> classPathAdjusters = ClasspathAdjusterProvider.getClasspathAdjuster();
-        for (IClasspathAdjuster adjuster : classPathAdjusters) {
-            adjuster.initialize();
         }
 
         IProcessor processor = null;
@@ -761,6 +762,7 @@ public class ProcessorUtilities {
                 return null;
             }
             boolean isMainJob = false;
+            List<IClasspathAdjuster> classPathAdjusters = ClasspathAdjusterProvider.getClasspathAdjuster();
             if (jobInfo.getFatherJobInfo() == null) {
                 isMainJob = true;
                 codeModified = false;
@@ -775,6 +777,10 @@ public class ProcessorUtilities {
                 // if it's the father, reset the processMap to ensure to have a good
                 // code generation
                 ItemCacheManager.clearCache();
+
+                for (IClasspathAdjuster adjuster : classPathAdjusters) {
+                    adjuster.initialize();
+                }
             }
 
             IProcess currentProcess = null;
@@ -815,11 +821,6 @@ public class ProcessorUtilities {
                 }
             } else {
                 currentProcess = jobInfo.getProcess();
-            }
-
-            List<IClasspathAdjuster> classPathAdjusters = ClasspathAdjusterProvider.getClasspathAdjuster();
-            for (IClasspathAdjuster adjuster : classPathAdjusters) {
-                adjuster.initialize();
             }
 
             IProcessor processor = null;
@@ -1844,6 +1845,14 @@ public class ProcessorUtilities {
 
     public static void setExportAsOSGI(boolean toOSGI) {
         exportAsOSGI = toOSGI;
+    }
+
+    public static boolean isExportJobAsMicroService() {
+        return exportJobAsMicroService;
+    }
+
+    public static void setExportJobAsMicroSerivce(boolean toMicroService) {
+        exportJobAsMicroService = toMicroService;
     }
 
     /**

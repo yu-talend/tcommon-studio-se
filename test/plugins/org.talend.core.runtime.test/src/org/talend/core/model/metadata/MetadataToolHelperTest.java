@@ -1,6 +1,6 @@
 // ============================================================================
 //
-// Copyright (C) 2006-2016 Talend Inc. - www.talend.com
+// Copyright (C) 2006-2017 Talend Inc. - www.talend.com
 //
 // This source code is available under agreement available at
 // %InstallDIR%\features\org.talend.rcp.branding.%PRODUCTNAME%\%PRODUCTNAME%license.txt
@@ -44,8 +44,8 @@ import org.talend.core.runtime.CoreRuntimePlugin;
 import org.talend.cwm.helper.ConnectionHelper;
 import org.talend.cwm.helper.PackageHelper;
 import org.talend.cwm.helper.SAPBWTableHelper;
-import org.talend.designer.core.model.utils.emf.talendfile.TalendFileFactory;
 import org.talend.repository.model.IProxyRepositoryFactory;
+
 import orgomg.cwm.resource.record.RecordFactory;
 import orgomg.cwm.resource.record.RecordFile;
 
@@ -283,6 +283,8 @@ public class MetadataToolHelperTest {
      */
     @Test
     public void testValidateTableName() {
+        IEclipsePreferences preferences = new InstanceScope().getNode(ITalendCorePrefConstants.CoreUIPlugin_ID);
+        preferences.putBoolean(IRepositoryPrefConstants.ALLOW_SPECIFIC_CHARACTERS_FOR_SCHEMA_COLUMNS, false);
 
         String tableName = "public";
         tableName = MetadataToolHelper.validateTableName(tableName);
@@ -311,6 +313,16 @@ public class MetadataToolHelperTest {
         tableName = "_dic";
         tableName = MetadataToolHelper.validateTableName(tableName);
         assertEquals(tableName, "_dic");
+
+        tableName = "t_ht01_处理日期_2017";
+        tableName = MetadataToolHelper.validateTableName(tableName);
+        assertEquals(tableName, "t_ht01______2017");
+
+        preferences.putBoolean(IRepositoryPrefConstants.ALLOW_SPECIFIC_CHARACTERS_FOR_SCHEMA_COLUMNS, true);
+
+        tableName = "t_ht01_处理日期_2017";
+        tableName = MetadataToolHelper.validateTableName(tableName);
+        assertEquals(tableName, "t_ht01_处理日期_2017");
 
     }
 
@@ -559,5 +571,41 @@ public class MetadataToolHelperTest {
         String test = target.getAdditionalProperties().get("TEST");
         assertEquals(SAPBWTableHelper.IO_INNERTYPE_HIERARCHY, innerType);
         assertEquals(test, "TEST");
+    }
+
+    @Test
+    public void testCopyMetadataTableAndMappingDBType() {
+        // sap to postgres
+        IMetadataTable source = new org.talend.core.model.metadata.MetadataTable();
+        IMetadataTable target = new org.talend.core.model.metadata.MetadataTable();
+        source.setDbms("sap_id");
+        IMetadataColumn column = new MetadataColumn();
+        column.setLabel("S1"); //$NON-NLS-1$
+        column.setTalendType(JavaTypesManager.STRING.getId());
+        column.setType("STRING");
+        source.getListColumns().add(column);
+        column = new MetadataColumn();
+        column.setLabel("S2"); //$NON-NLS-1$
+        column.setTalendType(JavaTypesManager.SHORT.getId());
+        column.setType("SHORT");
+        source.getListColumns().add(column);
+        column = new MetadataColumn();
+        column.setLabel("S3"); //$NON-NLS-1$
+        column.setTalendType(JavaTypesManager.FLOAT.getId());
+        column.setType("FLOAT");
+        source.getListColumns().add(column);
+        column = new MetadataColumn();
+        column.setLabel("S4"); //$NON-NLS-1$
+        column.setTalendType(JavaTypesManager.BIGDECIMAL.getId());
+        column.setType("BIG_DECIMAL");
+        source.getListColumns().add(column);
+
+        target.setDbms("postgres_id");
+
+        MetadataToolHelper.copyTable(target.getDbms(), source, target);
+        assertEquals("VARCHAR", target.getColumn("S1").getType());
+        assertEquals("INT2", target.getColumn("S2").getType());
+        assertEquals("FLOAT4", target.getColumn("S3").getType());
+        assertEquals("NUMERIC", target.getColumn("S4").getType());
     }
 }
