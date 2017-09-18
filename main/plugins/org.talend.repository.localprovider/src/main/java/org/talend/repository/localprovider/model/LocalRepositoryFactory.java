@@ -3518,4 +3518,8 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
             }
         }// else no bundle for this, should never happend.
     }
+
+    public byte[] getReferenceSettingContent(Project project, String branch) throws PersistenceException {
+        return null;
+    }    
 }

@@ -16,13 +16,14 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.talend.commons.exception.InvalidProjectException;
+import org.talend.commons.exception.BusinessException;
 import org.talend.commons.exception.PersistenceException;
 import org.talend.commons.utils.workbench.resources.ResourceUtils;
 import org.talend.core.model.properties.Project;
@@ -37,20 +38,29 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ReferenceProjectProvider implements IReferenceProjectProvider {
 
-    private static Logger log = Logger.getLogger(ReferenceProjectProvider.class);
-
     private Project project;
+
+    private byte[] configContent = null;
+
+    private boolean loadFromContent = false;
 
     private ReferenceProjectConfiguration referenceProjectConfig;
 
     private List<ProjectReference> referenceProjectList = new ArrayList<ProjectReference>();
 
+    private static Map<String, List<ProjectReference>> tempReferenceMap = new HashMap<String, List<ProjectReference>>();
+
     public ReferenceProjectProvider(Project project) {
         this.project = project;
     }
 
-    public void initSettings() throws InvalidProjectException, PersistenceException {
-        ReferenceProjectProblemManager.getInstance().clearAll();
+    public ReferenceProjectProvider(Project project, byte[] configContent) {
+        this.project = project;
+        this.configContent = configContent;
+        loadFromContent = true;
+    }
+
+    public void initSettings() throws BusinessException, PersistenceException {
         IProxyRepositoryFactory proxyRepositoryFactory = CoreRuntimePlugin.getInstance().getProxyRepositoryFactory();
 
         loadSettings();
@@ -63,30 +73,30 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
                         ProjectReference projectReference = PropertiesFactory.eINSTANCE.createProjectReference();
                         projectReference.setReferencedProject(refProject);
                         projectReference.setReferencedBranch(bean.getBranchName());
-                        referenceProjectList.add(projectReference);
+                        referenceProjectList.add(getProjectReferenceInstance(refProject, bean));
                     }
                 } else {
-                    log.error("Invalid admin access: Can't access project {" + bean.getProjectTechnicalName()
-                            + "} by current user.");
+                    ReferenceProjectProblemManager.getInstance().addInvalidProjectReference(bean.getProjectTechnicalName(),
+                            bean.getBranchName());
                 }
-            }
-            // get exception message
-            if (ReferenceProjectProblemManager.getInstance().getInvalidProjectReferenceSet().size() > 0) {
-                StringBuffer sb = new StringBuffer();
-                for (String project : ReferenceProjectProblemManager.getInstance().getInvalidProjectReferenceSet()) {
-                    if (sb.length() > 0) {
-                        sb.append(",");
-                    }
-                    sb.append(project);
-                }
-                throw new InvalidProjectException(" Can't access project {" + sb.toString() + "} by current user.");
             }
         }
         return;
     }
 
+    private ProjectReference getProjectReferenceInstance(org.talend.core.model.properties.Project refProject,
+            ReferenceProjectBean bean) {
+        ProjectReference pr = PropertiesFactory.eINSTANCE.createProjectReference();
+        pr.setReferencedBranch(bean.getBranchName());
+        pr.setReferencedProject(refProject);
+        return pr;
+    }
+
     @Override
     public List<ProjectReference> getProjectReference() {
+        if (!loadFromContent && tempReferenceMap.get(project.getTechnicalLabel()) != null) {
+            return getTempReferenceList(project.getTechnicalLabel());
+        }
         return referenceProjectList;
     }
 
@@ -116,9 +126,13 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
         };
 
         try {
-            File file = getConfigurationFile();
-            if (file != null && file.exists()) {
-                referenceProjectConfig = new ObjectMapper().readValue(file, typeReference);
+            if (loadFromContent) {
+                referenceProjectConfig = new ObjectMapper().readValue(configContent, typeReference);
+            } else {
+                File file = getConfigurationFile();
+                if (file != null && file.exists()) {
+                    referenceProjectConfig = new ObjectMapper().readValue(file, typeReference);
+                }
             }
         } catch (Throwable e) {
             throw new PersistenceException(e);
@@ -127,8 +141,8 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
 
     protected File getConfigurationFile() throws Exception {
         IProject iProject = ResourceUtils.getProject(project.getTechnicalLabel());
-        IFolder folder = iProject.getFolder(".settings"); //$NON-NLS-1$
-        IFile file = folder.getFile("reference_projects.settings"); //$NON-NLS-1$
+        IFolder folder = iProject.getFolder(CONFIGURATION_FOLDER_NAME);
+        IFile file = folder.getFile(CONFIGURATION_FILE_NAME);
         File propertiesFile = new File(file.getLocationURI());
         return propertiesFile;
     }
@@ -152,6 +166,32 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
             bw.flush();
             bw.close();
         }
+    }
+
+    public static void setTempReferenceList(String projectLabel, List<ProjectReference> referenceList) {
+        tempReferenceMap.put(projectLabel, referenceList);
+    }
+
+    public static List<ProjectReference> getTempReferenceList(String projectLabel) {
+        List<ProjectReference> referenceList = tempReferenceMap.get(projectLabel);
+        if (referenceList != null) {
+            List<ProjectReference> clonedList = new ArrayList<ProjectReference>();
+            IProxyRepositoryFactory proxyRepositoryFactory = CoreRuntimePlugin.getInstance().getProxyRepositoryFactory();
+            for (ProjectReference pr : referenceList) {
+                org.talend.core.model.properties.Project refProject = proxyRepositoryFactory
+                        .getEmfProjectContent(pr.getReferencedProject().getTechnicalLabel());
+                if (refProject != null) {
+                    pr.setReferencedProject(refProject);
+                }
+                clonedList.add(pr);
+            }
+            return clonedList;
+        }
+        return null;
+    }
+
+    public static void removeAllTempReferenceList() {
+        tempReferenceMap.clear();
     }
 }
 

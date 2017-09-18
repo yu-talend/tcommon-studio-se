@@ -528,4 +528,6 @@ public interface IProxyRepositoryFactory {
     public void updateEmfProjectContent(org.talend.core.model.properties.Project project);
 
     public org.talend.core.model.properties.Project getEmfProjectContent(String technicalLabel);
+    
+    public byte[] getReferenceSettingContent(Project project, String branch) throws PersistenceException;
 }

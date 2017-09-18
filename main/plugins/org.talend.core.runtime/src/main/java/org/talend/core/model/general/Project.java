@@ -18,9 +18,7 @@ import java.util.List;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.PlatformUI;
 import org.talend.commons.exception.BusinessException;
-import org.talend.commons.exception.CycleReferenceException;
 import org.talend.commons.exception.ExceptionHandler;
-import org.talend.commons.exception.InvalidProjectException;
 import org.talend.commons.exception.PersistenceException;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.context.Context;
@@ -359,7 +357,7 @@ public class Project {
             referenceProjectProvider = new ReferenceProjectProvider(project);
             try {
                 referenceProjectProvider.initSettings();
-            } catch (InvalidProjectException | PersistenceException  e) {
+            } catch (BusinessException | PersistenceException  e) {
                 ExceptionHandler.process(e);
             }
         }
@@ -373,7 +371,7 @@ public class Project {
             referenceProjectProvider = new ReferenceProjectProvider(project);
             try {
                 referenceProjectProvider.initSettings();
-            } catch (InvalidProjectException | PersistenceException e) {
+            } catch (BusinessException | PersistenceException e) {
                 ExceptionHandler.process(e);
             }
         }

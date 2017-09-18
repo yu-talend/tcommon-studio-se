@@ -14,12 +14,19 @@ package org.talend.repository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.talend.commons.exception.BusinessException;
+import org.talend.commons.exception.PersistenceException;
+import org.talend.core.GlobalServiceRegister;
 import org.talend.core.model.general.Project;
 import org.talend.core.model.properties.ProjectReference;
+import org.talend.core.runtime.i18n.Messages;
+import org.talend.repository.model.IProxyRepositoryFactory;
+import org.talend.repository.model.IProxyRepositoryService;
 
 public class ReferenceProjectProblemManager {
 
@@ -34,10 +41,9 @@ public class ReferenceProjectProblemManager {
         return instance;
     }
 
-    public void addInvalidProjectReference(ProjectReference projectReference) {
-        if (projectReference != null) {
-            invalidProjectMap.put(projectReference.getReferencedProject().getTechnicalLabel(),
-                    projectReference.getReferencedBranch());
+    public void addInvalidProjectReference(String projectTechnicalLabel, String branchName) {
+        if (projectTechnicalLabel != null) {
+            invalidProjectMap.put(projectTechnicalLabel, branchName);
         }
     }
 
@@ -49,28 +55,73 @@ public class ReferenceProjectProblemManager {
         invalidProjectMap.clear();
     }
 
-    public static boolean checkCycleReference(Project project) {
+    public static boolean checkCycleReference(Project project, Map<String, List<ProjectReference>> projectRefMap)
+            throws PersistenceException, BusinessException {
         List<ProjectReference> referenceList = project.getProjectReferenceList();
         if (referenceList.size() == 0) {
             return true;
         }
-        Map<String, List<String>> referenceMap = new HashMap<String, List<String>>();
         List<String> list = new ArrayList<String>();
-        referenceMap.put(project.getTechnicalLabel(), list);
         for (ProjectReference projetReference : referenceList) {
             list.add(projetReference.getReferencedProject().getTechnicalLabel());
-            List<ProjectReference> childReferenceList = new Project(projetReference.getReferencedProject())
-                    .getProjectReferenceList();
-            if (childReferenceList.size() > 0) {
-                List<String> childList = new ArrayList<String>();
-                referenceMap.put(projetReference.getReferencedProject().getTechnicalLabel(), childList);
-                for (ProjectReference pr : childReferenceList) {
-                    childList.add(pr.getReferencedProject().getTechnicalLabel());
-                }
+        }
+        projectRefMap.put(project.getTechnicalLabel(), referenceList);
+        for (ProjectReference projetReference : referenceList) {
+            List<ProjectReference> childReferenceList = getAllReferenceProject(projetReference, projectRefMap,
+                    new HashSet<String>(), false);
+            projectRefMap.put(projetReference.getReferencedProject().getTechnicalLabel(), childReferenceList);
+        }
+
+        return checkCycleReference(projectRefMap);
+    }
+
+    private static List<ProjectReference> readProjectReferenceSetting(ProjectReference projetReference)
+            throws PersistenceException, BusinessException {
+        byte[] configContent = null;
+        Project referencedProject = new Project(projetReference.getReferencedProject());
+        IProxyRepositoryService service = (IProxyRepositoryService) GlobalServiceRegister.getDefault()
+                .getService(IProxyRepositoryService.class);
+        IProxyRepositoryFactory factory = service.getProxyRepositoryFactory();
+        if (factory != null) {
+            configContent = factory.getReferenceSettingContent(referencedProject, projetReference.getReferencedBranch());
+            if (configContent != null && configContent.length > 0) {
+                ReferenceProjectProvider privoder = new ReferenceProjectProvider(referencedProject.getEmfProject(),
+                        configContent);
+                privoder.initSettings();
+                return privoder.getProjectReference();
             }
         }
 
-        return checkCycleReference(referenceMap);
+        return new ArrayList<ProjectReference>();
+    }
+
+    public static List<ProjectReference> getAllReferenceProject(ProjectReference projectReference,
+            Map<String, List<ProjectReference>> projectRefMap, Set<String> addedSet, boolean isReadFromRepository)
+            throws PersistenceException, BusinessException {
+        List<ProjectReference> result = new ArrayList<ProjectReference>();
+        List<ProjectReference> referenceList = null;
+        if (projectRefMap.containsKey(projectReference.getReferencedProject().getTechnicalLabel())) {
+            referenceList = projectRefMap.get(projectReference.getReferencedProject().getTechnicalLabel());
+        } else {
+            if (isReadFromRepository) {
+                referenceList = readProjectReferenceSetting(projectReference);
+                projectRefMap.put(projectReference.getReferencedProject().getTechnicalLabel(), referenceList);
+            } else {
+                referenceList = new Project(projectReference.getReferencedProject()).getProjectReferenceList();
+                projectRefMap.put(projectReference.getReferencedProject().getTechnicalLabel(), referenceList);
+            }
+        }
+        addedSet.add(projectReference.getReferencedProject().getTechnicalLabel());
+        if (referenceList != null && referenceList.size() > 0) {
+            for (ProjectReference reference : referenceList) {
+                result.add(reference);
+                if (!addedSet.contains(reference.getReferencedProject().getTechnicalLabel())) {
+                    result.addAll(getAllReferenceProject(reference, projectRefMap, addedSet, isReadFromRepository));
+                    addedSet.add(reference.getReferencedProject().getTechnicalLabel());
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -79,25 +130,25 @@ public class ReferenceProjectProblemManager {
      * @return false- cycle reference exist otherwise true
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static boolean checkCycleReference(Map<String, List<String>> referenceMap) {
+    public static boolean checkCycleReference(Map<String, List<ProjectReference>> projectRefMap) {
         List<String> allReferenceList = new ArrayList<String>();
-        for (String key : referenceMap.keySet()) {
+        for (String key : projectRefMap.keySet()) {
             if (!allReferenceList.contains(key)) {
                 allReferenceList.add(key);
             }
-            List<String> referenceList = referenceMap.get(key);
-            for (String reference : referenceList) {
-                if (!allReferenceList.contains(reference)) {
-                    allReferenceList.add(reference);
+            List<ProjectReference> referenceList = projectRefMap.get(key);
+            for (ProjectReference reference : referenceList) {
+                if (!allReferenceList.contains(reference.getReferencedProject().getTechnicalLabel())) {
+                    allReferenceList.add(reference.getReferencedProject().getTechnicalLabel());
                 }
             }
         }
         List<int[]> prerequisites = new ArrayList<int[]>();
-        for (String key : referenceMap.keySet()) {
+        for (String key : projectRefMap.keySet()) {
             int keyId = allReferenceList.indexOf(key);
-            List<String> referenceList = referenceMap.get(key);
-            for (String reference : referenceList) {
-                int refernceId = allReferenceList.indexOf(reference);
+            List<ProjectReference> referenceList = projectRefMap.get(key);
+            for (ProjectReference reference : referenceList) {
+                int refernceId = allReferenceList.indexOf(reference.getReferencedProject().getTechnicalLabel());
                 prerequisites.add(new int[] { keyId, refernceId });
             }
         }
@@ -133,5 +184,38 @@ public class ReferenceProjectProblemManager {
         }
         visited[id] = false;
         return true;
+    }
+
+    /**
+     * 
+     * @param projectRefMap key : project technical label, value : all referenced project list
+     * @throws MoreThanOneBranchException
+     */
+    public static void checkMoreThanOneBranch(Map<String, List<ProjectReference>> projectRefMap) throws BusinessException {
+        Map<String, Set<String>> prjectBranchMap = new HashMap<String, Set<String>>();
+        for (List<ProjectReference> referenceList : projectRefMap.values()) {
+            for (ProjectReference pr : referenceList) {
+                Set<String> branchSet = prjectBranchMap.get(pr.getReferencedProject().getTechnicalLabel());
+                if (branchSet == null) {
+                    branchSet = new HashSet<String>();
+                    prjectBranchMap.put(pr.getReferencedProject().getTechnicalLabel(), branchSet);
+                }
+                branchSet.add(pr.getReferencedBranch());
+            }
+        }
+        StringBuffer sb = new StringBuffer();
+        for (String label : prjectBranchMap.keySet()) {
+            if (prjectBranchMap.get(label).size() > 1) {
+                if (sb.length() > 0) {
+                    sb.append(",");
+                }
+                sb.append(label);
+            }
+        }
+        if (sb.length() > 0) {
+            throw new BusinessException(
+                    Messages.getString("ReferenceProjectProblemManager.ErrorMoreThanOneBranchUsing", sb.toString()),
+                    prjectBranchMap);
+        }
     }
 }

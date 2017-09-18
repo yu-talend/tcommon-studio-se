@@ -58,7 +58,6 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.talend.commons.CommonsPlugin;
 import org.talend.commons.exception.BusinessException;
-import org.talend.commons.exception.CycleReferenceException;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.exception.LoginException;
 import org.talend.commons.exception.PersistenceException;
@@ -94,6 +93,7 @@ import org.talend.core.model.properties.JobDocumentationItem;
 import org.talend.core.model.properties.JobletDocumentationItem;
 import org.talend.core.model.properties.MigrationTask;
 import org.talend.core.model.properties.ProcessItem;
+import org.talend.core.model.properties.ProjectReference;
 import org.talend.core.model.properties.PropertiesPackage;
 import org.talend.core.model.properties.Property;
 import org.talend.core.model.properties.SpagoBiServer;
@@ -1886,13 +1886,12 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                 currentMonitor.beginTask(Messages.getString("ProxyRepositoryFactory.initializeProjectConnection"), 1); //$NON-NLS-1$
                 ProjectManager.getInstance().getBeforeLogonRecords().clear();
                 ProjectManager.getInstance().getUpdatedRemoteHandlerRecords().clear();
+                ReferenceProjectProblemManager.getInstance().clearAll();
                 this.repositoryFactoryFromProvider.beforeLogon(project);
                 ProjectManager.getInstance().getBeforeLogonRecords().clear();
                 ProjectManager.getInstance().getUpdatedRemoteHandlerRecords().clear();
-
-                if (!ReferenceProjectProblemManager.checkCycleReference(project)) {
-                    throw new CycleReferenceException(Messages.getString("ProxyRepositoryFactory.CycleReferenceError")); //$NON-NLS-1$
-                }
+                // Check reference project setting problems
+                checkReferenceProjectsProblems(project);               
                 // monitorWrap.worked(1);
                 TimeMeasure.step("logOnProject", "beforeLogon"); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -2036,6 +2035,27 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
             logOffProject();
             throw e;
         }
+    }
+    
+    private void checkReferenceProjectsProblems(Project project)
+            throws BusinessException, PersistenceException {
+        if (ReferenceProjectProblemManager.getInstance().getInvalidProjectReferenceSet().size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            for (String technicalLabel : ReferenceProjectProblemManager.getInstance().getInvalidProjectReferenceSet()) {
+                if (sb.length() > 0) {
+                    sb.append(",");
+                }
+                sb.append(technicalLabel);
+            }
+            throw new BusinessException(" Can't access project {" + sb.toString() + "} by current user.");
+        }
+
+        Map<String, List<ProjectReference>> projectRefMap = new HashMap<String, List<ProjectReference>>();
+        if (!ReferenceProjectProblemManager.checkCycleReference(project, projectRefMap)) {
+            throw new BusinessException(Messages.getString("ProxyRepositoryFactory.CycleReferenceError")); //$NON-NLS-1$
+        }
+
+        ReferenceProjectProblemManager.checkMoreThanOneBranch(projectRefMap);
     }
 
     public void logOffProject() {
@@ -2352,5 +2372,9 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
 
     public org.talend.core.model.properties.Project getEmfProjectContent(String technicalLabel) {
         return emfProjectContentMap.get(technicalLabel);
+    }
+    
+    public byte[] getReferenceSettingContent(Project project, String branch) throws PersistenceException {
+        return repositoryFactoryFromProvider.getReferenceSettingContent(project, branch);
     }
 }

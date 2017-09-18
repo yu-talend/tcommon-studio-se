@@ -430,4 +430,6 @@ public interface IRepositoryFactory {
     public List<ILockBean> getAllRemoteLocks();
 
     public void loadProjectAndSetContext(IProject eclipseProject) throws PersistenceException;
+    
+    public byte[] getReferenceSettingContent(Project project, String branch) throws PersistenceException;
 }
