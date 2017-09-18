@@ -410,20 +410,20 @@ public class LocalLibraryManager implements ILibraryManagerService {
                             }
                         }
                     }
-                    for (String uri : toResolve) {
-                        if (isResolveAllowed(uri)) {
-                            MavenArtifact parseMvnUrl = MavenUrlHelper.parseMvnUrl(uri);
-                            if (jarFile == null || parseMvnUrl.getVersion().endsWith(MavenUrlHelper.VERSION_SNAPSHOT)) {
-                                File resolvedJar = resolveJar(manager, customNexusServer, uri);
-                                if (resolvedJar != null) {
-                                    jarFile = resolvedJar;
-                                    break;
-                                }
-                            }
-                        }
-
-                    }
                 }
+                for (String uri : toResolve) {
+                    if (isResolveAllowed(uri)) {
+                        // MavenArtifact parseMvnUrl = MavenUrlHelper.parseMvnUrl(uri);
+                        // if (jarFile == null || parseMvnUrl.getVersion().endsWith(MavenUrlHelper.VERSION_SNAPSHOT)) {
+                        File resolvedJar = resolveJar(manager, customNexusServer, uri);
+                        if (resolvedJar != null) {
+                            jarFile = resolvedJar;
+                        }
+                        // }
+                    }
+
+                }
+
             }
         } catch (Exception e) {
             CommonExceptionHandler.process(new Exception(getClass().getSimpleName() + " resolve " + mavenUri + " failed !"));
