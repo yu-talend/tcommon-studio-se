@@ -2035,6 +2035,8 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
             logOffProject();
             throw e;
         }
+        
+        this.repositoryFactoryFromProvider.migrateReferenceSetting(project);
     }
     
     private void checkReferenceProjectsProblems(Project project)

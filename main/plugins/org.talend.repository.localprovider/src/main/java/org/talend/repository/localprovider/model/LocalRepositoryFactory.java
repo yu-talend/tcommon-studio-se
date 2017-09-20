@@ -3217,9 +3217,7 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
                 .get(IProxyRepositoryFactory.BRANCH_SELECTION + "_" + getRepositoryContext().getProject().getTechnicalLabel());
         List<org.talend.core.model.properties.Project> refProjectList = new ArrayList<org.talend.core.model.properties.Project>();
         for (ProjectReference refProject : project.getProjectReferenceList()) {
-            String rBranch = ProjectManager.getInstance().getLocalProjectReferenceBranch(project.getEmfProject(), parentBranch, refProject);
-            String refBranch4Local = ProjectManager.getInstance().getLocalProjectReferenceReferenceBranch(project.getEmfProject(), parentBranch, refProject);
-            if (ProjectManager.validReferenceProject(parentBranch, rBranch, refBranch4Local, refProject)) {
+            if (ProjectManager.validReferenceProject(parentBranch, refProject)) {
                 refProjectList.add(new Project(refProject.getReferencedProject()).getEmfProject());
             }
         }
@@ -3521,5 +3519,9 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
 
     public byte[] getReferenceSettingContent(Project project, String branch) throws PersistenceException {
         return null;
-    }    
+    }
+
+    public void migrateReferenceSetting(final Project project) throws PersistenceException {
+        // nothing to do
+    }
 }

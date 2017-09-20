@@ -12,6 +12,7 @@
 // ============================================================================
 package org.talend.core.model.general;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -366,7 +367,7 @@ public class Project {
         return projectReferenceList;
     }
 
-    public void saveProjectReferenceList(List<ProjectReference> projectReferenceList) throws Exception {
+    public void saveProjectReferenceList(List<ProjectReference> projectReferenceList) throws PersistenceException, IOException {
         if (referenceProjectProvider == null) {
             referenceProjectProvider = new ReferenceProjectProvider(project);
             try {
@@ -378,8 +379,19 @@ public class Project {
         referenceProjectProvider.setProjectReference(projectReferenceList);
         referenceProjectProvider.saveSettings();
     }
-
     
+    public boolean isHasConfigurationFile() {
+        if (referenceProjectProvider == null) {
+            referenceProjectProvider = new ReferenceProjectProvider(project);
+            try {
+                referenceProjectProvider.initSettings();
+            } catch (BusinessException | PersistenceException e) {
+                ExceptionHandler.process(e);
+            }
+        }
+        return referenceProjectProvider.isHasConfigurationFile();
+    }
+   
     public void setReferenceProjectProvider(IReferenceProjectProvider referenceProjectProvider) {
         this.referenceProjectProvider = referenceProjectProvider;
     }

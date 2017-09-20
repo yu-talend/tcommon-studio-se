@@ -15,6 +15,7 @@ package org.talend.repository;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +49,11 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
 
     private List<ProjectReference> referenceProjectList = new ArrayList<ProjectReference>();
 
+    private boolean hasConfigurationFile = false;
+
     private static Map<String, List<ProjectReference>> tempReferenceMap = new HashMap<String, List<ProjectReference>>();
+
+    private static Map<String, List<ProjectReference>> tacReferenceMap = new HashMap<String, List<ProjectReference>>();
 
     public ReferenceProjectProvider(Project project) {
         this.project = project;
@@ -97,6 +102,9 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
         if (!loadFromContent && tempReferenceMap.get(project.getTechnicalLabel()) != null) {
             return getTempReferenceList(project.getTechnicalLabel());
         }
+        if (!loadFromContent && !isHasConfigurationFile()) {
+            return getTacReferenceList(project.getTechnicalLabel());
+        }
         return referenceProjectList;
     }
 
@@ -131,6 +139,7 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
             } else {
                 File file = getConfigurationFile();
                 if (file != null && file.exists()) {
+                    hasConfigurationFile = true;
                     referenceProjectConfig = new ObjectMapper().readValue(file, typeReference);
                 }
             }
@@ -139,7 +148,7 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
         }
     }
 
-    protected File getConfigurationFile() throws Exception {
+    protected File getConfigurationFile() throws PersistenceException  {
         IProject iProject = ResourceUtils.getProject(project.getTechnicalLabel());
         IFolder folder = iProject.getFolder(CONFIGURATION_FOLDER_NAME);
         IFile file = folder.getFile(CONFIGURATION_FILE_NAME);
@@ -148,7 +157,7 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
     }
 
     @Override
-    public void saveSettings() throws Exception {
+    public void saveSettings() throws PersistenceException, IOException  {
         File file = getConfigurationFile();
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
@@ -166,6 +175,10 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
             bw.flush();
             bw.close();
         }
+    }
+
+    public boolean isHasConfigurationFile() {
+        return hasConfigurationFile;
     }
 
     public static void setTempReferenceList(String projectLabel, List<ProjectReference> referenceList) {
@@ -192,6 +205,32 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
 
     public static void removeAllTempReferenceList() {
         tempReferenceMap.clear();
+    }
+
+    public static void setTacReferenceList(String projectLabel, List<ProjectReference> referenceList) {
+        tacReferenceMap.put(projectLabel, referenceList);
+    }
+
+    public static List<ProjectReference> getTacReferenceList(String projectLabel) {
+        List<ProjectReference> referenceList = tacReferenceMap.get(projectLabel);
+        if (referenceList != null) {
+            List<ProjectReference> clonedList = new ArrayList<ProjectReference>();
+            IProxyRepositoryFactory proxyRepositoryFactory = CoreRuntimePlugin.getInstance().getProxyRepositoryFactory();
+            for (ProjectReference pr : referenceList) {
+                org.talend.core.model.properties.Project refProject = proxyRepositoryFactory
+                        .getEmfProjectContent(pr.getReferencedProject().getTechnicalLabel());
+                if (refProject != null) {
+                    pr.setReferencedProject(refProject);
+                }
+                clonedList.add(pr);
+            }
+            return clonedList;
+        }
+        return null;
+    }
+
+    public static void removeAllTacReferenceList() {
+        tacReferenceMap.clear();
     }
 }
 

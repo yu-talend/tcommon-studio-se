@@ -1,5 +1,6 @@
 package org.talend.repository;
 
+import java.io.IOException;
 // ============================================================================
 //
 // Copyright (C) 2006-2016 Talend Inc. - www.talend.com
@@ -28,9 +29,11 @@ public interface IReferenceProjectProvider {
 
     public void setProjectReference(List<ProjectReference> projectReferenceList);
 
-    public void loadSettings() throws Exception;
+    public void loadSettings() throws PersistenceException, IOException;
 
-    public void saveSettings() throws Exception;
+    public void saveSettings() throws PersistenceException, IOException;
 
     public void initSettings() throws BusinessException, PersistenceException;
+
+    public boolean isHasConfigurationFile();
 }

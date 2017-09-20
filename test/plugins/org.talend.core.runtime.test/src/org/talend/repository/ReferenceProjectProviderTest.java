@@ -16,6 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -127,9 +128,14 @@ class TestBaseReferenceProjectProvider extends ReferenceProjectProvider {
         super(project);
     }
 
-    protected File getConfigurationFile() throws PersistenceException, Exception {
+    protected File getConfigurationFile() throws PersistenceException {
         Bundle bundle = Platform.getBundle("org.talend.core.runtime.test"); //$NON-NLS-1$
         URL confEntry = bundle.getEntry("resources/reference_projects.settings"); //$NON-NLS-1$
-        return new File(FileLocator.toFileURL(confEntry).getFile());
+        try {
+            return new File(FileLocator.toFileURL(confEntry).getFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

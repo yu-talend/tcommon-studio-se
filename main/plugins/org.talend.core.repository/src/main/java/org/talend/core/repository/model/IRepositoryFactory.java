@@ -432,4 +432,6 @@ public interface IRepositoryFactory {
     public void loadProjectAndSetContext(IProject eclipseProject) throws PersistenceException;
     
     public byte[] getReferenceSettingContent(Project project, String branch) throws PersistenceException;
+    
+    public void migrateReferenceSetting(final Project project) throws PersistenceException;
 }
