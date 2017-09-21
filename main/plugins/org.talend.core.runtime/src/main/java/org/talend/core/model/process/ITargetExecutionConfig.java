@@ -31,16 +31,21 @@ public interface ITargetExecutionConfig extends IServerConfiguration {
     public void setUseSSL(boolean useSSL);
 
     public boolean useSSL();
-    
+
     public boolean isUseJMX();
 
-	public void setUseJMX(boolean useJMX);
+    public void setUseJMX(boolean useJMX);
 
-	public int getRemotePort();
+    public int getRemotePort();
 
-	public void setRemotePort(int remotePort);
-	
-	public String getRunAsUser();
-	
-	public void setRunAsUser(String runAsUser);
+    public void setRemotePort(int remotePort);
+
+    public String getRunAsUser();
+
+    public void setRunAsUser(String runAsUser);
+
+    int getMqPort();
+
+    void setMqPort(int mqPort);
+
 }
