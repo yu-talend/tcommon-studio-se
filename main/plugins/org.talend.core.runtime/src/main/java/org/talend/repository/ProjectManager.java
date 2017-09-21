@@ -169,6 +169,7 @@ public final class ProjectManager {
 
     private void resolveSubRefProject(org.talend.core.model.properties.Project p, List<Project> allReferencedprojects,
             Set<String> resolvedProjectLabels) {
+
         Context ctx = CoreRuntimePlugin.getInstance().getContext();
         if (ctx != null && p != null) {
             String parentBranch = ProjectManager.getInstance().getMainProjectBranch(p);
@@ -311,13 +312,6 @@ public final class ProjectManager {
                 return getProject(((Property) object).getItem());
             }
             if (object instanceof Item) {
-                if (((Item) object).getParent() == null) { // may be a routelet from reference project
-                    org.talend.core.model.properties.Project refProject = getRouteletReferenceProject((Item) object);
-                    if (refProject != null) {
-                        return refProject;
-                    }
-                }
-
                 return getProject(((Item) object).getParent());
             }
         }
@@ -330,48 +324,6 @@ public final class ProjectManager {
         return null;
     }
 
-    /*
-     * returns reference project where the given routelet comes from, or null in case if the routelet is from the
-     * current project
-     */
-    private org.talend.core.model.properties.Project getRouteletReferenceProject(Item item) {
-
-        final String URI_PREFIX = "platform:/resource/";
-
-        org.talend.core.model.properties.ItemState state = item.getState();
-
-        if (state != null) {
-            if (state instanceof org.eclipse.emf.ecore.impl.EObjectImpl) {
-                org.eclipse.emf.common.util.URI eProxyUri = ((org.eclipse.emf.ecore.impl.EObjectImpl) state).eProxyURI();
-                if (eProxyUri == null) {
-                    return null;
-                }
-                String eProxyUriString = eProxyUri.toString();
-                if (eProxyUriString != null && eProxyUriString.startsWith(URI_PREFIX)) {
-                    String tmpString = eProxyUriString.substring(URI_PREFIX.length());
-                    if (!tmpString.contains("/routelets/")) {
-                        return null;
-                    }
-                    String projectLabel = tmpString.substring(0, tmpString.indexOf("/"));
-
-                    if (currentProject == null) {
-                        initCurrentProject();
-                    }
-
-                    if (currentProject.getLabel().equalsIgnoreCase(projectLabel)) {
-                        return currentProject.getEmfProject();
-                    }
-                    for (Project project : getAllReferencedProjects()) {
-                        if (project.getLabel().equalsIgnoreCase(projectLabel)) {
-                            return project.getEmfProject();
-                        }
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
 
     public org.talend.core.model.properties.Project getProject(Project project, EObject object) {
         if (object != null) {

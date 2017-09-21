@@ -34,7 +34,7 @@ import org.talend.core.model.general.ModuleStatusProvider;
 import org.talend.core.model.general.ModuleToInstall;
 import org.talend.librariesmanager.ui.LibManagerUiPlugin;
 import org.talend.librariesmanager.ui.i18n.Messages;
-import org.talend.librariesmanager.ui.startup.ShareLibsOnStartup;
+import org.talend.librariesmanager.ui.startup.ShareMavenArtifactsOnStartup;
 import org.talend.librariesmanager.ui.wizards.AcceptModuleLicensesWizard;
 import org.talend.librariesmanager.ui.wizards.AcceptModuleLicensesWizardDialog;
 import org.talend.librariesmanager.utils.nexus.NexusDownloadHelperWithProgress;
