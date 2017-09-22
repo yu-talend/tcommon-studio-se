@@ -72,20 +72,12 @@ public class ProjectPomProjectSettingPage extends AbstractPersistentProjectSetti
                     Messages.getString("ProjectPomProjectSettingPage_ConfirmMessage")); //$NON-NLS-1$
 
             // Update project pom file.
-            if (GlobalServiceRegister.getDefault().isServiceRegistered(IRunProcessService.class)) {
-                IRunProcessService service = (IRunProcessService) GlobalServiceRegister.getDefault().getService(
-                        IRunProcessService.class);
-                ITalendProcessJavaProject talendJavaProject = service.getTalendProcessJavaProject();
-                if (talendJavaProject != null) {
-                    ProjectPomManager projectPomManager = new ProjectPomManager();
-                    try {
-                        projectPomManager.updateFromTemplate(null);
-                    } catch (Exception e) {
-                        ExceptionHandler.process(e);
-                    }
-                }
+            ProjectPomManager projectPomManager = new ProjectPomManager();
+            try {
+                projectPomManager.updateFromTemplate(null);
+            } catch (Exception e) {
+                ExceptionHandler.process(e);
             }
-
         }
 
         return performOk;

@@ -12,6 +12,8 @@
 // ============================================================================
 package org.talend.designer.maven.utils;
 
+import static org.junit.Assert.*;
+
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,9 +22,12 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -36,6 +41,7 @@ import org.talend.core.model.properties.Property;
 import org.talend.core.nexus.TalendLibsServerManager;
 import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenConstants;
+import org.talend.designer.maven.model.TalendJavaProjectConstants;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.template.MavenTemplateManager;
 import org.talend.designer.runprocess.IProcessor;
@@ -452,14 +458,56 @@ public class PomUtilTest {
         Assert.assertNotNull(projectName);
         Assert.assertEquals("ABC", projectName);
     }
-    
+
     @Test
-    public void testGetPomRelativePath() {
-        //TODO
+    public void testGetPomRelativePath() throws Exception {
+        String projectTechName = ProjectManager.getInstance().getCurrentProject().getTechnicalLabel();
+        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+        IFolder pomsFolder = root.getFolder(new Path(projectTechName + "/" + TalendJavaProjectConstants.DIR_POMS));
+        IFile routinePom = pomsFolder.getFolder("code").getFolder("routines").getFile("pom.xml");
+        String relativePath = PomUtil.getPomRelativePath(routinePom.getLocation().toFile(), "poms");
+        assertEquals("../../", relativePath);
+        
+        IFolder jobFolder = pomsFolder.getFolder("jobs").getFolder("process").getFolder("item_relativeTest");
+        if (!jobFolder.exists()) {
+            jobFolder.create(true, true, null);
+        }
+        IFile jobPom = jobFolder.getFile("pom.xml");
+        Model model = new Model();
+        model.setModelVersion("4.0.0");
+        model.setGroupId("org.talend.test");
+        model.setArtifactId("testRelative");
+        model.setVersion("1.0.0");
+        PomUtil.savePom(null, model, jobPom);
+        
+        assertTrue(jobPom.exists());
+        
+        relativePath = PomUtil.getPomRelativePath(jobPom.getLocation().toFile(), "poms");
+        assertEquals("../../../", relativePath);
     }
-    
+
     @Test
-    public void testRemoveFromParentModules() {
-        //TODO
+    public void testAddToAndRemoveFromParentModules() throws Exception {
+        String projectTechName = ProjectManager.getInstance().getCurrentProject().getTechnicalLabel();
+        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+        IFolder pomsFolder = root.getFolder(new Path(projectTechName + "/" + TalendJavaProjectConstants.DIR_POMS));
+        IFolder jobFolder = pomsFolder.getFolder("jobs").getFolder("process").getFolder("item_job1");
+        if (!jobFolder.exists()) {
+            jobFolder.create(true, true, null);
+        }
+        IFile jobPom = jobFolder.getFile("pom.xml");
+        PomUtil.addToParentModules(jobPom);
+
+        IFile processPom = pomsFolder.getFolder("jobs").getFolder("process").getFile("pom.xml");
+        Model model = MavenPlugin.getMavenModelManager().readMavenModel(processPom);
+        assertNotNull(model.getModules());
+        assertTrue(model.getModules().contains("item_job1/pom.xml"));
+
+        PomUtil.removeFromParentModules(jobPom);
+
+        model = MavenPlugin.getMavenModelManager().readMavenModel(processPom);
+        assertNotNull(model.getModules());
+        assertFalse(model.getModules().contains("item_job1/pom.xml"));
     }
+
 }

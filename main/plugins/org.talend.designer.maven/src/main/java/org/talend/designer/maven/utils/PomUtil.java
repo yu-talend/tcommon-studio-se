@@ -192,8 +192,7 @@ public class PomUtil {
         parent.setArtifactId(codeProjectTemplateModel.getArtifactId());
         parent.setVersion(codeProjectTemplateModel.getVersion());
         
-        File pomFolder = curPomFile.getLocation().toFile().getParentFile();
-        String relativePath = getPomRelativePath(pomFolder.getParentFile(), "poms"); //$NON-NLS-1$
+        String relativePath = getPomRelativePath(curPomFile.getLocation().toFile(), "poms"); //$NON-NLS-1$
         parent.setRelativePath(relativePath);
 
     }
@@ -201,8 +200,10 @@ public class PomUtil {
     public static String getPomRelativePath(File file, String baseFolder) {
         String path = "../"; //$NON-NLS-1$
         // TODO should not allow user-defined folder named poms.
-        if (file != null && !file.getName().equals(baseFolder)) {
+        if (file != null && !file.getParentFile().getName().equals(baseFolder)) {
             path += getPomRelativePath(file.getParentFile(), baseFolder);
+        } else {
+            path = ""; //$NON-NLS-1$
         }
         return path;
     }
@@ -686,25 +687,41 @@ public class PomUtil {
     }
 
     public static void addToParentModules(IFile pomFile) throws Exception {
+        if (pomFile == null || pomFile.getParent() == null || pomFile.getParent().getParent() == null) {
+            return;
+        }
+        if (pomFile.getParent().getName().equals(TalendMavenConstants.PROJECT_NAME)) {
+            // ignore .Java project
+            return;
+        }
         IContainer container = pomFile.getParent().getParent();
         if (container instanceof IFolder) {
             IFolder folder = (IFolder) container;
             IFile parentPom = folder.getFile(TalendMavenConstants.POM_FILE_NAME);
-            IPath relativePath = pomFile.getFullPath().makeRelativeTo(folder.getFullPath());
-            Model model = MODEL_MANAGER.readMavenModel(parentPom);
-            List<String> modules = model.getModules();
-            if (modules == null) {
-                modules = new ArrayList<>();
-                model.setModules(modules);
-            }
-            if (!modules.contains(relativePath.toPortableString())) {
-                modules.add(relativePath.toPortableString());
-                savePom(null, model, parentPom);
+            if (parentPom.exists()) {
+                IPath relativePath = pomFile.getFullPath().makeRelativeTo(folder.getFullPath());
+                Model model = MODEL_MANAGER.readMavenModel(parentPom);
+                List<String> modules = model.getModules();
+                if (modules == null) {
+                    modules = new ArrayList<>();
+                    model.setModules(modules);
+                }
+                if (!modules.contains(relativePath.toPortableString())) {
+                    modules.add(relativePath.toPortableString());
+                    savePom(null, model, parentPom);
+                }
             }
         }
     }
 
     public static void removeFromParentModules(IFile pomFile) throws Exception {
+        if (pomFile == null || pomFile.getParent() == null || pomFile.getParent().getParent() == null) {
+            return;
+        }
+        if (pomFile.getParent().getName().equals(TalendMavenConstants.PROJECT_NAME)) {
+            // ignore .Java project
+            return;
+        }
         IContainer container = pomFile.getParent().getParent();
         if (container instanceof IFolder) {
             IFolder folder = (IFolder) container;
@@ -712,9 +729,9 @@ public class PomUtil {
             IPath relativePath = pomFile.getFullPath().makeRelativeTo(folder.getFullPath());
             Model model = MODEL_MANAGER.readMavenModel(parentPom);
             List<String> modules = model.getModules();
-            if (modules != null && !modules.contains(relativePath)) {
-                modules.remove(relativePath);
-                savePom(null, model, pomFile);
+            if (modules != null && modules.contains(relativePath.toPortableString())) {
+                modules.remove(relativePath.toPortableString());
+                savePom(null, model, parentPom);
             }
         }
     }

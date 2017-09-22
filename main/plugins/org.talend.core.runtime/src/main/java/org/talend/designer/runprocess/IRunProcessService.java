@@ -182,6 +182,9 @@ public interface IRunProcessService extends IService {
 
     public void buildJavaProject();
 
+    /**
+     * @deprecated use {@link IRunProcessService#getTalendJobJavaProject(Property)} instead
+     */
     ITalendProcessJavaProject getTalendProcessJavaProject();
 
     ProjectPreferenceManager getProjectPreferenceManager();
@@ -199,6 +202,8 @@ public interface IRunProcessService extends IService {
     ITalendProcessJavaProject getTalendCodeJavaProject(ERepositoryObjectType type);
 
     ITalendProcessJavaProject getTalendJobJavaProject(Property property);
+    
+    ITalendProcessJavaProject getTempJavaProject();
     
     void deleteEclipseProjects();
 

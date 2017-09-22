@@ -28,6 +28,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.talend.commons.exception.ExceptionHandler;
+import org.talend.commons.exception.PersistenceException;
+import org.talend.core.GlobalServiceRegister;
 import org.talend.core.model.process.IProcess;
 import org.talend.core.model.process.JobInfo;
 import org.talend.core.model.process.ProcessUtils;
@@ -38,6 +40,7 @@ import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.model.utils.JavaResourcesHelper;
 import org.talend.core.runtime.projectsetting.IProjectSettingTemplateConstants;
 import org.talend.core.runtime.repository.build.IMavenPomCreator;
+import org.talend.core.ui.ITestContainerProviderService;
 import org.talend.designer.maven.model.TalendMavenConstants;
 import org.talend.designer.maven.template.ETalendMavenVariables;
 import org.talend.designer.maven.tools.ProcessorDependenciesManager;
@@ -102,8 +105,20 @@ public abstract class AbstractMavenProcessorPom extends CreateMavenBundleTemplat
     protected void setAttributes(Model model) {
         //
         final IProcessor jProcessor = getJobProcessor();
-        final IProcess process = jProcessor.getProcess();
-        final Property property = jProcessor.getProperty();
+        IProcess process = jProcessor.getProcess();
+        Property property = jProcessor.getProperty();
+        
+        if (ProcessUtils.isTestContainer(process)) {
+            if (GlobalServiceRegister.getDefault().isServiceRegistered(ITestContainerProviderService.class)) {
+                ITestContainerProviderService testService = (ITestContainerProviderService) GlobalServiceRegister.getDefault().getService(ITestContainerProviderService.class);
+                try {
+                    property = testService.getParentJobItem(property.getItem()).getProperty();
+                    process = testService.getParentJobProcess(process);
+                } catch (PersistenceException e) {
+                    ExceptionHandler.process(e);
+                }
+            }
+        }
 
         Map<ETalendMavenVariables, String> variablesValuesMap = new HashMap<ETalendMavenVariables, String>();
         // no need check property is null or not, because if null, will get default ids.

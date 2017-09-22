@@ -52,7 +52,7 @@ public class CoreServiceTest {
         if (GlobalServiceRegister.getDefault().isServiceRegistered(IRunProcessService.class)) {
             IRunProcessService runProcessService = (IRunProcessService) GlobalServiceRegister.getDefault()
                     .getService(IRunProcessService.class);
-            talendProcessJavaProject = runProcessService.getTalendProcessJavaProject();
+            talendProcessJavaProject = runProcessService.getTempJavaProject();
             //TODO create a temp job code project
         }
     }

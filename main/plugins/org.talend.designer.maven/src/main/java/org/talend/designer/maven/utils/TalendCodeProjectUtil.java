@@ -11,6 +11,7 @@
 // ============================================================================
 package org.talend.designer.maven.utils;
 
+import org.apache.maven.model.Model;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -29,7 +30,9 @@ import org.talend.designer.maven.tools.creator.CreateMavenCodeProject;
  */
 public final class TalendCodeProjectUtil {
 
-    // TODO remove
+    /**
+     * a temp maven java project, actually only used for compilation by jdt, any settings in pom.xml won't take affect.
+     */
     public static IProject initCodeProject(IProgressMonitor monitor) throws Exception {
         IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 
@@ -43,7 +46,22 @@ public final class TalendCodeProjectUtil {
                 }
                 codeProject.delete(true, true, monitor);
             }
-            CreateMavenCodeProject createProject = new CreateMavenCodeProject(codeProject);
+            CreateMavenCodeProject createProject = new CreateMavenCodeProject(codeProject){
+
+                @Override
+                protected Model createModel() {
+                    Model templateModel = new Model();
+                    templateModel.setModelVersion("4.0.0"); //$NON-NLS-1$
+                    templateModel.setGroupId("org.talend.temp.project"); //$NON-NLS-1$
+                    templateModel.setArtifactId(TalendMavenConstants.PROJECT_NAME);
+                    templateModel.setVersion(PomIdsHelper.getProjectVersion());
+                    templateModel.setPackaging(TalendMavenConstants.PACKAGING_JAR);
+                    
+                    return templateModel;
+                }
+                
+            };
+            createProject.setProjectLocation(root.getLocation().append(TalendMavenConstants.PROJECT_NAME));
             createProject.create(monitor);
             codeProject = createProject.getProject();
         }
@@ -98,10 +116,6 @@ public final class TalendCodeProjectUtil {
             if (!codeProject.getFile(TalendMavenConstants.POM_FILE_NAME).exists()) {
                 return true;
             }
-
-            // FIXME pom is not "pom" packaging?
-            // will change to "pom" packaging when ProjectPomManager.updateAttributes. so no need check.
-
         }
         return false;
     }

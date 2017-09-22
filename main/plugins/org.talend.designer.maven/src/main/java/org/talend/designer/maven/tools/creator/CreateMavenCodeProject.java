@@ -425,6 +425,10 @@ public class CreateMavenCodeProject extends AbstractMavenGeneralTemplatePom {
         monitor.subTask(Messages.ProjectConfigurationManager_task_creating_project);
         projectConfigurationManager.enableMavenNature(p, importConfiguration.getResolverConfiguration(), monitor);
         monitor.worked(1);
+        
+        if (this.pomFile == null) {
+            this.pomFile = pomFile;
+        }
     }
 
     private void hideNestedProjectsFromParents(List<IProject> projects) {

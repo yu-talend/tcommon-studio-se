@@ -38,7 +38,9 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.talend.commons.exception.ExceptionHandler;
+import org.talend.commons.exception.PersistenceException;
 import org.talend.commons.utils.VersionUtils;
+import org.talend.core.GlobalServiceRegister;
 import org.talend.core.model.process.IContext;
 import org.talend.core.model.process.IProcess;
 import org.talend.core.model.process.IProcess2;
@@ -56,6 +58,7 @@ import org.talend.core.runtime.process.LastGenerationInfo;
 import org.talend.core.runtime.process.TalendProcessArgumentConstant;
 import org.talend.core.runtime.projectsetting.IProjectSettingPreferenceConstants;
 import org.talend.core.runtime.projectsetting.IProjectSettingTemplateConstants;
+import org.talend.core.ui.ITestContainerProviderService;
 import org.talend.core.utils.TalendQuoteUtils;
 import org.talend.designer.core.model.utils.emf.talendfile.ContextParameterType;
 import org.talend.designer.maven.model.TalendMavenConstants;
@@ -169,9 +172,21 @@ public class CreateMavenJobPom extends AbstractMavenProcessorPom {
         Properties properties = model.getProperties();
 
         final IProcessor jProcessor = getJobProcessor();
-        final IProcess process = jProcessor.getProcess();
+        IProcess process = jProcessor.getProcess();
         final IContext context = jProcessor.getContext();
-        final Property property = jProcessor.getProperty();
+        Property property = jProcessor.getProperty();
+        
+        if (ProcessUtils.isTestContainer(process)) {
+            if (GlobalServiceRegister.getDefault().isServiceRegistered(ITestContainerProviderService.class)) {
+                ITestContainerProviderService testService = (ITestContainerProviderService) GlobalServiceRegister.getDefault().getService(ITestContainerProviderService.class);
+                try {
+                    property = testService.getParentJobItem(property.getItem()).getProperty();
+                    process = testService.getParentJobProcess(process);
+                } catch (PersistenceException e) {
+                    ExceptionHandler.process(e);
+                }
+            }
+        }
 
         // same as JavaProcessor.initCodePath
         String jobClassPackageFolder = JavaResourcesHelper.getJobClassPackageFolder(property.getItem());
