@@ -13,6 +13,8 @@
 package org.talend.librariesmanager.ui.actions;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -65,7 +67,6 @@ public class ImportExternalJarAction extends Action {
      */
     @Override
     public void run() {
-
         handleImportJarDialog(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell());
     }
 
@@ -76,42 +77,7 @@ public class ImportExternalJarAction extends Action {
      * @return, list of imported file names, may be empty
      */
     public String[] handleImportJarDialog(Shell shell) {
-        FileDialog fileDialog = new FileDialog(shell, SWT.OPEN | SWT.MULTI);
-        fileDialog.setFilterExtensions(FilesUtils.getAcceptJARFilesSuffix());
-        fileDialog.open();
-        final String path = fileDialog.getFilterPath();
-        final String[] fileNames = fileDialog.getFileNames();
-
-        BusyIndicator.showWhile(Display.getDefault(), new Runnable() {
-
-            @Override
-            public void run() {
-                boolean modified = false;
-                for (String fileName : fileNames) {
-                    File file = new File(path + File.separatorChar + fileName);
-                    try {
-                        LibManagerUiPlugin.getDefault().getLibrariesService().deployLibrary(file.toURL(), false);
-                        // TUP-18405, record the custom module to custom uri mapping if not exist in any index
-                        Set<String> modulesNeededNames = ModulesNeededProvider.getModulesNeededNames();
-                        if (!modulesNeededNames.contains(fileName)) {
-                            String mavenUri = MavenUrlHelper.generateMvnUrlForJarName(fileName, true, true);
-                            CustomUriManager.getInstance().put(mavenUri, mavenUri);
-                            ModulesNeededProvider.addUnknownModules(fileName, mavenUri, true);
-                            modified = true;
-                        }
-                    } catch (Exception e) {
-                        ExceptionHandler.process(e);
-                        continue;
-                    }
-                }
-                if (modified) {
-                    CustomUriManager.getInstance().saveCustomURIMap();
-                }
-                // only clean the existed one
-                cleanupLib(new HashSet<String>(Arrays.asList(fileNames)));
-            }
-        });
-        return fileNames;
+        return handleImportJarDialog(shell, null);
     }
 
     public String[] handleImportJarDialog(Shell shell, ModuleToInstall module) {
@@ -119,24 +85,63 @@ public class ImportExternalJarAction extends Action {
         fileDialog.setFilterExtensions(FilesUtils.getAcceptJARFilesSuffix());
         fileDialog.open();
         final String path = fileDialog.getFilterPath();
-        final String fileName = fileDialog.getFileName();
-        final String[] fileNames = new String[] { module.getName() };
+        final String[] fileNames = fileDialog.getFileNames();
         BusyIndicator.showWhile(Display.getDefault(), new Runnable() {
 
             @Override
             public void run() {
-                String mvnUri = module.getMavenUri();
-                File file = new File(path + File.separatorChar + fileName);
-                try {
-                    LibManagerUiPlugin.getDefault().getLibrariesService().deployLibrary(file.toURL(), mvnUri);
-                } catch (Exception e) {
-                    ExceptionHandler.process(e);
+                Set<String> modulesNeededNames = ModulesNeededProvider.getModulesNeededNames();
+                if (fileNames.length > 0) {
+                    boolean modified = false;
+                    if (fileNames.length > 1) {
+                        for (String fileName : fileNames) {
+                            File file = new File(path + File.separatorChar + fileName);
+                            try {
+                                String mvnUri = null;
+                                if (module != null && module.getName().equals(fileName)) {
+                                    mvnUri = module.getMavenUri();
+                                }
+                                modified = installFile(modulesNeededNames, file, file.getName(), mvnUri) || modified;
+                            } catch (Exception e) {
+                                ExceptionHandler.process(e);
+                                continue;
+                            }
+                        }
+                    } else {
+                        File file = new File(path + File.separatorChar + fileNames[0]);
+                        String mvnUri = null;
+                        String moduleName = file.getName();
+                        if (module != null) {
+                            mvnUri = module.getMavenUri();
+                            // in case selected file name is not the same as module name
+                            moduleName = module.getName();
+                            fileNames[0] = moduleName;
+                        }
+                        try {
+                            modified = installFile(modulesNeededNames, file, moduleName, mvnUri) || modified;
+                        } catch (Exception e) {
+                            ExceptionHandler.process(e);
+                        }
+                    }
                 }
+                LibManagerUiPlugin.getDefault().getLibrariesService().checkLibraries();
                 // only clean the existed one
                 cleanupLib(new HashSet<String>(Arrays.asList(fileNames)));
             }
         });
         return fileNames;
+    }
+
+    private boolean installFile(Set<String> modulesNeededNames, File file, String moduleName, String mvnURI)
+            throws MalformedURLException, IOException {
+        LibManagerUiPlugin.getDefault().getLibrariesService().deployLibrary(file.toURL(), mvnURI, false);
+        if (!modulesNeededNames.contains(moduleName)) {
+            String mavenUri = MavenUrlHelper.generateMvnUrlForJarName(moduleName, true, true);
+            CustomUriManager.getInstance().put(mavenUri, mavenUri);
+            ModulesNeededProvider.addUnknownModules(moduleName, mavenUri, true);
+            return true;
+        }
+        return false;
     }
 
     public static void cleanupLib(Set<String> installedModule) {

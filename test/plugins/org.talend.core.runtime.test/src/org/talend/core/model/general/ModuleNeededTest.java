@@ -12,6 +12,8 @@
 // ============================================================================
 package org.talend.core.model.general;
 
+import static org.junit.Assert.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -67,21 +69,22 @@ public class ModuleNeededTest {
     public void getGetMavenUri() {
         ModuleNeeded module1 = new ModuleNeeded("tMysqlInput", "test1.exe", "description", false, null, null,
                 "mvn:org.talend.libraries/test1/6.1.0");
-        Assert.assertEquals(module1.getMavenUriFromConfiguration(), "mvn:org.talend.libraries/test1/6.1.0/exe");
+        Assert.assertEquals(module1.getMavenURIFromConfiguration(), "mvn:org.talend.libraries/test1/6.1.0/exe");
         Assert.assertEquals(module1.getMavenUri(), "mvn:org.talend.libraries/test1/6.1.0/exe");
 
         ModuleNeeded module2 = new ModuleNeeded("tMysqlInput", "mysql-connector-java-5.1.30-bin.jar", null, false);
-        Assert.assertEquals(module2.getMavenUriFromConfiguration(), null);
+        Assert.assertEquals(module2.getMavenURIFromConfiguration(), null);
         Assert.assertEquals(module2.getMavenUri(), "mvn:org.talend.libraries/mysql-connector-java-5.1.30-bin/6.0.0/jar");
 
         // jar not in configuration
         ModuleNeeded module3 = new ModuleNeeded("tMysqlInput", "ModuleNeededTest.jar", null, false);
-        Assert.assertEquals(module3.getMavenUriFromConfiguration(), null);
+        Assert.assertEquals(module3.getMavenURIFromConfiguration(), null);
         Assert.assertEquals(module3.getMavenUri(), "mvn:org.talend.libraries/ModuleNeededTest/6.0.0-SNAPSHOT/jar");
     }
 
     @Test
     public void testGetStatus() throws URISyntaxException, IOException {
+        // test jar not installed in platform
         URI testFileToDeploy = FileLocator.toFileURL(this.getClass().getClassLoader().getResource("resources/tRowGenerator.xml"))
                 .toURI();
         ModuleNeeded module1 = new ModuleNeeded("tMysqlInput", "tRowGenerator.xml", "description", false, null, null,
@@ -99,8 +102,41 @@ public class ModuleNeededTest {
 
         // change back the status
         module1.setCustomMavenUri(null);
-        libService.saveCustomMavenURIMap();
         String jarPathFromMaven = libService.getJarPathFromMaven("mvn:org.talend.libraries/tRowGenerator/6.0.0/xml");
+        File file = new File(jarPathFromMaven);
+        if (file.exists()) {
+            FilesUtils.deleteFile(file.getParentFile().getParentFile(), true);
+        }
+
+    }
+
+    @Test
+    public void testGetStatus1() throws URISyntaxException, IOException {
+        // test jar installed in platform
+        String mavenURI = "mvn:org.talend.libraries/commons-logging-1.1.1-emr-2.4.0/6.0.0/jar";
+        String customURI = "mvn:org.talend.libraries/commons-logging-emr/6.0.0/jar";
+        String platformURL = "platform:/plugin/org.talend.libraries.hadoop/lib/commons-logging-1.1.1-emr-2.4.0.jar";
+        ILibraryManagerService libService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+                ILibraryManagerService.class);
+        ModuleNeeded module1 = new ModuleNeeded("", "commons-logging-1.1.1-emr-2.4.0.jar", "description", false, null, null,
+                mavenURI);
+        module1.setModuleLocaion(platformURL);
+        if (ELibraryInstallStatus.NOT_INSTALLED == module1.getStatus() || !libService.checkJarInstalledFromPlatform(platformURL)) {
+            fail("Please change an other jar installed in platform for test");
+        }
+        module1.setCustomMavenUri(customURI);
+        Assert.assertEquals(ELibraryInstallStatus.NOT_INSTALLED, module1.getStatus());
+        Assert.assertEquals(ELibraryInstallStatus.NOT_DEPLOYED, module1.getDeployStatus());
+        URI testFileToDeploy = FileLocator.toFileURL(this.getClass().getClassLoader().getResource("resources/tRowGenerator.xml"))
+                .toURI();
+        libService.deploy(testFileToDeploy, module1.getMavenUri());
+
+        Assert.assertEquals(module1.getStatus(), ELibraryInstallStatus.INSTALLED);
+        Assert.assertEquals(module1.getDeployStatus(), ELibraryInstallStatus.DEPLOYED);
+
+        // change back the status
+        module1.setCustomMavenUri(null);
+        String jarPathFromMaven = libService.getJarPathFromMaven(customURI);
         File file = new File(jarPathFromMaven);
         if (file.exists()) {
             FilesUtils.deleteFile(file.getParentFile().getParentFile(), true);

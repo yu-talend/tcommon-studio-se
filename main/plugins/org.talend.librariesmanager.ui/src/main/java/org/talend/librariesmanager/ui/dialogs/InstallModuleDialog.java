@@ -13,6 +13,9 @@
 package org.talend.librariesmanager.ui.dialogs;
 
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
@@ -20,14 +23,20 @@ import org.apache.oro.text.regex.PatternMatcherInput;
 import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.dialogs.TitleAreaDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -37,8 +46,12 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.PlatformUI;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.ui.runtime.expressionbuilder.ICellEditorDialog;
+import org.talend.commons.ui.runtime.image.EImage;
+import org.talend.commons.ui.runtime.image.ImageProvider;
+import org.talend.commons.ui.utils.image.ColorUtils;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.ILibraryManagerService;
 import org.talend.core.model.general.ModuleNeeded;
@@ -54,19 +67,25 @@ import org.talend.librariesmanager.ui.i18n.Messages;
  * created by wchen on Aug 16, 2017 Detailled comment
  *
  */
-public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
+public class InstallModuleDialog extends TitleAreaDialog implements ICellEditorDialog {
 
-    private Text jarPathTxt;
+    private Label warningLabel;
 
-    private Text originalUriTxt;
+    private Composite warningComposite;
 
-    private Text customUriText;
+    private GridData warningLayoutData;
 
-    private Button useCustomBtn;
+    protected Text jarPathTxt;
 
-    private Button detectButton;
+    protected Button browseButton;
 
-    private Label errorLabel;
+    protected Text defaultUriTxt;
+
+    protected Text customUriText;
+
+    protected Button useCustomBtn;
+
+    protected Button detectButton;
 
     private ModuleNeeded module;
 
@@ -81,29 +100,34 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
     // match mvn:group-id/artifact-id/version
     public static final String expression3 = "(mvn:(\\w+.*/)(\\w+.*/)([0-9]+(\\.[0-9])+(-SNAPSHOT){0,1}))";//$NON-NLS-1$
 
-    private PatternMatcherInput patternMatcherInput;
+    protected final String MVNURI_TEMPLET = "mvn:<groupid>/<artifactId>/<version>/<type>";
 
-    private Perl5Matcher matcher = new Perl5Matcher();
+    protected String moduleName = "";
 
-    private Perl5Compiler compiler = new Perl5Compiler();
+    protected String cusormURIValue = "";
 
-    private Pattern pattern;
+    protected String defaultURIValue = "";
+
+    protected PatternMatcherInput patternMatcherInput;
+
+    protected Perl5Matcher matcher = new Perl5Matcher();
+
+    protected Perl5Compiler compiler = new Perl5Compiler();
+
+    protected Pattern pattern;
+
+    private Color warningColor = ColorUtils.getCacheColor(new RGB(255, 175, 10));
 
     /**
      * DOC wchen InstallModuleDialog constructor comment.
-     * 
-     * @param parentShell
      */
-    public InstallModuleDialog(Shell parentShell, ModuleNeeded module) {
+    public InstallModuleDialog(Shell parentShell) {
         super(parentShell);
-        setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER | SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
-        this.module = module;
         try {
             pattern = compiler.compile(expression1 + "|" + expression2 + "|" + expression3);
         } catch (MalformedPatternException e) {
             ExceptionHandler.process(e);
         }
-
     }
 
     public InstallModuleDialog(Shell parentShell, CustomURITextCellEditor cellEditor) {
@@ -121,31 +145,60 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
     protected void configureShell(Shell newShell) {
         super.configureShell(newShell);
         newShell.setText(Messages.getString("InstallModuleDialog.title"));//$NON-NLS-1$
+
     }
 
     @Override
     protected Control createDialogArea(Composite parent) {
-        if (cellEditor != null) {
-            this.module = cellEditor.getModule();
-        }
-        ((GridData) parent.getLayoutData()).minimumWidth = 600;
-        ((GridData) parent.getLayoutData()).heightHint = 300;
-        GridData data = new GridData(GridData.FILL_BOTH);
         Composite container = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout();
-        layout.marginTop = 10;
+        layout.marginTop = 20;
         layout.marginLeft = 20;
         layout.marginRight = 20;
+        layout.marginBottom = 100;
         layout.numColumns = 3;
         container.setLayout(layout);
+        GridData data = new GridData(GridData.FILL_BOTH);
         container.setLayoutData(data);
 
+        createWarningLabel(container);
+        createJarPathComposite(container);
+        createMavenURIComposite(container);
+        createDetectComposite(container);
+
+        warningLabel.setText(Messages.getString("InstallModuleDialog.warning", defaultUriTxt.getText().trim()));
+        return parent;
+    }
+
+    protected void createWarningLabel(Composite container) {
+        warningComposite = new Composite(container, SWT.NONE);
+        warningComposite.setBackground(warningColor);
+        warningLayoutData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+        warningLayoutData.horizontalSpan = ((GridLayout) container.getLayout()).numColumns;
+        warningComposite.setLayoutData(warningLayoutData);
+        GridLayout layout = new GridLayout();
+        layout.marginTop = 0;
+        layout.marginLeft = 0;
+        layout.marginRight = 0;
+        layout.numColumns = 2;
+        warningComposite.setLayout(layout);
+        Label imageLabel = new Label(warningComposite, SWT.NONE);
+        imageLabel.setImage(ImageProvider.getImage(EImage.WARNING_ICON));
+        imageLabel.setBackground(warningColor);
+
+        warningLabel = new Label(warningComposite, SWT.WRAP);
+        warningLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL));
+        warningLabel.setBackground(warningColor);
+        warningLayoutData.exclude = true;
+    }
+
+    protected void createJarPathComposite(Composite container) {
         Label label1 = new Label(container, SWT.NONE);
         label1.setText(Messages.getString("InstallModuleDialog.newJar"));
         jarPathTxt = new Text(container, SWT.BORDER);
         jarPathTxt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL));
 
-        Button browseButton = new Button(container, SWT.PUSH);
+        browseButton = new Button(container, SWT.PUSH);
         browseButton.setText("...");//$NON-NLS-1$
         browseButton.addSelectionListener(new SelectionAdapter() {
 
@@ -154,20 +207,22 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
                 handleButtonPressed();
             }
         });
+    }
 
-        Label label2 = new Label(container, SWT.NONE);
+    protected void createMavenURIComposite(Composite composite) {
+        Label label2 = new Label(composite, SWT.NONE);
         label2.setText(Messages.getString("InstallModuleDialog.originalUri"));
-        originalUriTxt = new Text(container, SWT.BORDER);
+        defaultUriTxt = new Text(composite, SWT.BORDER);
         GridData gdData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
         gdData.horizontalSpan = 2;
-        originalUriTxt.setLayoutData(gdData);
-        originalUriTxt.setEnabled(false);
-        originalUriTxt.setBackground(container.getBackground());
-        originalUriTxt.setText(module.getMavenUri());
+        defaultUriTxt.setLayoutData(gdData);
+        defaultUriTxt.setEnabled(false);
+        defaultUriTxt.setBackground(composite.getBackground());
+        defaultUriTxt.setText(defaultURIValue);
 
-        Composite customContainter = new Composite(container, SWT.NONE);
+        Composite customContainter = new Composite(composite, SWT.NONE);
         customContainter.setLayoutData(new GridData());
-        layout = new GridLayout();
+        GridLayout layout = new GridLayout();
         layout.marginTop = 0;
         layout.marginLeft = 0;
         layout.marginRight = 0;
@@ -177,40 +232,24 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
         useCustomBtn = new Button(customContainter, SWT.CHECK);
         gdData = new GridData();
         useCustomBtn.setLayoutData(gdData);
+        useCustomBtn.setSelection(!MVNURI_TEMPLET.equals(cusormURIValue));
 
         Label label3 = new Label(customContainter, SWT.NONE);
         label3.setText(Messages.getString("InstallModuleDialog.customUri"));
-        customUriText = new Text(container, SWT.BORDER);
+        customUriText = new Text(composite, SWT.BORDER);
         gdData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
         gdData.horizontalSpan = 2;
         customUriText.setLayoutData(gdData);
         customUriText.setEnabled(useCustomBtn.getSelection());
-        final String customMavenUri = module.getCustomMavenUri();
-        if (cellEditor != null) {
-            useCustomBtn.setSelection(cellEditor.getExpression().equals(customMavenUri));
-            customUriText.setEnabled(useCustomBtn.getSelection());
+        if (customUriText.isEnabled()) {
+            customUriText.setText(cusormURIValue);
         }
-        if (customUriText.isEnabled() && customMavenUri != null) {
-            customUriText.setText(customMavenUri);
-        }
-        detectButton = new Button(container, SWT.NONE);
-        detectButton.setText("Dectect Maven URI");
-        detectButton.setEnabled(false);
-        gdData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
-        gdData.horizontalSpan = 3;
-        detectButton.setLayoutData(gdData);
-
-        errorLabel = new Label(container, SWT.WRAP);
-        gdData = new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL);
-        gdData.horizontalSpan = 3;
-        errorLabel.setLayoutData(gdData);
-        errorLabel.setForeground(getShell().getDisplay().getSystemColor(SWT.COLOR_RED));
 
         jarPathTxt.addModifyListener(new ModifyListener() {
 
             @Override
             public void modifyText(ModifyEvent e) {
-                checkError();
+                jarPathModified();
             }
         });
 
@@ -218,18 +257,16 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
+                // show the warning if useCustomBtn select/deselect
+                warningLayoutData.exclude = false;
+                warningComposite.getParent().layout();
                 if (useCustomBtn.getSelection()) {
                     customUriText.setEnabled(true);
-                    if (module.getCustomMavenUri() == null) {
-                        customUriText.setText("mvn:org.talend.libraries/");//$NON-NLS-1$
-                    } else {
-                        customUriText.setText(module.getCustomMavenUri());
-                    }
+                    customUriText.setText(cusormURIValue);
                 } else {
                     customUriText.setEnabled(false);
-                    customUriText.setText("");
                 }
-                checkError();
+                checkInstallFieldsError();
             }
         });
 
@@ -237,108 +274,203 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
 
             @Override
             public void modifyText(ModifyEvent e) {
-                checkError();
+                checkInstallFieldsError();
             }
         });
+    }
+
+    protected void jarPathModified() {
+        checkInstallFieldsError();
+    }
+
+    protected void createDetectComposite(Composite composite) {
+        detectButton = new Button(composite, SWT.NONE);
+        detectButton.setText(Messages.getString("InstallModuleDialog.detectButton.text"));
+        detectButton.setEnabled(false);
+        GridData gdData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+        gdData.horizontalSpan = 3;
+        detectButton.setLayoutData(gdData);
         detectButton.addSelectionListener(new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                checkMavenRepository();
+                handleDetectPressed();
             }
         });
-
-        return parent;
     }
 
-    private void checkError() {
-        String errorMessage = null;
-        boolean needDetect = false;
-        if (useCustomBtn.getSelection()) {
-            // validate custom uri + check status
-            String customText = customUriText.getText().trim();
-            String originalText = originalUriTxt.getText().trim();
-            if (customText.equals(originalText)
-                    || MavenUrlHelper.addTypeForMavenUri(customText, module.getModuleName()).equals(originalText)) {
-                errorMessage = Messages.getString("InstallModuleDialog.error.sameCustomURI");
-            } else {
-                patternMatcherInput = new PatternMatcherInput(customText);
-                matcher.setMultiline(false);
-                boolean isMatch = matcher.matches(patternMatcherInput, pattern);
-                if (!isMatch) {
-                    errorMessage = Messages.getString("InstallModuleDialog.error.customURI");
-                } else {
-                    String customURIWithType = MavenUrlHelper.addTypeForMavenUri(customText, module.getModuleName());
-                    ELibraryInstallStatus status = ModuleStatusProvider.getDeployStatus(customURIWithType);
-                    if (status == ELibraryInstallStatus.DEPLOYED) {
-                        errorMessage = Messages.getString("InstallModuleDialog.error.jarexsit");
-                    }
-                    if (status == null) {
-                        needDetect = true;
-                    }
-                }
-            }
-        } else {
-            ELibraryInstallStatus status = module.getStatus();
-            if (status == ELibraryInstallStatus.DEPLOYED) {
-                errorMessage = Messages.getString("InstallModuleDialog.error.jarexsit");
-            } else {
-                if (module.getCustomMavenUri() == null) {
-                    if (!new File(jarPathTxt.getText()).exists()) {
-                        errorMessage = Messages.getString("InstallModuleDialog.error.jarPath");
-                    }
-                }
-            }
-        }
-        if (errorMessage != null) {
-            getButton(IDialogConstants.OK_ID).setEnabled(false);
-            errorLabel.setText(errorMessage);
-        } else {
-            NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
-            if (customNexusServer == null && !needDetect) {
-                getButton(IDialogConstants.OK_ID).setEnabled(true);
-                errorLabel.setText("");
-            } else {
-                errorLabel.setText(Messages.getString("InstallModuleDialog.error.detectMvnURI"));
-                getButton(IDialogConstants.OK_ID).setEnabled(false);
-                detectButton.setEnabled(true);
-            }
-        }
-    }
-
-    private void checkMavenRepository() {
-        String mvnURI = null;
-        if (useCustomBtn.getSelection()) {
-            mvnURI = customUriText.getText().trim();
-        } else {
-            mvnURI = originalUriTxt.getText().trim();
-        }
-        ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
-                ILibraryManagerService.class);
-        boolean exsit = false;
-        String jarPathFromMaven = libManagerService.getJarPathFromMaven(mvnURI);
-        if (jarPathFromMaven != null) {
-            exsit = true;
-        } else {
-            NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
-            if (customNexusServer != null) {
-                try {
-                    File resolveJar = libManagerService.resolveJar(customNexusServer, mvnURI);
-                    if (resolveJar != null) {
-                        exsit = true;
-                    }
-                } catch (Exception e) {
-                    exsit = false;
-                }
-            }
-        }
-        if (exsit) {
-            errorLabel.setText(Messages.getString("InstallModuleDialog.error.jarexsit"));
+    protected void handleDetectPressed() {
+        boolean deployed = checkInstalledStatus();
+        if (deployed) {
+            setMessage(Messages.getString("InstallModuleDialog.error.jarexsit"), IMessageProvider.ERROR);
             getButton(IDialogConstants.OK_ID).setEnabled(false);
         } else {
-            errorLabel.setText("");
+            setMessage(Messages.getString("InstallModuleDialog.message"), IMessageProvider.INFORMATION);
             getButton(IDialogConstants.OK_ID).setEnabled(true);
         }
+
+    }
+
+    /**
+     * 
+     * DOC wchen Comment method "checkInstallCompositeError".
+     * 
+     * @return false if has error
+     */
+    protected boolean checkInstallFieldsError() {
+        String originalText = defaultUriTxt.getText().trim();
+        String customURIWithType = MavenUrlHelper.addTypeForMavenUri(customUriText.getText(), moduleName);
+        ELibraryInstallStatus status = null;
+        if (useCustomBtn.getSelection()) {
+            // if use custom uri:validate file path if not empty+ validate custom uri + check deploy status
+            if (!"".equals(jarPathTxt.getText()) && !new File(jarPathTxt.getText()).exists()) {
+                setMessage(Messages.getString("InstallModuleDialog.error.jarPath"), IMessageProvider.ERROR);
+                return false;
+            }
+
+            boolean statusOK = true;
+            statusOK = validateCustomMvnURI(originalText, customURIWithType);
+            if (!statusOK) {
+                return false;
+            }
+
+            status = getMavenURIInstallStatus(customURIWithType);
+            if (status == ELibraryInstallStatus.DEPLOYED) {
+                setMessage(Messages.getString("InstallModuleDialog.error.jarexsit"), IMessageProvider.ERROR);
+                return false;
+            }
+
+        } else {
+            // if use original uri: validate file path + check deploy status
+            if (!new File(jarPathTxt.getText()).exists()) {
+                setMessage(Messages.getString("InstallModuleDialog.error.jarPath"), IMessageProvider.ERROR);
+                return false;
+            }
+
+            status = getMavenURIInstallStatus(originalText);
+            if (status == ELibraryInstallStatus.DEPLOYED) {
+                setMessage(Messages.getString("InstallModuleDialog.error.jarexsit"), IMessageProvider.ERROR);
+                return false;
+            }
+
+        }
+
+        // check deploy status from remote
+        boolean statusOK = checkDetectButtonStatus();
+        if (!statusOK) {
+            return false;
+        }
+
+        setMessage(Messages.getString("InstallModuleDialog.message"), IMessageProvider.INFORMATION);
+        return true;
+    }
+
+    protected boolean checkDetectButtonStatus() {
+        NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
+        if (customNexusServer == null) {
+            detectButton.setEnabled(true);
+            setMessage(Messages.getString("InstallModuleDialog.error.detectMvnURI"), IMessageProvider.ERROR);
+            return false;
+        }
+        return true;
+    }
+
+    protected boolean validateCustomMvnURI(String originalText, String customText) {
+        if (customText.equals(originalText)) {
+            setMessage(Messages.getString("InstallModuleDialog.error.sameCustomURI"), IMessageProvider.ERROR);
+            detectButton.setEnabled(false);
+            return false;
+        }
+        patternMatcherInput = new PatternMatcherInput(customText);
+        matcher.setMultiline(false);
+        boolean isMatch = matcher.matches(patternMatcherInput, pattern);
+        if (!isMatch) {
+            setMessage(Messages.getString("InstallModuleDialog.error.customURI"), IMessageProvider.ERROR);
+            detectButton.setEnabled(false);
+            return false;
+        }
+        return true;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.jface.dialogs.TitleAreaDialog#setMessage(java.lang.String, int)
+     */
+    @Override
+    public void setMessage(String newMessage, int newType) {
+        super.setMessage(newMessage, newType);
+        if (newType == IMessageProvider.ERROR) {
+            getButton(IDialogConstants.OK_ID).setEnabled(false);
+        } else {
+            getButton(IDialogConstants.OK_ID).setEnabled(true);
+        }
+    }
+
+    protected boolean checkInstalledStatus() {
+        String uri = null;
+        if (useCustomBtn.getSelection()) {
+            uri = customUriText.getText().trim();
+        } else {
+            uri = defaultUriTxt.getText().trim();
+        }
+        final String mvnURI = uri;
+        ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+                ILibraryManagerService.class);
+        String jarPathFromMaven = libManagerService.getJarPathFromMaven(mvnURI);
+        final boolean[] deployStatus = new boolean[] { false };
+        if (jarPathFromMaven != null) {
+            deployStatus[0] = true;
+        } else {
+            final IRunnableWithProgress acceptOursProgress = new IRunnableWithProgress() {
+
+                @Override
+                public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                    NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
+                    if (customNexusServer != null) {
+                        try {
+
+                            File resolveJar = libManagerService.resolveJar(customNexusServer, mvnURI);
+                            if (resolveJar != null) {
+                                deployStatus[0] = true;
+                                LibManagerUiPlugin.getDefault().getLibrariesService().checkLibraries();
+                            }
+                        } catch (Exception e) {
+                            deployStatus[0] = false;
+                        }
+                    }
+                }
+            };
+
+            ProgressMonitorDialog dialog = new ProgressMonitorDialog(PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                    .getShell());
+            try {
+                dialog.run(true, true, acceptOursProgress);
+            } catch (Throwable e) {
+                if (!(e instanceof TimeoutException)) {
+                    ExceptionHandler.process(e);
+                }
+            }
+
+        }
+
+        if (useCustomBtn.getSelection() && !deployStatus[0]) {
+            ModuleStatusProvider.putDeployStatus(mvnURI, ELibraryInstallStatus.NOT_DEPLOYED);
+            ModuleStatusProvider.putStatus(mvnURI, ELibraryInstallStatus.NOT_INSTALLED);
+        }
+
+        return deployStatus[0];
+    }
+
+    protected ELibraryInstallStatus getMavenURIInstallStatus(String mvnURI) {
+        ELibraryInstallStatus deployStatus = ModuleStatusProvider.getDeployStatus(mvnURI);
+        if (deployStatus == null) {
+            ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+                    ILibraryManagerService.class);
+            libManagerService.resolveStatusLocally(mvnURI);
+            deployStatus = ModuleStatusProvider.getDeployStatus(mvnURI);
+        }
+        return deployStatus;
     }
 
     /*
@@ -349,7 +481,7 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
     @Override
     protected Control createContents(Composite parent) {
         Control control = super.createContents(parent);
-        getButton(IDialogConstants.OK_ID).setEnabled(false);
+        setMessage(Messages.getString("InstallModuleDialog.error.jarPath"), IMessageProvider.ERROR);
         return control;
     }
 
@@ -381,6 +513,13 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
      */
     @Override
     public void openDialog(Object obj) {
+        this.module = cellEditor.getModule();
+        this.moduleName = module.getModuleName();
+        this.defaultURIValue = module.getDefaultMavenURI();
+        this.cusormURIValue = module.getCustomMavenUri();
+        if (cusormURIValue == null) {
+            cusormURIValue = MVNURI_TEMPLET;
+        }
         open();
     }
 
@@ -391,36 +530,64 @@ public class InstallModuleDialog extends Dialog implements ICellEditorDialog {
      */
     @Override
     protected void okPressed() {
+        String newCustomURI = null;
         if (useCustomBtn.getSelection()) {
-            if (!useCustomBtn.getText().equals(module.getCustomMavenUri())) {
-                if (cellEditor != null) {
-                    cellEditor.setConsumerExpression(customUriText.getText().trim());
-                    cellEditor.fireApplyEditorValue();
-                } else {
-                    module.setCustomMavenUri(customUriText.getText().trim());
-                }
+            newCustomURI = MavenUrlHelper.addTypeForMavenUri(customUriText.getText().trim(), module.getModuleName());
+            if (cellEditor != null) {
+                cellEditor.setConsumerExpression(newCustomURI);
+                cellEditor.fireApplyEditorValue();
+            } else {
+                module.setCustomMavenUri(customUriText.getText().trim());
             }
         } else {
             if (cellEditor != null) {
-                cellEditor.setConsumerExpression(originalUriTxt.getText());
+                cellEditor.setConsumerExpression(defaultUriTxt.getText());
                 cellEditor.fireApplyEditorValue();
             }
         }
-        String mvnUri = module.getCustomMavenUri();
-        if (mvnUri == null) {
-            mvnUri = module.getMavenUri();
-        }
-        if (jarPathTxt.getText() != null) {
+
+        if (!"".equals(jarPathTxt.getText().trim())) {
+            String mvnUri = module.getMavenUri();
             File file = new File(jarPathTxt.getText().trim());
             if (file.exists()) {
+                final IRunnableWithProgress acceptOursProgress = new IRunnableWithProgress() {
+
+                    @Override
+                    public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                        try {
+                            monitor.beginTask("Install module " + file.getName(), 100);
+                            monitor.worked(30);
+                            LibManagerUiPlugin.getDefault().getLibrariesService().deployLibrary(file.toURL(), mvnUri);
+                            monitor.done();
+                        } catch (IOException e) {
+                            ExceptionHandler.process(e);
+                        }
+                    }
+                };
+
+                ProgressMonitorDialog dialog = new ProgressMonitorDialog(PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                        .getShell());
                 try {
-                    LibManagerUiPlugin.getDefault().getLibrariesService().deployLibrary(file.toURL(), mvnUri);
-                } catch (Exception e) {
-                    ExceptionHandler.process(e);
+                    dialog.run(true, true, acceptOursProgress);
+                } catch (Throwable e) {
+                    if (!(e instanceof TimeoutException)) {
+                        ExceptionHandler.process(e);
+                    }
                 }
             }
         }
         super.okPressed();
         LibManagerUiPlugin.getDefault().getLibrariesService().checkLibraries();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.jface.dialogs.Dialog#close()
+     */
+    @Override
+    public boolean close() {
+        setMessage("");
+        return super.close();
     }
 }

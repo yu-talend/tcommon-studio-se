@@ -111,6 +111,8 @@ public interface ILibraryManagerService extends IService {
      */
     public File resolveJar(final NexusServerBean customNexusServer, String uri) throws Exception, IOException;
 
+    public File resolveStatusLocally(String mvnUriStatusKey);
+
     /**
      * List all the jars (or other files) available.
      * 

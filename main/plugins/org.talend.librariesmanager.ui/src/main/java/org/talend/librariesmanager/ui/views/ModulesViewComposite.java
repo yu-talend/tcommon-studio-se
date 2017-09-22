@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.swt.SWT;
@@ -167,24 +166,24 @@ public class ModulesViewComposite extends Composite {
 
             @Override
             public String get(ModuleNeeded bean) {
-                String mvnUri = null;
-                if (bean.getCustomMavenUri() != null) {
-                    mvnUri = bean.getCustomMavenUri();
-                } else {
-                    mvnUri = bean.getMavenUri();
-                }
-                return mvnUri;
+                return bean.getMavenUri();
             }
 
             @Override
             public void set(ModuleNeeded bean, String value) {
-                String originalValue = bean.getCustomMavenUri();
-                if (bean.getMavenUri().equals(value)) {
+                boolean modified = false;
+                String defaultURI = bean.getDefaultMavenURI();
+                String oldCustomURI = bean.getCustomMavenUri();
+                if (defaultURI.equals(value)) {
+                    if (bean.getCustomMavenUri() != null) {
+                        modified = true;
+                    }
                     bean.setCustomMavenUri(null);
-                } else {
+                } else if (!value.equals(oldCustomURI)) {
                     bean.setCustomMavenUri(value);
+                    modified = true;
                 }
-                if (!StringUtils.equals(value, originalValue)) {
+                if (modified) {
                     ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault()
                             .getService(ILibraryManagerService.class);
                     libManagerService.saveCustomMavenURIMap();

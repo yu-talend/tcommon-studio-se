@@ -611,7 +611,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
         Set<ModuleNeeded> jarNotFound = new HashSet<ModuleNeeded>();
         boolean allIsOK = true;
         for (ModuleNeeded jar : modulesNeeded) {
-            if (!retrieve(jar.getModuleName(), jar.getMavenUriFromConfiguration(), pathToStore, false, false)) {
+            if (!retrieve(jar.getModuleName(), jar.getMavenURIFromConfiguration(), pathToStore, false, false)) {
                 jarNotFound.add(jar);
                 allIsOK = false;
             }
@@ -626,7 +626,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
                 allIsOK = true;
                 boolean needResetModulesNeeded = false;
                 for (ModuleNeeded jar : modulesNeeded) {
-                    if (!retrieve(jar.getModuleName(), jar.getMavenUriFromConfiguration(), pathToStore, false, false)) {
+                    if (!retrieve(jar.getModuleName(), jar.getMavenURIFromConfiguration(), pathToStore, false, false)) {
                         jarNotFound.add(jar);
                         allIsOK = false;
                     } else {
@@ -648,7 +648,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
 
     @Override
     public boolean retrieve(ModuleNeeded module, String pathToStore, boolean showDialog, IProgressMonitor... monitorWrap) {
-        String mavenUri = module.getMavenUriFromConfiguration();
+        String mavenUri = module.getMavenURIFromConfiguration();
         String jarNeeded = module.getModuleName();
 
         return retrieve(jarNeeded, mavenUri, pathToStore, showDialog, true);
@@ -769,7 +769,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
             File fileToDeploy = null;
             String moduleLocation = module.getModuleLocaion();
             Set<String> toDeploy = new HashSet<String>();
-            if (module.getMavenUriFromConfiguration() == null && mavenIndex.get(module.getModuleName()) != null) {
+            if (module.getMavenURIFromConfiguration() == null && mavenIndex.get(module.getModuleName()) != null) {
                 final String[] split = mavenIndex.get(module.getModuleName()).split(MavenUrlHelper.MVN_INDEX_SPLITER);
                 for (String mvnUri : split) {
                     toDeploy.add(mvnUri);
@@ -930,7 +930,8 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
         return false;
     }
 
-    private File resolveStatusLocally(String mvnUriStatusKey) {
+    @Override
+    public File resolveStatusLocally(String mvnUriStatusKey) {
         if (ModuleStatusProvider.getDeployStatus(mvnUriStatusKey) == ELibraryInstallStatus.NOT_DEPLOYED) {
             return null;
         }
@@ -959,34 +960,35 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
      */
     @Override
     public void checkModuleStatus(ModuleNeeded module) {
-        String mvnUriStatusKey = module.getCustomMavenUri();
-        if (mvnUriStatusKey == null) {
-            mvnUriStatusKey = module.getMavenUri();
-        }
+        String mvnUriStatusKey = module.getMavenUri();
         final ELibraryInstallStatus status = ModuleStatusProvider.getStatus(mvnUriStatusKey);
-        if (status == null && mvnUriStatusKey != null) {
+        if (status == null) {
             // check from maven
             File resolvedJar = resolveStatusLocally(mvnUriStatusKey);
             if (resolvedJar == null || !resolvedJar.exists()) {
-                if (module.getModuleLocaion() != null) {
-                    // check from platfrom
-                    String platformPath = getJarPathFromPlatform(module.getModuleLocaion());
-                    if (platformPath != null) {
-                        resolvedJar = new File(platformPath);
-                    }
-                } else {
-                    // check the lib/java
-                    List<File> jarFiles;
-                    try {
-                        jarFiles = FilesUtils.getJarFilesFromFolder(getStorageDirectory(), null);
-                        for (File jar : jarFiles) {
-                            if (jar.getName().equals(module.getModuleName())) {
-                                resolvedJar = jar;
-                                break;
-                            }
+                String customMavenUri = module.getCustomMavenUri();
+                // if customer uri set ,only check in maven repository and don't use jar in the platform anymore
+                if (customMavenUri != null) {
+                    if (module.getModuleLocaion() != null) {
+                        // check from platfrom
+                        String platformPath = getJarPathFromPlatform(module.getModuleLocaion());
+                        if (platformPath != null) {
+                            resolvedJar = new File(platformPath);
                         }
-                    } catch (MalformedURLException e) {
-                        ExceptionHandler.process(e);
+                    } else {
+                        // check the lib/java
+                        List<File> jarFiles;
+                        try {
+                            jarFiles = FilesUtils.getJarFilesFromFolder(getStorageDirectory(), null);
+                            for (File jar : jarFiles) {
+                                if (jar.getName().equals(module.getModuleName())) {
+                                    resolvedJar = jar;
+                                    break;
+                                }
+                            }
+                        } catch (MalformedURLException e) {
+                            ExceptionHandler.process(e);
+                        }
                     }
                 }
                 if (resolvedJar != null) {
@@ -1228,7 +1230,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
         for (ModuleNeeded module : modules) {
             String moduleLocation = module.getModuleLocaion();
             // take maven uri from configuration to save in the index , don't generate by module name automatically
-            String mavenUrl = module.getMavenUriFromConfiguration();
+            String mavenUrl = module.getMavenURIFromConfiguration();
             if (mavenUrl != null && mavenUrl.startsWith(MavenUrlHelper.MVN_PROTOCOL)) {
                 String existUri = libsToMavenUri.get(module.getModuleName());
                 if (existUri != null && !existUri.equals(mavenUrl)) {
