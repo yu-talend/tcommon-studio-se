@@ -162,8 +162,9 @@ public enum EDatabaseConnTemplate {
             "8591")), //$NON-NLS-1$
     // "jdbc:sap://talendhana.cld.sr:30015";
     SAPHana(new DbConnStr(EDatabaseTypeName.SAPHana, //
-            "jdbc:sap://<host>:<port>", //$NON-NLS-1$
-            "30015")), //$NON-NLS-1$
+            "jdbc:sap://<host>:<port>?<property>", //$NON-NLS-1$
+            "30015", //$NON-NLS-1$
+            "encrypt=true&validateCertificate=false")), //$NON-NLS-1$
 
     PARACCEL(new DbConnStr(EDatabaseTypeName.PARACCEL, //
             "jdbc:paraccel://<host>:<port>/<sid>", //$NON-NLS-1$
@@ -387,6 +388,7 @@ public enum EDatabaseConnTemplate {
             case EXASOL:
             case ACCESS:
             case REDSHIFT:
+            case SAPHana:
                 return true;
             default:
             }
