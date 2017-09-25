@@ -24,5 +24,10 @@ public class CreateMavenTestPom extends CreateMavenJobPom {
     public CreateMavenTestPom(IProcessor jobProcessor, IFile pomFile) {
         super(jobProcessor, pomFile);
     }
+    
+    @Deprecated
+    public CreateMavenTestPom(IProcessor jobProcessor, IFile pomFile, String pomTestRouteTemplateFileName) {
+        super(jobProcessor, pomFile);
+    }
 
 }
