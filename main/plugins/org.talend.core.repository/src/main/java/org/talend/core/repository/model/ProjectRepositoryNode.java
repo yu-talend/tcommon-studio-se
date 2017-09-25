@@ -244,7 +244,7 @@ public class ProjectRepositoryNode extends RepositoryNode implements IProjectRep
         }
 
         // Reference Projects
-        if (PluginChecker.isRefProjectLoaded() && getParent() != this && project != null
+        if (PluginChecker.isRefProjectLoaded() && getParent() != this && project != null && !project.isLocal()
                 && (project.equals(ProjectManager.getInstance().getCurrentProject())
                         || project.getProjectReferenceList().size() > 0)) {
             refProject = new RepositoryNode(null, this, ENodeType.SYSTEM_FOLDER);
