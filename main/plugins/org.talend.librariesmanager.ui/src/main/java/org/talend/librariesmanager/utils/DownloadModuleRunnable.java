@@ -1,6 +1,6 @@
 // ============================================================================
 //
-// Copyright (C) 2006-2016 Talend Inc. - www.talend.com
+// Copyright (C) 2006-2017 Talend Inc. - www.talend.com
 //
 // This source code is available under agreement available at
 // %InstallDIR%\features\org.talend.rcp.branding.%PRODUCTNAME%\%PRODUCTNAME%license.txt
@@ -34,7 +34,7 @@ import org.talend.core.model.general.ModuleStatusProvider;
 import org.talend.core.model.general.ModuleToInstall;
 import org.talend.librariesmanager.ui.LibManagerUiPlugin;
 import org.talend.librariesmanager.ui.i18n.Messages;
-import org.talend.librariesmanager.ui.startup.ShareLibsOnStartup;
+import org.talend.librariesmanager.ui.startup.ShareMavenArtifactsOnStartup;
 import org.talend.librariesmanager.ui.wizards.AcceptModuleLicensesWizard;
 import org.talend.librariesmanager.ui.wizards.AcceptModuleLicensesWizardDialog;
 import org.talend.librariesmanager.utils.nexus.NexusDownloadHelperWithProgress;

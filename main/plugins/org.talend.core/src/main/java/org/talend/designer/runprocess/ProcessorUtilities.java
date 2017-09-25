@@ -1,6 +1,6 @@
 // ============================================================================
 //
-// Copyright (C) 2006-2016 Talend Inc. - www.talend.com
+// Copyright (C) 2006-2017 Talend Inc. - www.talend.com
 //
 // This source code is available under agreement available at
 // %InstallDIR%\features\org.talend.rcp.branding.%PRODUCTNAME%\%PRODUCTNAME%license.txt
@@ -77,7 +77,6 @@ import org.talend.core.model.repository.RepositoryManager;
 import org.talend.core.model.repository.job.JobResource;
 import org.talend.core.model.repository.job.JobResourceManager;
 import org.talend.core.model.utils.JavaResourcesHelper;
-import org.talend.core.nexus.TalendLibsServerManager;
 import org.talend.core.runtime.process.ITalendProcessJavaProject;
 import org.talend.core.runtime.process.LastGenerationInfo;
 import org.talend.core.runtime.process.TalendProcessArgumentConstant;
@@ -125,6 +124,8 @@ public class ProcessorUtilities {
     private static boolean needContextInCurrentGeneration = true;
 
     private static boolean exportAsOSGI = false;
+
+    private static boolean exportJobAsMicroService = false;
 
     private static IDesignerCoreService designerCoreService = (IDesignerCoreService) GlobalServiceRegister.getDefault()
             .getService(IDesignerCoreService.class);
@@ -395,7 +396,6 @@ public class ProcessorUtilities {
 
             isMainJob = true;
             codeModified = false;
-            TalendLibsServerManager.getInstance().checkAndUpdateNexusServer();
 
             // this cache only keep the last main job's generation, so clear it since we regenerate a new job.
             LastGenerationInfo.getInstance().getLastGeneratedjobs().clear();
@@ -784,8 +784,6 @@ public class ProcessorUtilities {
                 LastGenerationInfo.getInstance().getLastGeneratedjobs().clear();
                 LastGenerationInfo.getInstance().getHighPriorityModuleNeeded().clear();
                 retrievedJarsForCurrentBuild.clear();
-
-                TalendLibsServerManager.getInstance().checkAndUpdateNexusServer();
 
                 // if it's the father, reset the processMap to ensure to have a good
                 // code generation
@@ -1843,6 +1841,14 @@ public class ProcessorUtilities {
 
     public static void setExportAsOSGI(boolean toOSGI) {
         exportAsOSGI = toOSGI;
+    }
+
+    public static boolean isExportJobAsMicroService() {
+        return exportJobAsMicroService;
+    }
+
+    public static void setExportJobAsMicroSerivce(boolean toMicroService) {
+        exportJobAsMicroService = toMicroService;
     }
 
     /**
