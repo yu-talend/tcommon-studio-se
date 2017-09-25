@@ -206,6 +206,7 @@ public class InstallModuleDialog extends TitleAreaDialog implements ICellEditorD
      * 
      * @return false if has error
      */
+    @Override
     public boolean checkFieldsError() {
         if (!new File(jarPathTxt.getText()).exists()) {
             setMessage(Messages.getString("InstallModuleDialog.error.jarPath"), IMessageProvider.ERROR);

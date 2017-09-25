@@ -647,6 +647,7 @@ public class ModulesNeededProvider {
                 // FIXME SML i18n
                 ModuleNeeded toAdd = new ModuleNeeded("Routine " + currentImport.getNAME(), currentImport.getMODULE(), //$NON-NLS-1$
                         currentImport.getMESSAGE(), currentImport.isREQUIRED());
+                toAdd.setMavenUri(currentImport.getMVN());
                 // toAdd.setStatus(ELibraryInstallStatus.INSTALLED);
                 importNeedsList.add(toAdd);
             }

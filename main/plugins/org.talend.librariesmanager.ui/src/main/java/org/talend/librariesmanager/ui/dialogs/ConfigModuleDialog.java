@@ -42,10 +42,12 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 import org.talend.commons.exception.ExceptionHandler;
+import org.talend.commons.ui.swt.dialogs.IConfigModuleDialog;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.ILibraryManagerService;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
+import org.talend.core.runtime.maven.MavenUrlHelper;
 import org.talend.librariesmanager.model.ModulesNeededProvider;
 import org.talend.librariesmanager.ui.LibManagerUiPlugin;
 import org.talend.librariesmanager.ui.i18n.Messages;
@@ -55,7 +57,7 @@ import org.talend.librariesmanager.ui.i18n.Messages;
  * created by wchen on Sep 18, 2017 Detailled comment
  *
  */
-public class ConfigModuleDialog extends InstallModuleDialog {
+public class ConfigModuleDialog extends InstallModuleDialog implements IConfigModuleDialog {
 
     private Text nameTxt;
 
@@ -69,7 +71,7 @@ public class ConfigModuleDialog extends InstallModuleDialog {
 
     private Button findRadioBtn;
 
-    private InstallModuleURIComposite findExsitURIComposite;
+    private ConfigModuleURIComposite findExsitURIComposite;
 
     private String initValue;
 
@@ -82,6 +84,8 @@ public class ConfigModuleDialog extends InstallModuleDialog {
     private Composite installNewContainer;
 
     private Composite findExistContainer;
+
+    private String urlToUse;
 
     /**
      * DOC wchen InstallModuleDialog constructor comment.
@@ -314,7 +318,7 @@ public class ConfigModuleDialog extends InstallModuleDialog {
         GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
         data.horizontalSpan = 2;
         nameTxt.setLayoutData(data);
-        findExsitURIComposite = new InstallModuleURIComposite(this);
+        findExsitURIComposite = new ConfigModuleURIComposite(this);
         findExsitURIComposite.setCusormURIValue(cusormURIValue);
         findExsitURIComposite.setDefaultURIValue(defaultURIValue);
         findExsitURIComposite.setModuleName(moduleName);
@@ -358,8 +362,9 @@ public class ConfigModuleDialog extends InstallModuleDialog {
 
     protected boolean checkFindExsitFieldsError() {
         moduleName = nameTxt.getText().trim();
-        if ("".equals(moduleName)) {
+        if ("".equals(moduleName) || !moduleName.contains(".")) {
             setMessage(Messages.getString("ConfigModuleDialog.moduleName.error"), IMessageProvider.ERROR);
+            findExsitURIComposite.detectButton.setEnabled(false);
             return false;
         }
         boolean statusOK = findExsitURIComposite.checkFieldsError();
@@ -404,14 +409,14 @@ public class ConfigModuleDialog extends InstallModuleDialog {
             String originalURI = null;
             String customURI = null;
             if (installRadioBtn.getSelection()) {
-                originalURI = installNewRUIComposite.defaultUriTxt.getText().trim();
-                if (installNewRUIComposite.useCustomBtn.getSelection()) {
-                    customURI = installNewRUIComposite.customUriText.getText().trim();
-                }
-                final String urlToUse = customURI != null ? customURI : originalURI;
                 final File file = new File(jarPathTxt.getText().trim());
                 moduleName = file.getName();
-
+                originalURI = installNewRUIComposite.defaultUriTxt.getText().trim();
+                if (installNewRUIComposite.useCustomBtn.getSelection()) {
+                    customURI = MavenUrlHelper.addTypeForMavenUri(installNewRUIComposite.customUriText.getText().trim(),
+                            moduleName);
+                }
+                urlToUse = !"".equals(customURI) ? customURI : originalURI;
                 final IRunnableWithProgress acceptOursProgress = new IRunnableWithProgress() {
 
                     @Override
@@ -438,12 +443,13 @@ public class ConfigModuleDialog extends InstallModuleDialog {
                 }
             } else if (findRadioBtn.getSelection()) {
                 originalURI = findExsitURIComposite.defaultUriTxt.getText().trim();
+                moduleName = nameTxt.getText().trim();
                 if (findExsitURIComposite.useCustomBtn.getSelection()) {
-                    customURI = findExsitURIComposite.customUriText.getText().trim();
+                    customURI = MavenUrlHelper.addTypeForMavenUri(findExsitURIComposite.customUriText.getText().trim(),
+                            moduleName);
                 }
-                moduleName = addDefaultExtension(nameTxt.getText().trim());
+                urlToUse = !"".equals(customURI) ? customURI : originalURI;
             }
-            String urlToUse = customURI != null ? customURI : originalURI;
             Set<String> modulesNeededNames = ModulesNeededProvider.getModulesNeededNames();
             if (!modulesNeededNames.contains(moduleName)) {
                 ModulesNeededProvider.addUnknownModules(moduleName, urlToUse, false);
@@ -461,8 +467,18 @@ public class ConfigModuleDialog extends InstallModuleDialog {
         close();
     }
 
-    public String getResult() {
+    @Override
+    public String getModuleName() {
         return moduleName;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.commons.ui.swt.dialogs.IConfigModuleDialog#getMavenURI()
+     */
+    @Override
+    public String getMavenURI() {
+        return urlToUse;
+    }
 }
