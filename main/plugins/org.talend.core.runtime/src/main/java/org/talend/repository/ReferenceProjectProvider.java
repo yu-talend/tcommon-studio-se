@@ -102,7 +102,7 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
         if (!loadFromContent && tempReferenceMap.get(project.getTechnicalLabel()) != null) {
             return getTempReferenceList(project.getTechnicalLabel());
         }
-        if (!loadFromContent && !isHasConfigurationFile()) {
+        if (!loadFromContent && !isHasConfigurationFile() && getTacReferenceList(project.getTechnicalLabel()) != null) {
             return getTacReferenceList(project.getTechnicalLabel());
         }
         return referenceProjectList;
