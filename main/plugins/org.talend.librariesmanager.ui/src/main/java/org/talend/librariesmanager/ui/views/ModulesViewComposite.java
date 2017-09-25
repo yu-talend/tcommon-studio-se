@@ -161,6 +161,7 @@ public class ModulesViewComposite extends Composite {
         column.setWeight(6);
 
         column = new TableViewerCreatorColumn(tableViewerCreator);
+        column.setSortable(true);
         column.setTitle(Messages.getString("ModulesViewComposite.MavenUri")); //$NON-NLS-1$
         column.setBeanPropertyAccessors(new IBeanPropertyAccessors<ModuleNeeded, String>() {
 

@@ -46,9 +46,6 @@ import org.talend.core.GlobalServiceRegister;
 import org.talend.core.ILibraryManagerService;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
-import org.talend.core.nexus.NexusServerBean;
-import org.talend.core.nexus.TalendLibsServerManager;
-import org.talend.core.runtime.maven.MavenUrlHelper;
 import org.talend.librariesmanager.model.ModulesNeededProvider;
 import org.talend.librariesmanager.ui.LibManagerUiPlugin;
 import org.talend.librariesmanager.ui.i18n.Messages;
@@ -72,6 +69,8 @@ public class ConfigModuleDialog extends InstallModuleDialog {
 
     private Button findRadioBtn;
 
+    private InstallModuleURIComposite findExsitURIComposite;
+
     private String initValue;
 
     private GridData installNewLayoutData;
@@ -80,9 +79,9 @@ public class ConfigModuleDialog extends InstallModuleDialog {
 
     private Composite repGroupSubComp;
 
-    private Composite installNewComposite;
+    private Composite installNewContainer;
 
-    private Composite findExistComposite;
+    private Composite findExistContainer;
 
     /**
      * DOC wchen InstallModuleDialog constructor comment.
@@ -93,7 +92,6 @@ public class ConfigModuleDialog extends InstallModuleDialog {
         super(parentShell);
         setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER | SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
         this.initValue = initValue;
-        this.cusormURIValue = MVNURI_TEMPLET;
         if (initValue != null && !"".equals(initValue)) {
             moduleName = initValue;
             ModuleNeeded testModuel = new ModuleNeeded("", initValue, "", true);
@@ -133,7 +131,6 @@ public class ConfigModuleDialog extends InstallModuleDialog {
         Control control = super.createContents(parent);
         setPlatformGroupEnabled(true);
         setRepositoryGroupEnabled(false);
-        useCustomBtn.setEnabled(false);
         return control;
     }
 
@@ -223,23 +220,23 @@ public class ConfigModuleDialog extends InstallModuleDialog {
         data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
         findRadioBtn.setLayoutData(data);
 
-        installNewComposite = new Composite(repGroupSubComp, SWT.NONE);
+        installNewContainer = new Composite(repGroupSubComp, SWT.NONE);
         layout = new GridLayout();
         layout.marginLeft = 0;
         layout.numColumns = 3;
-        installNewComposite.setLayout(layout);
+        installNewContainer.setLayout(layout);
         installNewLayoutData = new GridData(GridData.FILL_BOTH);
-        installNewComposite.setLayoutData(installNewLayoutData);
-        createInstallNewComposite(installNewComposite);
+        installNewContainer.setLayoutData(installNewLayoutData);
+        createInstallNewComposite(installNewContainer);
 
-        findExistComposite = new Composite(repGroupSubComp, SWT.NONE);
+        findExistContainer = new Composite(repGroupSubComp, SWT.NONE);
         layout = new GridLayout();
         layout.marginLeft = 0;
         layout.numColumns = 3;
-        findExistComposite.setLayout(layout);
+        findExistContainer.setLayout(layout);
         findExistLayoutdata = new GridData(GridData.FILL_BOTH);
-        findExistComposite.setLayoutData(findExistLayoutdata);
-        createFindExistingModuleComposite(findExistComposite);
+        findExistContainer.setLayoutData(findExistLayoutdata);
+        createFindExistingModuleComposite(findExistContainer);
         findExistLayoutdata.exclude = true;
 
         repositoryRadioBtn.addSelectionListener(new SelectionAdapter() {
@@ -256,13 +253,13 @@ public class ConfigModuleDialog extends InstallModuleDialog {
             public void widgetSelected(SelectionEvent e) {
                 if (installRadioBtn.getSelection()) {
                     installNewLayoutData.exclude = false;
-                    installNewComposite.setVisible(true);
+                    installNewContainer.setVisible(true);
 
                     findExistLayoutdata.exclude = true;
-                    findExistComposite.setVisible(false);
+                    findExistContainer.setVisible(false);
 
                     repGroupSubComp.layout();
-                    checkInstallFieldsError();
+                    checkFieldsError();
                 }
             }
         });
@@ -272,13 +269,13 @@ public class ConfigModuleDialog extends InstallModuleDialog {
             public void widgetSelected(SelectionEvent e) {
                 if (findRadioBtn.getSelection()) {
                     installNewLayoutData.exclude = true;
-                    installNewComposite.setVisible(false);
+                    installNewContainer.setVisible(false);
 
                     findExistLayoutdata.exclude = false;
-                    findExistComposite.setVisible(true);
+                    findExistContainer.setVisible(true);
 
                     repGroupSubComp.layout();
-                    checkInstallFieldsError();
+                    checkFieldsError();
                 }
             }
 
@@ -288,8 +285,11 @@ public class ConfigModuleDialog extends InstallModuleDialog {
 
     private void createInstallNewComposite(Composite composite) {
         createJarPathComposite(composite);
-        createMavenURIComposite(composite);
-        createDetectComposite(composite);
+        installNewRUIComposite = new InstallModuleURIComposite(this);
+        installNewRUIComposite.setCusormURIValue(cusormURIValue);
+        installNewRUIComposite.setDefaultURIValue(defaultURIValue);
+        installNewRUIComposite.setModuleName(moduleName);
+        installNewRUIComposite.createMavenURIComposite(composite);
     }
 
     /*
@@ -300,9 +300,9 @@ public class ConfigModuleDialog extends InstallModuleDialog {
     @Override
     protected void jarPathModified() {
         File file = new File(jarPathTxt.getText());
-        String jarName = file.getName();
-        if (!"".equals(jarName)) {
-            setupMavenURIByModuleName(jarName);
+        moduleName = file.getName();
+        if (!"".equals(moduleName)) {
+            installNewRUIComposite.setupMavenURIByModuleName(moduleName);
         }
         super.jarPathModified();
     }
@@ -314,8 +314,11 @@ public class ConfigModuleDialog extends InstallModuleDialog {
         GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
         data.horizontalSpan = 2;
         nameTxt.setLayoutData(data);
-        createMavenURIComposite(composite);
-        createDetectComposite(composite);
+        findExsitURIComposite = new InstallModuleURIComposite(this);
+        findExsitURIComposite.setCusormURIValue(cusormURIValue);
+        findExsitURIComposite.setDefaultURIValue(defaultURIValue);
+        findExsitURIComposite.setModuleName(moduleName);
+        findExsitURIComposite.createMavenURIComposite(composite);
 
         nameTxt.addModifyListener(new ModifyListener() {
 
@@ -324,23 +327,12 @@ public class ConfigModuleDialog extends InstallModuleDialog {
                 String jarName = nameTxt.getText().trim();
                 if (!jarName.contains(".")) {
                     jarName = addDefaultExtension(jarName);
-                    setupMavenURIByModuleName(jarName);
+                    findExsitURIComposite.setupMavenURIByModuleName(jarName);
                 }
-                checkInstallFieldsError();
+                checkFieldsError();
             }
         });
 
-    }
-
-    private void setupMavenURIByModuleName(String moduleName) {
-        ModuleNeeded moduel = new ModuleNeeded("", moduleName, "", true);
-        defaultUriTxt.setText(moduel.getDefaultMavenURI());
-        String customMavenUri = moduel.getCustomMavenUri();
-        if (customMavenUri != null) {
-            useCustomBtn.setSelection(true);
-            customUriText.setEnabled(true);
-            customUriText.setText(customMavenUri);
-        }
     }
 
     private String addDefaultExtension(String jarName) {
@@ -350,108 +342,29 @@ public class ConfigModuleDialog extends InstallModuleDialog {
         return jarName;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.librariesmanager.ui.dialogs.InstallModuleDialog#checkFieldsError()
+     */
     @Override
-    protected void handleDetectPressed() {
-        boolean deployed = checkInstalledStatus();
-        if (deployed) {
-            setMessage(Messages.getString("ConfigModuleDialog.message"), IMessageProvider.INFORMATION);
-            getButton(IDialogConstants.OK_ID).setEnabled(true);
+    public boolean checkFieldsError() {
+        if (installRadioBtn.getSelection()) {
+            return super.checkFieldsError();
         } else {
-            setMessage(Messages.getString("ConfigModuleDialog.jarNotInstalled.error"), IMessageProvider.ERROR);
-            getButton(IDialogConstants.OK_ID).setEnabled(false);
+            return checkFindExsitFieldsError();
         }
-
     }
 
-    @Override
-    protected boolean checkInstallFieldsError() {
-        String originalText = defaultUriTxt.getText().trim();
-        String customURIWithType = MavenUrlHelper.addTypeForMavenUri(customUriText.getText(), moduleName);
-        ModuleNeeded testModule = new ModuleNeeded("", moduleName, "", true);
-        ELibraryInstallStatus status = null;
-        if (useCustomBtn.getSelection()) {
-            // if use custom uri: validate custom uri + check deploy status + validate file path if not empty
-            boolean statusOK = true;
-            statusOK = validateCustomMvnURI(originalText, customURIWithType);
-            if (!statusOK) {
-                return false;
-            }
-
-            testModule.setMavenUri(customURIWithType);
-            status = testModule.getDeployStatus();
-            if (status == ELibraryInstallStatus.DEPLOYED) {
-                setMessage(Messages.getString("InstallModuleDialog.error.jarexsit"), IMessageProvider.ERROR);
-                return false;
-            }
-
-            if (!"".equals(jarPathTxt.getText()) && !new File(jarPathTxt.getText()).exists()) {
-                setMessage(Messages.getString("InstallModuleDialog.error.jarPath"), IMessageProvider.ERROR);
-                return false;
-            }
-        } else {
-            // if use original uri: validate file path + check deploy status
-            if (!new File(jarPathTxt.getText()).exists()) {
-                setMessage(Messages.getString("InstallModuleDialog.error.jarPath"), IMessageProvider.ERROR);
-                return false;
-            }
-
-            testModule.setMavenUri(originalText);
-            status = testModule.getDeployStatus();
-            if (status == ELibraryInstallStatus.DEPLOYED) {
-                setMessage(Messages.getString("InstallModuleDialog.error.jarexsit"), IMessageProvider.ERROR);
-                return false;
-            }
-
-        }
-
-        // check deploy status from remote
-        boolean statusOK = checkDetectButtonStatus();
-        if (!statusOK) {
-            return false;
-        }
-
-        setMessage(Messages.getString("InstallModuleDialog.message"), IMessageProvider.INFORMATION);
-        getButton(IDialogConstants.OK_ID).setEnabled(true);
-        return true;
-    }
-
-    protected boolean checkFindeExsitFieldsError() {
+    protected boolean checkFindExsitFieldsError() {
         moduleName = nameTxt.getText().trim();
         if ("".equals(moduleName)) {
             setMessage(Messages.getString("ConfigModuleDialog.moduleName.error"), IMessageProvider.ERROR);
             return false;
         }
-        String originalText = defaultUriTxt.getText().trim();
-        String customURIWithType = MavenUrlHelper.addTypeForMavenUri(customUriText.getText(), moduleName);
-        ModuleNeeded testModule = new ModuleNeeded("", moduleName, "", true);
-        if (useCustomBtn.getSelection()) {
-            // if use custom uri: validate custom uri + check deploy status
-            boolean statusOK = true;
-            statusOK = validateCustomMvnURI(originalText, customURIWithType);
-            if (!statusOK) {
-                return false;
-            }
-
-            testModule.setMavenUri(customURIWithType);
-
-            if (jarPathTxt.getText() != null && !new File(jarPathTxt.getText()).exists()) {
-                setMessage(Messages.getString("InstallModuleDialog.error.jarPath"), IMessageProvider.ERROR);
-                return false;
-            }
-        } else {
-            testModule.setMavenUri(originalText);
-        }
-        ELibraryInstallStatus status = testModule.getDeployStatus();
-        if (status != ELibraryInstallStatus.DEPLOYED) {
-            NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
-            if (customNexusServer != null) {
-                setMessage(Messages.getString("InstallModuleDialog.error.detectMvnURI"), IMessageProvider.ERROR);
-                detectButton.setEnabled(true);
-                return false;
-            } else {
-                setMessage(Messages.getString("ConfigModuleDialog.jarNotInstalled.error"), IMessageProvider.ERROR);
-                return false;
-            }
+        boolean statusOK = findExsitURIComposite.checkFieldsError();
+        if (!statusOK) {
+            return false;
         }
 
         setMessage(Messages.getString("ConfigModuleDialog.message"), IMessageProvider.INFORMATION);
@@ -461,15 +374,19 @@ public class ConfigModuleDialog extends InstallModuleDialog {
 
     private void setRepositoryGroupEnabled(boolean enable) {
         repositoryRadioBtn.setSelection(enable);
+        // install
         installRadioBtn.setEnabled(enable);
-        findRadioBtn.setEnabled(enable);
         jarPathTxt.setEnabled(enable);
         browseButton.setEnabled(enable);
-        useCustomBtn.setEnabled(enable);
-        customUriText.setEnabled(enable && useCustomBtn.getSelection());
+        installNewRUIComposite.useCustomBtn.setEnabled(enable);
+        installNewRUIComposite.customUriText.setEnabled(enable && installNewRUIComposite.useCustomBtn.getSelection());
+        // find existing
+        findRadioBtn.setEnabled(enable);
         nameTxt.setEnabled(enable);
+        findExsitURIComposite.useCustomBtn.setEnabled(enable);
+        findExsitURIComposite.customUriText.setEnabled(enable && findExsitURIComposite.useCustomBtn.getSelection());
         if (enable) {
-            checkInstallFieldsError();
+            checkFieldsError();
 
         }
     }
@@ -484,13 +401,14 @@ public class ConfigModuleDialog extends InstallModuleDialog {
         if (platfromRadioBtn.getSelection()) {
             moduleName = platformCombo.getText();
         } else if (repositoryRadioBtn.getSelection()) {
-            String originalURI = defaultUriTxt.getText().trim();
+            String originalURI = null;
             String customURI = null;
-            if (useCustomBtn.getSelection()) {
-                customURI = customUriText.getText().trim();
-            }
-            final String urlToUse = customURI != null ? customURI : originalURI;
             if (installRadioBtn.getSelection()) {
+                originalURI = installNewRUIComposite.defaultUriTxt.getText().trim();
+                if (installNewRUIComposite.useCustomBtn.getSelection()) {
+                    customURI = installNewRUIComposite.customUriText.getText().trim();
+                }
+                final String urlToUse = customURI != null ? customURI : originalURI;
                 final File file = new File(jarPathTxt.getText().trim());
                 moduleName = file.getName();
 
@@ -519,8 +437,13 @@ public class ConfigModuleDialog extends InstallModuleDialog {
                     }
                 }
             } else if (findRadioBtn.getSelection()) {
+                originalURI = findExsitURIComposite.defaultUriTxt.getText().trim();
+                if (findExsitURIComposite.useCustomBtn.getSelection()) {
+                    customURI = findExsitURIComposite.customUriText.getText().trim();
+                }
                 moduleName = addDefaultExtension(nameTxt.getText().trim());
             }
+            String urlToUse = customURI != null ? customURI : originalURI;
             Set<String> modulesNeededNames = ModulesNeededProvider.getModulesNeededNames();
             if (!modulesNeededNames.contains(moduleName)) {
                 ModulesNeededProvider.addUnknownModules(moduleName, urlToUse, false);
