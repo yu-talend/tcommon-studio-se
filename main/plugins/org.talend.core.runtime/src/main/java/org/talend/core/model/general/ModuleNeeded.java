@@ -254,10 +254,8 @@ public class ModuleNeeded {
         ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
                 ILibraryManagerService.class);
         libManagerService.checkModuleStatus(this);
-        String mvnUriStatusKey = getCustomMavenUri();
-        if (mvnUriStatusKey == null) {
-            mvnUriStatusKey = getMavenUri();
-        }
+        String mvnUriStatusKey = getMavenUri();
+
         this.installStatus = ModuleStatusProvider.getDeployStatus(mvnUriStatusKey);
         return this.installStatus;
     }

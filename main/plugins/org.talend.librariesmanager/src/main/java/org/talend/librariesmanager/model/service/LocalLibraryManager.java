@@ -769,15 +769,15 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
             File fileToDeploy = null;
             String moduleLocation = module.getModuleLocaion();
             Set<String> toDeploy = new HashSet<String>();
-            if (module.getMavenURIFromConfiguration() == null && mavenIndex.get(module.getModuleName()) != null) {
+            if (module.getCustomMavenUri() != null) {
+                toDeploy.add(module.getCustomMavenUri());
+            } else if (module.getMavenURIFromConfiguration() == null && mavenIndex.get(module.getModuleName()) != null) {
                 final String[] split = mavenIndex.get(module.getModuleName()).split(MavenUrlHelper.MVN_INDEX_SPLITER);
                 for (String mvnUri : split) {
                     toDeploy.add(mvnUri);
                 }
             } else {
-                if (module.getMavenUri() != null) {
-                    toDeploy.add(module.getMavenUri());
-                }
+                toDeploy.add(module.getMavenUri());
             }
             for (String mavenUri : toDeploy) {
                 if (checkJarInstalledInMaven(mavenUri)) {
@@ -968,7 +968,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
             if (resolvedJar == null || !resolvedJar.exists()) {
                 String customMavenUri = module.getCustomMavenUri();
                 // if customer uri set ,only check in maven repository and don't use jar in the platform anymore
-                if (customMavenUri != null) {
+                if (customMavenUri == null) {
                     if (module.getModuleLocaion() != null) {
                         // check from platfrom
                         String platformPath = getJarPathFromPlatform(module.getModuleLocaion());

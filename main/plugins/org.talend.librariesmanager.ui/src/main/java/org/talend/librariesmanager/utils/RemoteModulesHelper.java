@@ -595,33 +595,39 @@ public class RemoteModulesHelper {
         final Iterator<ModuleNeeded> iterator = neededModules.iterator();
         while (iterator.hasNext()) {
             ModuleNeeded module = iterator.next();
-            String mvnUri = module.getMavenURIFromConfiguration();
-            if (mvnUri == null) {
-                Set<String> urisFromIndex = new HashSet<String>();
-                ILibraryManagerService librairesManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault()
-                        .getService(ILibraryManagerService.class);
-                final String mavenUriFromIndex = librairesManagerService.getMavenUriFromIndex(module.getModuleName());
-                if (mavenUriFromIndex != null) {
-                    final String[] split = mavenUriFromIndex.split(MavenUrlHelper.MVN_INDEX_SPLITER);
-                    for (String fromIndex : split) {
-                        urisFromIndex.add(fromIndex);
+            String mvnUri = null;
+            if (module.getCustomMavenUri() != null) {
+                mvnUri = module.getCustomMavenUri();
+            } else {
+                mvnUri = module.getMavenURIFromConfiguration();
+                if (mvnUri == null) {
+                    Set<String> urisFromIndex = new HashSet<String>();
+                    ILibraryManagerService librairesManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault()
+                            .getService(ILibraryManagerService.class);
+                    final String mavenUriFromIndex = librairesManagerService.getMavenUriFromIndex(module.getModuleName());
+                    if (mavenUriFromIndex != null) {
+                        final String[] split = mavenUriFromIndex.split(MavenUrlHelper.MVN_INDEX_SPLITER);
+                        for (String fromIndex : split) {
+                            urisFromIndex.add(fromIndex);
+                        }
                     }
-                }
-                if (urisFromIndex.isEmpty()) {
-                    mvnUri = module.getMavenUri();
-                } else {
-                    // add all mvnuris from index to try to download
-                    for (String uri : urisFromIndex) {
-                        if (uri != null) {
-                            uri = addTypeForMavenUri(uri, module.getModuleName());
-                            ModuleNeeded newModule = new ModuleNeeded(null, module.getModuleName(), null, true);
-                            newModule.setMavenUri(uri);
-                            if (!contextMap.keySet().contains(uri)) {
-                                List<ModuleNeeded> modules = new ArrayList<ModuleNeeded>();
-                                modules.add(module);
-                                contextMap.put(uri, modules);
-                            } else {
-                                contextMap.get(uri).add(module);
+                    if (urisFromIndex.isEmpty()) {
+                        // use the default one if not managed in talend index
+                        mvnUri = module.getMavenUri();
+                    } else {
+                        // add all mvnuris from index to try to download
+                        for (String uri : urisFromIndex) {
+                            if (uri != null) {
+                                uri = addTypeForMavenUri(uri, module.getModuleName());
+                                ModuleNeeded newModule = new ModuleNeeded(null, module.getModuleName(), null, true);
+                                newModule.setMavenUri(uri);
+                                if (!contextMap.keySet().contains(uri)) {
+                                    List<ModuleNeeded> modules = new ArrayList<ModuleNeeded>();
+                                    modules.add(module);
+                                    contextMap.put(uri, modules);
+                                } else {
+                                    contextMap.get(uri).add(module);
+                                }
                             }
                         }
                     }
