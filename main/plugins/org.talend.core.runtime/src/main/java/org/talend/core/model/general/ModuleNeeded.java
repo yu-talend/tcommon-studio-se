@@ -70,6 +70,8 @@ public class ModuleNeeded {
 
     private String mavenUri;
 
+    private boolean excludeDependencies = false;
+
     private boolean dynamic;
 
     private Map<String, Object> extraAttributes = new HashMap<>();
@@ -540,8 +542,8 @@ public class ModuleNeeded {
                 // set jar by default
                 parseMvnUrl.setType(MavenConstants.TYPE_JAR);
             }
-            uri = MavenUrlHelper.generateMvnUrl(parseMvnUrl.getGroupId(), parseMvnUrl.getArtifactId(), parseMvnUrl.getVersion(),
-                    parseMvnUrl.getType(), parseMvnUrl.getClassifier());
+            uri = MavenUrlHelper.generateMvnUrl(parseMvnUrl.getRepositoryUrl(), parseMvnUrl.getGroupId(),
+                    parseMvnUrl.getArtifactId(), parseMvnUrl.getVersion(), parseMvnUrl.getType(), parseMvnUrl.getClassifier());
         }
         return uri;
     }
@@ -557,5 +559,14 @@ public class ModuleNeeded {
     public Map<String, Object> getExtraAttributes() {
         return this.extraAttributes;
     }
+
+    public boolean isExcludeDependencies() {
+        return this.excludeDependencies;
+    }
+
+    public void setExcludeDependencies(boolean excludeDependencies) {
+        this.excludeDependencies = excludeDependencies;
+    }
+
 
 }
