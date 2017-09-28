@@ -1878,6 +1878,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                 SubMonitor subMonitor = SubMonitor.convert(monitor, MAX_TASKS);
                 SubMonitor currentMonitor = subMonitor.newChild(1, SubMonitor.SUPPRESS_NONE);
                 currentMonitor.beginTask(Messages.getString("ProxyRepositoryFactory.logonInProgress"), 1); //$NON-NLS-1$
+                ReferenceProjectProblemManager.getInstance().clearAll();
                 project.setReferenceProjectProvider(null);
                 initEmfProjectContent();
                 getRepositoryContext().setProject(project);
