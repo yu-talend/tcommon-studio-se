@@ -16,6 +16,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -33,6 +34,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 import org.talend.commons.exception.ExceptionHandler;
+import org.talend.commons.ui.swt.dialogs.IConfigModuleDialog;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.ILibraryManagerService;
 import org.talend.core.model.general.ModuleNeeded;
@@ -49,7 +51,7 @@ import org.talend.librariesmanager.utils.CustomMavenURIValidator;
  * created by wchen on Sep 25, 2017 Detailled comment
  *
  */
-public class InstallModuleURIComposite {
+public class MavenURIComposite {
 
     Text defaultUriTxt;
 
@@ -65,13 +67,20 @@ public class InstallModuleURIComposite {
 
     protected String defaultURIValue = "";
 
-    protected IInstallModuleDialog moduleDialog;
+    protected IConfigModuleDialog moduleDialog;
 
     protected final String MVNURI_TEMPLET = "mvn:<groupid>/<artifactId>/<version>/<type>";
 
-    public InstallModuleURIComposite(IInstallModuleDialog moduleDialog) {
-        this.moduleDialog = moduleDialog;
+    boolean isInstall = true;
 
+    public MavenURIComposite(IConfigModuleDialog moduleDialog, String moduleName, String defaultURIValue, String cusormURIValue) {
+        this.moduleDialog = moduleDialog;
+        this.moduleName = moduleName;
+        this.defaultURIValue = defaultURIValue;
+        this.cusormURIValue = cusormURIValue;
+        if (StringUtils.isEmpty(this.cusormURIValue)) {
+            this.cusormURIValue = MVNURI_TEMPLET;
+        }
     }
 
     public void createMavenURIComposite(Composite composite) {
@@ -122,8 +131,7 @@ public class InstallModuleURIComposite {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 // show the warning if useCustomBtn select/deselect
-
-                moduleDialog.layoutWarningComposite();
+                moduleDialog.layoutWarningComposite(false);
                 if (useCustomBtn.getSelection()) {
                     customUriText.setEnabled(true);
                     customUriText.setText(cusormURIValue);
@@ -152,6 +160,14 @@ public class InstallModuleURIComposite {
     }
 
     protected boolean checkFieldsError() {
+        if (isInstall) {
+            return checkErrorForInstall();
+        } else {
+            return checkErrorForFindExisting();
+        }
+    }
+
+    private boolean checkErrorForInstall() {
         String originalText = defaultUriTxt.getText().trim();
         String customURIWithType = MavenUrlHelper.addTypeForMavenUri(customUriText.getText(), moduleName);
         ELibraryInstallStatus status = null;
@@ -180,29 +196,69 @@ public class InstallModuleURIComposite {
         }
 
         // check deploy status from remote
-        boolean statusOK = checkDetectButtonStatus();
+        boolean statusOK = checkDetectButtonStatus(status);
         if (!statusOK) {
             return false;
         }
 
+        detectButton.setEnabled(false);
         moduleDialog.setMessage(Messages.getString("InstallModuleDialog.message"), IMessageProvider.INFORMATION);
         return true;
     }
 
+    private boolean checkErrorForFindExisting() {
+        String originalText = defaultUriTxt.getText().trim();
+        String customURIWithType = MavenUrlHelper.addTypeForMavenUri(customUriText.getText(), moduleName);
+        ELibraryInstallStatus status = null;
+        if (useCustomBtn.getSelection()) {
+            // if use custom uri: validate custom uri + check deploy status
+            String message = CustomMavenURIValidator.validateCustomMvnURI(originalText, customURIWithType);
+            if (message != null) {
+                detectButton.setEnabled(false);
+                moduleDialog.setMessage(message, IMessageProvider.ERROR);
+                return false;
+            }
+            status = getMavenURIInstallStatus(customURIWithType);
+        } else {
+            status = getMavenURIInstallStatus(originalText);
+        }
+        if (status == null) {
+            moduleDialog.setMessage(Messages.getString("InstallModuleDialog.error.detectMvnURI"), IMessageProvider.ERROR);
+            detectButton.setEnabled(true);
+            return false;
+        }
+        if (status != ELibraryInstallStatus.DEPLOYED) {
+            NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
+            if (customNexusServer != null) {
+                moduleDialog.setMessage(Messages.getString("InstallModuleDialog.error.detectMvnURI"), IMessageProvider.ERROR);
+                detectButton.setEnabled(true);
+                return false;
+            } else {
+                moduleDialog.setMessage(Messages.getString("ConfigModuleDialog.jarNotInstalled.error"), IMessageProvider.ERROR);
+                return false;
+            }
+        }
+        detectButton.setEnabled(false);
+        moduleDialog.setMessage(Messages.getString("ConfigModuleDialog.message"), IMessageProvider.INFORMATION);
+        return true;
+
+    }
+
     protected ELibraryInstallStatus getMavenURIInstallStatus(String mvnURI) {
         ELibraryInstallStatus deployStatus = ModuleStatusProvider.getDeployStatus(mvnURI);
-        if (deployStatus == null) {
-            ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
-                    ILibraryManagerService.class);
-            libManagerService.resolveStatusLocally(mvnURI);
-            deployStatus = ModuleStatusProvider.getDeployStatus(mvnURI);
-        }
+        // if (deployStatus == null) {
+        // ILibraryManagerService libManagerService = (ILibraryManagerService)
+        // GlobalServiceRegister.getDefault().getService(
+        // ILibraryManagerService.class);
+        // libManagerService.resolveStatusLocally(mvnURI);
+        // deployStatus = ModuleStatusProvider.getDeployStatus(mvnURI);
+        // }
         return deployStatus;
     }
 
-    protected boolean checkDetectButtonStatus() {
+    protected boolean checkDetectButtonStatus(ELibraryInstallStatus localStatus) {
         NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
-        if (customNexusServer != null) {
+        if (customNexusServer != null || localStatus == null) {
             detectButton.setEnabled(true);
             moduleDialog.setMessage(Messages.getString("InstallModuleDialog.error.detectMvnURI"), IMessageProvider.ERROR);
             return false;
@@ -211,11 +267,28 @@ public class InstallModuleURIComposite {
     }
 
     protected void handleDetectPressed() {
+        if (isInstall) {
+            handleDetectPressedForInstall();
+        } else {
+            handleDetectPressedForFindExsting();
+        }
+    }
+
+    private void handleDetectPressedForInstall() {
         boolean deployed = checkInstalledStatus();
         if (deployed) {
             moduleDialog.setMessage(Messages.getString("InstallModuleDialog.error.jarexsit"), IMessageProvider.ERROR);
         } else {
             moduleDialog.setMessage(Messages.getString("InstallModuleDialog.message"), IMessageProvider.INFORMATION);
+        }
+    }
+
+    private void handleDetectPressedForFindExsting() {
+        boolean deployed = checkInstalledStatus();
+        if (deployed) {
+            moduleDialog.setMessage(Messages.getString("ConfigModuleDialog.message"), IMessageProvider.INFORMATION);
+        } else {
+            moduleDialog.setMessage(Messages.getString("ConfigModuleDialog.jarNotInstalled.error"), IMessageProvider.ERROR);
         }
     }
 
@@ -283,36 +356,15 @@ public class InstallModuleURIComposite {
             customUriText.setEnabled(true);
             customUriText.setText(customMavenUri);
         }
-
     }
 
     /**
-     * Sets the moduleName.
+     * Sets the isInstall.
      * 
-     * @param moduleName the moduleName to set
+     * @param isInstall the isInstall to set
      */
-    public void setModuleName(String moduleName) {
-        this.moduleName = moduleName;
+    public void setInstall(boolean isInstall) {
+        this.isInstall = isInstall;
     }
 
-    /**
-     * Sets the cusormURIValue.
-     * 
-     * @param cusormURIValue the cusormURIValue to set
-     */
-    public void setCusormURIValue(String cusormURIValue) {
-        this.cusormURIValue = cusormURIValue;
-        if (cusormURIValue == null || "".equals(cusormURIValue)) {
-            this.cusormURIValue = MVNURI_TEMPLET;
-        }
-    }
-
-    /**
-     * Sets the defaultURIValue.
-     * 
-     * @param defaultURIValue the defaultURIValue to set
-     */
-    public void setDefaultURIValue(String defaultURIValue) {
-        this.defaultURIValue = defaultURIValue;
-    }
 }

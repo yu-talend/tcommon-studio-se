@@ -17,10 +17,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.PatternMatcherInput;
-import org.apache.oro.text.regex.Perl5Compiler;
-import org.apache.oro.text.regex.Perl5Matcher;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -34,8 +30,6 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -50,12 +44,8 @@ import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.ui.runtime.expressionbuilder.ICellEditorDialog;
 import org.talend.commons.ui.runtime.image.EImage;
 import org.talend.commons.ui.runtime.image.ImageProvider;
-import org.talend.commons.ui.utils.image.ColorUtils;
-import org.talend.core.GlobalServiceRegister;
-import org.talend.core.ILibraryManagerService;
+import org.talend.commons.ui.swt.dialogs.IConfigModuleDialog;
 import org.talend.core.model.general.ModuleNeeded;
-import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
-import org.talend.core.model.general.ModuleStatusProvider;
 import org.talend.core.runtime.maven.MavenUrlHelper;
 import org.talend.librariesmanager.ui.LibManagerUiPlugin;
 import org.talend.librariesmanager.ui.i18n.Messages;
@@ -64,39 +54,27 @@ import org.talend.librariesmanager.ui.i18n.Messages;
  * created by wchen on Aug 16, 2017 Detailled comment
  *
  */
-public class InstallModuleDialog extends TitleAreaDialog implements ICellEditorDialog, IInstallModuleDialog {
+public class InstallModuleDialog extends TitleAreaDialog implements ICellEditorDialog, IConfigModuleDialog {
 
-    protected Label warningLabel;
+    private Label warningLabel;
 
-    protected Composite warningComposite;
+    private GridData warningLayoutData;
 
-    protected GridData warningLayoutData;
+    private Text jarPathTxt;
 
-    protected Text jarPathTxt;
+    private Button browseButton;
 
-    protected Button browseButton;
-
-    protected InstallModuleURIComposite installNewRUIComposite;
+    private MavenURIComposite installNewRUIComposite;
 
     private ModuleNeeded module;
 
     private CustomURITextCellEditor cellEditor;
 
-    protected String moduleName = "";
+    private String moduleName = "";
 
-    protected String cusormURIValue = "";
+    private String cusormURIValue = "";
 
-    protected String defaultURIValue = "";
-
-    protected PatternMatcherInput patternMatcherInput;
-
-    protected Perl5Matcher matcher = new Perl5Matcher();
-
-    protected Perl5Compiler compiler = new Perl5Compiler();
-
-    protected Pattern pattern;
-
-    private Color warningColor = ColorUtils.getCacheColor(new RGB(255, 175, 10));
+    private String defaultURIValue = "";
 
     /**
      * DOC wchen InstallModuleDialog constructor comment.
@@ -133,17 +111,14 @@ public class InstallModuleDialog extends TitleAreaDialog implements ICellEditorD
 
         createWarningLabel(container);
         createJarPathComposite(container);
-        installNewRUIComposite = new InstallModuleURIComposite(this);
-        installNewRUIComposite.setCusormURIValue(cusormURIValue);
-        installNewRUIComposite.setDefaultURIValue(defaultURIValue);
-        installNewRUIComposite.setModuleName(moduleName);
+        installNewRUIComposite = new MavenURIComposite(this, moduleName, defaultURIValue, cusormURIValue);
         installNewRUIComposite.createMavenURIComposite(container);
 
         return parent;
     }
 
-    protected void createWarningLabel(Composite container) {
-        warningComposite = new Composite(container, SWT.NONE);
+    private void createWarningLabel(Composite container) {
+        Composite warningComposite = new Composite(container, SWT.NONE);
         warningComposite.setBackground(warningColor);
         warningLayoutData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
         warningLayoutData.horizontalSpan = ((GridLayout) container.getLayout()).numColumns;
@@ -164,7 +139,16 @@ public class InstallModuleDialog extends TitleAreaDialog implements ICellEditorD
         warningLayoutData.exclude = true;
     }
 
-    protected void createJarPathComposite(Composite container) {
+    @Override
+    public void layoutWarningComposite(boolean exclude) {
+        warningLayoutData.exclude = exclude;
+        warningLabel
+                .setText(Messages.getString("InstallModuleDialog.warning", defaultURIValue)
+                        + "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddjjjjjjjjjjjjjjjjjjjjdddddddddd");
+        warningLabel.getParent().getParent().layout();
+    }
+
+    private void createJarPathComposite(Composite container) {
         Label label1 = new Label(container, SWT.NONE);
         label1.setText(Messages.getString("InstallModuleDialog.newJar"));
         jarPathTxt = new Text(container, SWT.BORDER);
@@ -183,21 +167,9 @@ public class InstallModuleDialog extends TitleAreaDialog implements ICellEditorD
 
             @Override
             public void modifyText(ModifyEvent e) {
-                jarPathModified();
+                checkFieldsError();
             }
         });
-    }
-
-    @Override
-    public void layoutWarningComposite() {
-        warningLayoutData.exclude = false;
-        warningLabel.setText(Messages.getString("InstallModuleDialog.warning", defaultURIValue));
-        warningLabel.getParent().getParent().layout();
-        // warningComposite.getParent().layout();
-    }
-
-    protected void jarPathModified() {
-        checkFieldsError();
     }
 
     /**
@@ -234,17 +206,6 @@ public class InstallModuleDialog extends TitleAreaDialog implements ICellEditorD
         } else {
             getButton(IDialogConstants.OK_ID).setEnabled(true);
         }
-    }
-
-    protected ELibraryInstallStatus getMavenURIInstallStatus(String mvnURI) {
-        ELibraryInstallStatus deployStatus = ModuleStatusProvider.getDeployStatus(mvnURI);
-        if (deployStatus == null) {
-            ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
-                    ILibraryManagerService.class);
-            libManagerService.resolveStatusLocally(mvnURI);
-            deployStatus = ModuleStatusProvider.getDeployStatus(mvnURI);
-        }
-        return deployStatus;
     }
 
     /*
@@ -360,5 +321,25 @@ public class InstallModuleDialog extends TitleAreaDialog implements ICellEditorD
     public boolean close() {
         setMessage("");
         return super.close();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.commons.ui.swt.dialogs.IConfigModuleDialog#getModuleName()
+     */
+    @Override
+    public String getModuleName() {
+        return moduleName;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.commons.ui.swt.dialogs.IConfigModuleDialog#getMavenURI()
+     */
+    @Override
+    public String getMavenURI() {
+        return null;
     }
 }
