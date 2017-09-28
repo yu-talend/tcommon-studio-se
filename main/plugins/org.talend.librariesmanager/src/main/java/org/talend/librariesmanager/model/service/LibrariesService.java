@@ -68,9 +68,24 @@ public class LibrariesService implements ILibrariesService {
         return null;
     }
 
+    /**
+     * 
+     * DOC wchen Comment method "getLibraryStatus".
+     * 
+     * @deprecated better call the function getLibraryStatus(String libName, String mvnURI)
+     * @param libName
+     * @return
+     * @throws BusinessException
+     */
+    @Deprecated
     @Override
     public ELibraryInstallStatus getLibraryStatus(String libName) throws BusinessException {
         return this.getLibrariesService().getLibraryStatus(libName);
+    }
+
+    @Override
+    public ELibraryInstallStatus getLibraryStatus(String libName, String mvnURI) {
+        return this.getLibrariesService().getLibraryStatus(libName, mvnURI);
     }
 
     @Override

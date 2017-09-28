@@ -202,7 +202,7 @@ public class InstallModuleURIComposite {
 
     protected boolean checkDetectButtonStatus() {
         NexusServerBean customNexusServer = TalendLibsServerManager.getInstance().getCustomNexusServer();
-        if (customNexusServer == null) {
+        if (customNexusServer != null) {
             detectButton.setEnabled(true);
             moduleDialog.setMessage(Messages.getString("InstallModuleDialog.error.detectMvnURI"), IMessageProvider.ERROR);
             return false;

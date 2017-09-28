@@ -300,58 +300,43 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
 
     @Override
     public boolean retrieve(String jarNeeded, String pathToStore, boolean popUp, IProgressMonitor... monitorWrap) {
+        ModuleNeeded testModule = new ModuleNeeded("", jarNeeded, "", true);
         boolean refresh = true;
-        return retrieve(jarNeeded, null, pathToStore, popUp, refresh);
+        return retrieve(testModule, pathToStore, popUp, refresh);
     }
 
-    private boolean retrieve(String jarNeeded, String mavenUri, String pathToStore, boolean showDialog, boolean refresh) {
-        String sourcePath = null, targetPath = pathToStore;
+    private boolean retrieve(ModuleNeeded module, String pathToStore, boolean showDialog, boolean refresh) {
+        String jarNeeded = module.getModuleName();
+        String sourcePath = null;
         File jarFile = null;
         try {
-            jarFile = getJarFile(mavenUri);
-            if (jarFile == null) {
-                jarFile = getJarFile(jarNeeded);
-            }
+            jarFile = retrieveJarFromLocal(module);
             // retrieve form custom nexus server automatically
             TalendLibsServerManager manager = TalendLibsServerManager.getInstance();
             NexusServerBean customNexusServer = manager.getCustomNexusServer();
             if (customNexusServer != null) {
-                Set<String> toResolve = new HashSet<String>();
-                if (mavenUri != null) {
-                    toResolve.add(mavenUri);
-                } else {
-                    mavenUri = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath().get(jarNeeded);
-                    if (mavenUri == null) {
-                        mavenUri = MavenUrlHelper.generateMvnUrlForJarName(jarNeeded);
-                        toResolve.add(mavenUri);
-                    } else {
-                        mavenUri = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath().get(jarNeeded);
-                        if (mavenUri == null) {
-                            mavenUri = MavenUrlHelper.generateMvnUrlForJarName(jarNeeded);
-                            toResolve.add(mavenUri);
-                        } else {
-                            final String[] split = mavenUri.split(MavenUrlHelper.MVN_INDEX_SPLITER);
-                            for (String mvnUri : split) {
-                                toResolve.add(mvnUri);
-                            }
-                        }
-                    }
-                }
+                Set<String> toResolve = guessMavenURI(module);
                 for (String uri : toResolve) {
                     if (isResolveAllowed(uri)) {
-                        // MavenArtifact parseMvnUrl = MavenUrlHelper.parseMvnUrl(uri);
-                        // if (jarFile == null || parseMvnUrl.getVersion().endsWith(MavenUrlHelper.VERSION_SNAPSHOT)) {
-                        File resolvedJar = resolveJar(customNexusServer, uri);
-                        if (resolvedJar != null) {
-                            jarFile = resolvedJar;
+                        MavenArtifact parseMvnUrl = MavenUrlHelper.parseMvnUrl(uri);
+                        if (jarFile == null || parseMvnUrl.getVersion().endsWith(MavenUrlHelper.VERSION_SNAPSHOT)) {
+                            File resolvedJar = resolveJar(customNexusServer, uri);
+                            if (resolvedJar != null) {
+                                jarFile = resolvedJar;
+                                break;
+                            }
                         }
                     }
 
                 }
 
             }
+            if (jarFile == null) {
+                jarFile = getJarFile(jarNeeded);
+            }
         } catch (Exception e) {
-            CommonExceptionHandler.process(new Exception(getClass().getSimpleName() + " resolve " + mavenUri + " failed !"));
+            CommonExceptionHandler.process(new Exception(getClass().getSimpleName() + " resolve " + module.getModuleName()
+                    + " failed !"));
         }
         try {
             if (jarFile == null) {
@@ -363,7 +348,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
 
                         libUiService.installModules(new String[] { jarNeeded });
                     }
-                    jarFile = getJarFile(jarNeeded);
+                    jarFile = retrieveJarFromLocal(module);
                     if (jarFile == null) {
                         // jar not found even after the popup > stop here
                         return false;
@@ -393,9 +378,41 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
         } catch (MalformedURLException e) {
             CommonExceptionHandler.process(e);
         } catch (IOException e) {
-            CommonExceptionHandler.process(new Exception("Can not copy: " + sourcePath + " to :" + targetPath, e));
+            CommonExceptionHandler.process(new Exception("Can not copy: " + sourcePath + " to :" + pathToStore, e));
         }
         return false;
+    }
+
+    private File retrieveJarFromLocal(ModuleNeeded module) {
+        File jarFile = null;
+        Set<String> toResolve = guessMavenURI(module);
+        // retrieve from local
+        for (String uri : toResolve) {
+            String filePath = getJarPathFromMaven(uri);
+            if (filePath != null) {
+                jarFile = new File(filePath);
+                break;
+            }
+        }
+        return jarFile;
+    }
+
+    private Set<String> guessMavenURI(ModuleNeeded module) {
+        String jarNeeded = module.getModuleName();
+        EMap<String, String> mvnURIIndex = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath();
+        Set<String> toResolve = new HashSet<String>();
+        if (module.getCustomMavenUri() != null) {
+            toResolve.add(module.getCustomMavenUri());
+        } else if (module.getMavenURIFromConfiguration() == null && mvnURIIndex.get(jarNeeded) != null) {
+            String mavenUriFromIndex = mvnURIIndex.get(jarNeeded);
+            final String[] split = mavenUriFromIndex.split(MavenUrlHelper.MVN_INDEX_SPLITER);
+            for (String mvnUri : split) {
+                toResolve.add(mvnUri);
+            }
+        } else {
+            toResolve.add(module.getDefaultMavenURI());
+        }
+        return toResolve;
     }
 
     /**
@@ -565,7 +582,8 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
                 allIsOK = true;
                 boolean needResetModulesNeeded = false;
                 for (String jar : jarsNeeded) {
-                    if (!retrieve(jar, null, pathToStore, false, false)) {
+                    ModuleNeeded testModule = new ModuleNeeded("", jar, "", true);
+                    if (!retrieve(testModule, pathToStore, false, false)) {
                         jarNotFound.add(jar);
                         allIsOK = false;
                     } else {
@@ -611,7 +629,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
         Set<ModuleNeeded> jarNotFound = new HashSet<ModuleNeeded>();
         boolean allIsOK = true;
         for (ModuleNeeded jar : modulesNeeded) {
-            if (!retrieve(jar.getModuleName(), jar.getMavenURIFromConfiguration(), pathToStore, false, false)) {
+            if (!retrieve(jar, pathToStore, false, false)) {
                 jarNotFound.add(jar);
                 allIsOK = false;
             }
@@ -626,7 +644,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
                 allIsOK = true;
                 boolean needResetModulesNeeded = false;
                 for (ModuleNeeded jar : modulesNeeded) {
-                    if (!retrieve(jar.getModuleName(), jar.getMavenURIFromConfiguration(), pathToStore, false, false)) {
+                    if (!retrieve(jar, pathToStore, false, false)) {
                         jarNotFound.add(jar);
                         allIsOK = false;
                     } else {
@@ -648,10 +666,7 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
 
     @Override
     public boolean retrieve(ModuleNeeded module, String pathToStore, boolean showDialog, IProgressMonitor... monitorWrap) {
-        String mavenUri = module.getMavenURIFromConfiguration();
-        String jarNeeded = module.getModuleName();
-
-        return retrieve(jarNeeded, mavenUri, pathToStore, showDialog, true);
+        return retrieve(module, pathToStore, showDialog, true);
     }
 
     /*
@@ -764,21 +779,10 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
     public void installModules(Collection<ModuleNeeded> modules, IProgressMonitor monitorWrap) {
         boolean modified = false;
         EMap<String, String> libIndex = LibrariesIndexManager.getInstance().getStudioLibIndex().getJarsToRelativePath();
-        EMap<String, String> mavenIndex = LibrariesIndexManager.getInstance().getMavenLibIndex().getJarsToRelativePath();
         for (ModuleNeeded module : modules) {
             File fileToDeploy = null;
             String moduleLocation = module.getModuleLocaion();
-            Set<String> toDeploy = new HashSet<String>();
-            if (module.getCustomMavenUri() != null) {
-                toDeploy.add(module.getCustomMavenUri());
-            } else if (module.getMavenURIFromConfiguration() == null && mavenIndex.get(module.getModuleName()) != null) {
-                final String[] split = mavenIndex.get(module.getModuleName()).split(MavenUrlHelper.MVN_INDEX_SPLITER);
-                for (String mvnUri : split) {
-                    toDeploy.add(mvnUri);
-                }
-            } else {
-                toDeploy.add(module.getMavenUri());
-            }
+            Set<String> toDeploy = guessMavenURI(module);
             for (String mavenUri : toDeploy) {
                 if (checkJarInstalledInMaven(mavenUri)) {
                     continue;
@@ -1112,12 +1116,12 @@ public class LocalLibraryManager implements ILibraryManagerService, IChangedLibr
             }
         }
 
-        saveMavenIndex(mavenURIMap, monitorWrap);
-        savePlatfromURLIndex(platformURLMap, monitorWrap);
-
         if (service != null) {
             deployLibsFromComponentFolder(service, platformURLMap);
         }
+
+        saveMavenIndex(mavenURIMap, monitorWrap);
+        savePlatfromURLIndex(platformURLMap, monitorWrap);
 
     }
 

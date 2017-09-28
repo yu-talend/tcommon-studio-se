@@ -15,6 +15,7 @@ package org.talend.librariesmanager.ui.actions;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
@@ -57,7 +58,12 @@ public class ImportCustomSettingsAction extends Action {
         String selectedFile = fileDialog.open();
         if (selectedFile != null) {
             try {
-                CustomUriManager.getInstance().importSettings(fileDialog.getFilterPath(), fileDialog.getFileName());
+                boolean openQuestion = MessageDialog.openQuestion(shell, "Warning",
+                        Messages.getString("ImportCustomSettingsAction.warning"));
+                if (openQuestion) {
+                    CustomUriManager.getInstance().importSettings(fileDialog.getFilterPath(), fileDialog.getFileName());
+                    LibManagerUiPlugin.getDefault().getLibrariesService().checkLibraries();
+                }
             } catch (Exception e) {
                 new ErrorDialogWidthDetailArea(shell, LibManagerUiPlugin.PLUGIN_ID,
                         "Import settings fail, please check the setting file format!", ExceptionUtils.getFullStackTrace(e),

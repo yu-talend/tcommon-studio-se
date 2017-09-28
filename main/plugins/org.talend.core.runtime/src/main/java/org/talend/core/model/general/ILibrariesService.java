@@ -77,7 +77,19 @@ public interface ILibrariesService extends IService {
 
     public URL getSqlPatternTemplate();
 
+    /**
+     * 
+     * DOC wchen Comment method "getLibraryStatus".
+     * 
+     * @deprecated better call the function getLibraryStatus(String libName, String mvnURI)
+     * @param libName
+     * @return
+     * @throws BusinessException
+     */
+    @Deprecated
     public ELibraryInstallStatus getLibraryStatus(String libName) throws BusinessException;
+
+    public ELibraryInstallStatus getLibraryStatus(String libName, String mvnURI);
 
     public List<Problem> getProblems(INode node, IElement element);
 

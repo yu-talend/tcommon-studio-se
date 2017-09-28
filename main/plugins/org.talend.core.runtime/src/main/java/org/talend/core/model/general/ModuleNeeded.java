@@ -564,7 +564,7 @@ public class ModuleNeeded {
 
     public void setCustomMavenUri(String customURI) {
         String customURIWithType = MavenUrlHelper.addTypeForMavenUri(customURI, getModuleName());
-        libManagerService.setCustomMavenURI(getMavenUri(), customURIWithType);
+        libManagerService.setCustomMavenURI(getDefaultMavenURI(), customURIWithType);
     }
 
 }

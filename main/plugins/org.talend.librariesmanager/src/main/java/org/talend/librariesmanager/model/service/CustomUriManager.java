@@ -15,13 +15,12 @@ package org.talend.librariesmanager.model.service;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Set;
 
 import net.sf.json.JSONObject;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.talend.commons.exception.ExceptionHandler;
@@ -44,7 +43,7 @@ public class CustomUriManager {
 
     private static CustomUriManager manager = new CustomUriManager();;
 
-    private static final String CUSTOM_URI_MAP = "CustomURIMapping.json";
+    private static final String CUSTOM_URI_MAP = "custom_uri_mapping.json";
 
     private static long lastModified = 0;
 
@@ -85,10 +84,8 @@ public class CustomUriManager {
     private void saveResource(JSONObject customMap, String filePath, String fileName, boolean isExport) {
         try {
             File file = new File(filePath, fileName);
-            FileWriter fileWriter = new FileWriter(file);
-            Writer writer = customMap.write(fileWriter);
-            writer.flush();
-            writer.close();
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, customMap);
             lastModified = file.lastModified();
         } catch (IOException e) {
             ExceptionHandler.process(e);
@@ -147,6 +144,7 @@ public class CustomUriManager {
 
     public void importSettings(String filePath, String fileName) throws Exception {
         JSONObject loadResources = loadResources(filePath, fileName);
+        customURIObject.clear();
         if (loadResources != null) {
             customURIObject.putAll(loadResources);
         }

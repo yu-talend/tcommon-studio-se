@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -128,6 +129,14 @@ public class ModulesNeededProvider {
         }
     }
 
+    private static ILibraryManagerService libManagerService = null;
+    static {
+        if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibraryManagerService.class)) {
+            libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+                    ILibraryManagerService.class);
+        }
+    }
+
     public static Set<ModuleNeeded> getModulesNeeded() {
         if (componentImportNeedsList.isEmpty()) {
             componentImportNeedsList.addAll(getRunningModules());
@@ -145,8 +154,6 @@ public class ModulesNeededProvider {
 
     public static Set<ModuleNeeded> getAllManagedModules() {
         if (allManagedModules.isEmpty()) {
-            ILibraryManagerService libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
-                    ILibraryManagerService.class);
             allManagedModules.addAll(getModulesNeeded());
             try {
                 // get moudles installed but not used by any component/routine......
@@ -164,7 +171,7 @@ public class ModulesNeededProvider {
                     }
                 }
                 // Custom URI Mapping
-                Set<String> modulesNeededMVNURIs = getModulesNeededMVNURIs();
+                Set<String> modulesNeededMVNURIs = getModulesNeededDefaultMVNURIs();
                 for (String mvnURIKey : new HashSet<String>(CustomUriManager.getInstance().keySet())) {
                     String mvnURI = CustomUriManager.getInstance().get(mvnURIKey);
                     if (!modulesNeededMVNURIs.contains(mvnURI)) {
@@ -207,10 +214,10 @@ public class ModulesNeededProvider {
         return componentImportNeedsListNames;
     }
 
-    public static Set<String> getModulesNeededMVNURIs() {
+    public static Set<String> getModulesNeededDefaultMVNURIs() {
         Set<String> mvnURIs = new HashSet<String>();
         for (ModuleNeeded m : getModulesNeeded()) {
-            mvnURIs.add(m.getMavenUri());
+            mvnURIs.add(m.getDefaultMavenURI());
         }
         return mvnURIs;
     }
@@ -306,20 +313,6 @@ public class ModulesNeededProvider {
     public static void collectModuleNeeded(String context, IMPORTType importType, List<ModuleNeeded> importNeedsList) {
         List<ModuleNeeded> importModuleFromExtension = ExtensionModuleManager.getInstance().getModuleNeededForComponent(context,
                 importType);
-        // filter modules configured in extension but jar do not exsit in the UrlPath
-        ILibraryManagerService libManagerService = null;
-        if (importType.getMODULEGROUP() == null
-                && GlobalServiceRegister.getDefault().isServiceRegistered(ILibraryManagerService.class)) {
-            libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
-                    ILibraryManagerService.class);
-            final Iterator<ModuleNeeded> iterator = importModuleFromExtension.iterator();
-            while (iterator.hasNext()) {
-                final ModuleNeeded next = iterator.next();
-                if (next.getModuleLocaion() != null && !libManagerService.checkJarInstalledFromPlatform(next.getModuleLocaion())) {
-                    next.setModuleLocaion(null);
-                }
-            }
-        }
         boolean foundModule = importModuleFromExtension.size() > 0;
         if (!foundModule) { // If cannot find the jar from extension point then do it like before.
             createModuleNeededForComponent(context, importType, importNeedsList);
@@ -721,10 +714,14 @@ public class ModulesNeededProvider {
         uripath = ExtensionModuleManager.getInstance().getFormalModulePath(uripath, current);
         String mvn_rui = current.getAttribute(ExtensionModuleManager.MVN_URI_ATTR);
         ModuleNeeded module = new ModuleNeeded(context, name, message, required);
-        module.setModuleLocaion(uripath);
+        if (uripath != null && libManagerService.checkJarInstalledFromPlatform(uripath)) {
+            module.setModuleLocaion(uripath);
+        }
         module.setId(id);
         module.setBundleName(current.getAttribute(ExtensionModuleManager.BUNDLEID_ATTR));
-        module.setMavenUri(mvn_rui);
+        if (!StringUtils.isEmpty(mvn_rui)) {
+            module.setMavenUri(mvn_rui);
+        }
         return module;
     }
 

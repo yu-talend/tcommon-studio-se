@@ -21,6 +21,8 @@ import org.eclipse.core.runtime.IContributor;
 import org.talend.commons.utils.workbench.extensions.ExtensionImplementationProvider;
 import org.talend.commons.utils.workbench.extensions.ExtensionPointLimiterImpl;
 import org.talend.commons.utils.workbench.extensions.IExtensionPointLimiter;
+import org.talend.core.GlobalServiceRegister;
+import org.talend.core.ILibraryManagerService;
 import org.talend.core.model.general.ModuleNeeded;
 import org.talend.designer.core.model.utils.emf.component.IMPORTType;
 import org.talend.librariesmanager.i18n.Messages;
@@ -70,7 +72,13 @@ public class ExtensionModuleManager {
 
     private static ExtensionModuleManager manager = new ExtensionModuleManager();
 
+    private ILibraryManagerService libManagerService;
+
     private ExtensionModuleManager() {
+        if (GlobalServiceRegister.getDefault().isServiceRegistered(ILibraryManagerService.class)) {
+            libManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+                    ILibraryManagerService.class);
+        }
     }
 
     public static synchronized final ExtensionModuleManager getInstance() {
@@ -121,6 +129,9 @@ public class ExtensionModuleManager {
             moduleNeeded.setShow(importType.isSHOW());
             if (!StringUtils.isEmpty(importType.getMVN())) {
                 moduleNeeded.setMavenUri(importType.getMVN());
+            }
+            if (importType.getUrlPath() != null && libManagerService.checkJarInstalledFromPlatform(importType.getUrlPath())) {
+                moduleNeeded.setModuleLocaion(importType.getUrlPath());
             }
             ModulesNeededProvider.initBundleID(importType, moduleNeeded);
             importNeedsList.add(moduleNeeded);

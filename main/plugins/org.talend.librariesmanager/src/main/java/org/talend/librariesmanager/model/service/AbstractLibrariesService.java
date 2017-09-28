@@ -52,7 +52,6 @@ import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.runtime.CoreRuntimePlugin;
 import org.talend.core.runtime.process.ITalendProcessJavaProject;
 import org.talend.designer.runprocess.IRunProcessService;
-import org.talend.librariesmanager.i18n.Messages;
 import org.talend.librariesmanager.model.ExtensionModuleManager;
 import org.talend.librariesmanager.model.ModulesNeededProvider;
 import org.talend.librariesmanager.prefs.LibrariesManagerUtils;
@@ -80,14 +79,32 @@ public abstract class AbstractLibrariesService implements ILibrariesService {
     @Override
     public abstract URL getBeanTemplate();
 
+    /**
+     * 
+     * DOC wchen Comment method "getLibraryStatus".
+     * 
+     * @deprecated better call the function getLibraryStatus(String libName, String mvnURI)
+     * @param libName
+     * @return
+     * @throws BusinessException
+     */
+    @Deprecated
     @Override
     public ELibraryInstallStatus getLibraryStatus(String libName) throws BusinessException {
-        for (ModuleNeeded current : ModulesNeededProvider.getModulesNeeded()) {
-            if (current.getModuleName().equals(libName)) {
-                return current.getStatus();
-            }
-        }
-        throw new BusinessException(Messages.getString("ModulesNeededProvider.Module.Exception", libName)); //$NON-NLS-1$
+        ModuleNeeded testModule = new ModuleNeeded("", libName, "", true);
+        return testModule.getStatus();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.talend.core.model.general.ILibrariesService#getLibraryStatus(java.lang.String, java.lang.String)
+     */
+    @Override
+    public ELibraryInstallStatus getLibraryStatus(String libName, String mvnURI) {
+        ModuleNeeded testModule = new ModuleNeeded("", libName, "", true);
+        testModule.setMavenUri(mvnURI);
+        return testModule.getStatus();
     }
 
     @Override

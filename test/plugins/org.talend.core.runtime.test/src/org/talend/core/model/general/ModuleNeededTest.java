@@ -80,6 +80,15 @@ public class ModuleNeededTest {
         ModuleNeeded module3 = new ModuleNeeded("tMysqlInput", "ModuleNeededTest.jar", null, false);
         Assert.assertEquals(module3.getMavenURIFromConfiguration(), null);
         Assert.assertEquals(module3.getMavenUri(), "mvn:org.talend.libraries/ModuleNeededTest/6.0.0-SNAPSHOT/jar");
+
+        // test custom mvn uri
+        String customMvnURI = "mvn:org.talend.libraries/ModuleNeededTest/6.1.0-SNAPSHOT/jar";
+        module3.setCustomMavenUri(customMvnURI);
+        Assert.assertEquals(module3.getMavenUri(), customMvnURI);
+        customMvnURI = "mvn:org.talend.libraries/ModuleNeededTest/6.2.0-SNAPSHOT/jar";
+        module3.setCustomMavenUri(customMvnURI);
+        Assert.assertEquals(module3.getMavenUri(), customMvnURI);
+
     }
 
     @Test

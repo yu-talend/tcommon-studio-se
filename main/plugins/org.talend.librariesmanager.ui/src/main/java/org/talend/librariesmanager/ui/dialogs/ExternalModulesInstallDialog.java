@@ -67,7 +67,6 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.browser.IWebBrowser;
-import org.talend.commons.exception.BusinessException;
 import org.talend.commons.ui.runtime.exception.ExceptionHandler;
 import org.talend.commons.ui.runtime.image.ECoreImage;
 import org.talend.commons.ui.runtime.image.EImage;
@@ -624,11 +623,7 @@ public class ExternalModulesInstallDialog extends TitleAreaDialog implements IMo
             if (obj instanceof ModuleToInstall) {
                 final ModuleToInstall data = (ModuleToInstall) obj;
                 boolean isInstalled = false;
-                try {
-                    isInstalled = librariesService.getLibraryStatus(data.getName()) == ELibraryInstallStatus.INSTALLED;
-                } catch (BusinessException e1) {// log the error and consider as unsinstalled
-                    log.error(e1);
-                }
+                isInstalled = librariesService.getLibraryStatus(data.getName(), data.getMavenUri()) == ELibraryInstallStatus.INSTALLED;
                 boolean hasDownloadUrl = data.getUrl_description() != null;
                 if (!MavenConstants.DOWNLOAD_MANUAL.equals(data.getDistribution())) {// add the button to download
                     final Button button = new Button(table, SWT.FLAT);
