@@ -203,7 +203,7 @@ public abstract class AbstractMavenProcessorPom extends CreateMavenBundleTemplat
                     }
                     String groupId = model.getGroupId();
                     String artifactId = PomIdsHelper.getJobArtifactId(jobInfo);
-                    String version = PomIdsHelper.getJobVersion(jobInfo);
+                    String version = PomIdsHelper.getJobVersion(jobInfo.getProcessItem().getProperty());
 
                     // try to get the pom version of children job and load from the pom file.
                     String childPomFileName = PomUtil.getPomFileName(jobInfo.getJobName(), jobInfo.getJobVersion());

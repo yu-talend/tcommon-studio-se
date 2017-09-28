@@ -46,6 +46,8 @@ public class LastGenerationInfo {
     private static LastGenerationInfo instance;
 
     private JobInfo lastMainJob;
+    
+    private JobInfo currentBuildJob;
 
     private Set<JobInfo> lastGeneratedjobs; // main job + child jobs
 
@@ -210,6 +212,21 @@ public class LastGenerationInfo {
     public void setLastMainJob(JobInfo lastMainJob) {
         this.lastMainJob = lastMainJob;
     }
+    
+    public JobInfo getCurrentBuildJob() {
+        return currentBuildJob;
+    }
+
+    public boolean isCurrentMainJob() {
+        if (lastMainJob != null && currentBuildJob != null && lastMainJob.equals(currentBuildJob)) {
+            return true;
+        }
+        return false;
+    }
+
+    public void setCurrentBuildJob(JobInfo currentBuildJob) {
+        this.currentBuildJob = currentBuildJob;
+    }
 
     /**
      * Getter for lastGeneratedjobs.
@@ -345,5 +362,6 @@ public class LastGenerationInfo {
 
         lastMainJob = null;
         lastGeneratedjobs.clear();
+        currentBuildJob = null;
     }
 }

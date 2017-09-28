@@ -643,7 +643,7 @@ public class ProcessorUtilities {
             IProcess currentProcess, String currentJobName, IProcessor processor, int option) throws ProcessorException {
         jobInfo.setProcess(null);
         jobInfo.setProcessor(null);
-        if (isMainJob) {
+        if (true/*isMainJob*/) {
             progressMonitor.subTask(Messages.getString("ProcessorUtilities.finalizeBuild") + currentJobName); //$NON-NLS-1$
 
             final String timeMeasureGenerateCodesId = "Generate job source codes for " //$NON-NLS-1$
@@ -670,6 +670,7 @@ public class ProcessorUtilities {
     private static void generateContextInfo(JobInfo jobInfo, String selectedContextName, boolean statistics, boolean trace,
             boolean needContext, IProgressMonitor progressMonitor, IProcess currentProcess, String currentJobName,
             IProcessor processor, boolean isMain, boolean codeGenerationNeeded) throws ProcessorException {
+        LastGenerationInfo.getInstance().setCurrentBuildJob(jobInfo);
         if (codeGenerationNeeded) {
             codeModified = true;
             if ((currentProcess instanceof IProcess2) && exportConfig) {
