@@ -206,6 +206,20 @@ public class ModulesNeededProvider {
         return modulesMatching;
     }
 
+    public static ModuleNeeded getModuleNeededById(String id) {
+        ModuleNeeded result = null;
+
+        Set<ModuleNeeded> modulesNeeded = getModulesNeeded();
+        for (ModuleNeeded moduleNeeded : modulesNeeded) {
+            if (id.equals(moduleNeeded.getId())) {
+                result = moduleNeeded;
+                break;
+            }
+        }
+
+        return result;
+    }
+
     public static Set<String> getModulesNeededNames() {
         Set<String> componentImportNeedsListNames = new HashSet<String>();
         for (ModuleNeeded m : getModulesNeeded()) {
@@ -722,6 +736,9 @@ public class ModulesNeededProvider {
         if (!StringUtils.isEmpty(mvn_rui)) {
             module.setMavenUri(mvn_rui);
         }
+        module.setMavenUri(mvn_rui);
+        String excludeDependencies = current.getAttribute(ExtensionModuleManager.EXCLUDE_DEPENDENCIES_ATTR);
+        module.setExcludeDependencies(Boolean.valueOf(excludeDependencies));
         return module;
     }
 
@@ -730,8 +747,8 @@ public class ModulesNeededProvider {
      * @return the list of all extensions implementing org.talend.core.runtime.librariesNeeded/libraryNeeded
      */
     public static List<IConfigurationElement> getAllModulesNeededExtensions() {
-        IExtensionPointLimiter actionExtensionPoint = new ExtensionPointLimiterImpl(
-                "org.talend.core.runtime.librariesNeeded", "libraryNeeded"); //$NON-NLS-1$ //$NON-NLS-2$
+        IExtensionPointLimiter actionExtensionPoint = new ExtensionPointLimiterImpl(ExtensionModuleManager.EXT_ID,
+                ExtensionModuleManager.MODULE_ELE);
         List<IConfigurationElement> extension = ExtensionImplementationProvider.getInstanceV2(actionExtensionPoint);
         return extension;
     }
@@ -747,7 +764,7 @@ public class ModulesNeededProvider {
         List<IConfigurationElement> extension = getAllModulesNeededExtensions();
 
         for (IConfigurationElement current : extension) {
-            String context = current.getAttribute("context"); //$NON-NLS-1$
+            String context = current.getAttribute(ExtensionModuleManager.CONTEXT_ATTR); // $NON-NLS-1$
             if (context != null && context.startsWith(PLUGINS_CONTEXT_KEYWORD)) {
                 ModuleNeeded module = createModuleNeededInstance(current);
                 if (module.isRequired()) {

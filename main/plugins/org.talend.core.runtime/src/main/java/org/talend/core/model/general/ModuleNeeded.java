@@ -70,6 +70,8 @@ public class ModuleNeeded {
 
     private String mavenUri;
 
+    private boolean excludeDependencies = false;
+
     private boolean dynamic;
 
     private Map<String, Object> extraAttributes = new HashMap<>();
@@ -565,6 +567,14 @@ public class ModuleNeeded {
     public void setCustomMavenUri(String customURI) {
         String customURIWithType = MavenUrlHelper.addTypeForMavenUri(customURI, getModuleName());
         libManagerService.setCustomMavenURI(getDefaultMavenURI(), customURIWithType);
+    }
+
+    public boolean isExcludeDependencies() {
+        return this.excludeDependencies;
+    }
+
+    public void setExcludeDependencies(boolean excludeDependencies) {
+        this.excludeDependencies = excludeDependencies;
     }
 
 }
