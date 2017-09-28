@@ -168,7 +168,9 @@ public abstract class AbstractMavenProcessorPom extends CreateMavenBundleTemplat
             final List<Dependency> dependencies = model.getDependencies();
 
             // add codes to dependencies
-            String projectTechName = ProjectManager.getInstance().getProject(getJobProcessor().getProperty()).getTechnicalLabel();
+            // String projectTechName = ProjectManager.getInstance().getProject(getJobProcessor().getProperty()).getTechnicalLabel();
+            // always use codes of main project for ref project
+            String projectTechName = ProjectManager.getInstance().getCurrentProject().getTechnicalLabel();
             String codeVersion = PomIdsHelper.getCodesVersion();
             
             // routines
