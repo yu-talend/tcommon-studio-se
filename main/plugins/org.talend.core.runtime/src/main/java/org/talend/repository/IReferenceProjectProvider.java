@@ -25,7 +25,7 @@ public interface IReferenceProjectProvider {
 
     public static final String CONFIGURATION_FILE_NAME = "reference_projects.settings"; //$NON-NLS-1$
 
-    public List<ProjectReference> getProjectReference();
+    public List<ProjectReference> getProjectReference() throws PersistenceException;
 
     public void setProjectReference(List<ProjectReference> projectReferenceList);
 

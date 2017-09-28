@@ -2373,10 +2373,19 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
         emfProjectContentMap.put(project.getTechnicalLabel(), project);
     }
 
-    public org.talend.core.model.properties.Project getEmfProjectContent(String technicalLabel) {
-        return emfProjectContentMap.get(technicalLabel);
+    public org.talend.core.model.properties.Project getEmfProjectContent(String technicalLabel) throws PersistenceException {
+        org.talend.core.model.properties.Project emfProject = emfProjectContentMap.get(technicalLabel);
+        if (emfProject != null && emfProject.eResource() == null) {
+            IProject iProject = ResourceUtils.getProject(emfProject.getTechnicalLabel());
+            boolean isAvoidUnloadResource = repositoryFactoryFromProvider.getResourceManager().isAvoidUnloadResource();
+            repositoryFactoryFromProvider.getResourceManager().setAvoidUnloadResource(true);
+            emfProject = repositoryFactoryFromProvider.getResourceManager().loadProject(iProject);
+            repositoryFactoryFromProvider.getResourceManager().setAvoidUnloadResource(isAvoidUnloadResource);
+            updateEmfProjectContent(emfProject);
+        }
+        return emfProject;
     }
-    
+
     public byte[] getReferenceSettingContent(Project project, String branch) throws PersistenceException {
         return repositoryFactoryFromProvider.getReferenceSettingContent(project, branch);
     }

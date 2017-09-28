@@ -98,7 +98,7 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
     }
 
     @Override
-    public List<ProjectReference> getProjectReference() {
+    public List<ProjectReference> getProjectReference() throws PersistenceException {
         if (!loadFromContent && tempReferenceMap.get(project.getTechnicalLabel()) != null) {
             return getTempReferenceList(project.getTechnicalLabel());
         }
@@ -185,7 +185,7 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
         tempReferenceMap.put(projectLabel, referenceList);
     }
 
-    public static List<ProjectReference> getTempReferenceList(String projectLabel) {
+    public static List<ProjectReference> getTempReferenceList(String projectLabel) throws PersistenceException {
         List<ProjectReference> referenceList = tempReferenceMap.get(projectLabel);
         if (referenceList != null) {
             List<ProjectReference> clonedList = new ArrayList<ProjectReference>();
@@ -211,7 +211,7 @@ public class ReferenceProjectProvider implements IReferenceProjectProvider {
         tacReferenceMap.put(projectLabel, referenceList);
     }
 
-    public static List<ProjectReference> getTacReferenceList(String projectLabel) {
+    public static List<ProjectReference> getTacReferenceList(String projectLabel) throws PersistenceException {
         List<ProjectReference> referenceList = tacReferenceMap.get(projectLabel);
         if (referenceList != null) {
             List<ProjectReference> clonedList = new ArrayList<ProjectReference>();

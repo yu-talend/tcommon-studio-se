@@ -358,12 +358,16 @@ public class Project {
             referenceProjectProvider = new ReferenceProjectProvider(project);
             try {
                 referenceProjectProvider.initSettings();
-            } catch (BusinessException | PersistenceException  e) {
+            } catch (BusinessException | PersistenceException e) {
                 ExceptionHandler.process(e);
             }
         }
         List<ProjectReference> projectReferenceList = new ArrayList<ProjectReference>();
-        projectReferenceList.addAll(referenceProjectProvider.getProjectReference());
+        try {
+            projectReferenceList.addAll(referenceProjectProvider.getProjectReference());
+        } catch (PersistenceException e) {
+            ExceptionHandler.process(e);
+        }
         return projectReferenceList;
     }
 
