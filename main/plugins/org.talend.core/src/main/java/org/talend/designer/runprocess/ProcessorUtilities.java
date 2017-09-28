@@ -1012,6 +1012,7 @@ public class ProcessorUtilities {
                                     progressMonitor);
                             currentProcess.setNeedRegenerateCode(true);
                         }
+                        addSubjobModuleNeededToParentJob(jobInfo, subJobInfo);
                     }
                 }
             }
@@ -1137,24 +1138,29 @@ public class ProcessorUtilities {
             }
 
             if (needChildrenModules) {
-                Set<ModuleNeeded> subjobModules = generationInfo.getModulesNeededWithSubjobPerJob(subJobInfo.getJobId(),
-                        subJobInfo.getJobVersion());
-                generationInfo.getModulesNeededWithSubjobPerJob(jobInfo.getJobId(), jobInfo.getJobVersion())
-                        .addAll(subjobModules);
-
-                Set<String> subjobRoutineModules = generationInfo.getRoutinesNeededWithSubjobPerJob(subJobInfo.getJobId(),
-                        subJobInfo.getJobVersion());
-                generationInfo.getRoutinesNeededWithSubjobPerJob(jobInfo.getJobId(), jobInfo.getJobVersion()).addAll(
-                        subjobRoutineModules);
-
-                Set<String> subjobPigUDFModules = generationInfo.getPigudfNeededWithSubjobPerJob(subJobInfo.getJobId(),
-                        subJobInfo.getJobVersion());
-                generationInfo.getPigudfNeededWithSubjobPerJob(jobInfo.getJobId(), jobInfo.getJobVersion()).addAll(
-                        subjobPigUDFModules);
+                addSubjobModuleNeededToParentJob(jobInfo, subJobInfo);
 
             }
         }
 
+    }
+
+    private static void addSubjobModuleNeededToParentJob(JobInfo jobInfo, JobInfo subJobInfo) {
+        LastGenerationInfo generationInfo = LastGenerationInfo.getInstance();
+        Set<ModuleNeeded> subjobModules = generationInfo.getModulesNeededWithSubjobPerJob(subJobInfo.getJobId(),
+                subJobInfo.getJobVersion());
+        generationInfo.getModulesNeededWithSubjobPerJob(jobInfo.getJobId(), jobInfo.getJobVersion())
+                .addAll(subjobModules);
+
+        Set<String> subjobRoutineModules = generationInfo.getRoutinesNeededWithSubjobPerJob(subJobInfo.getJobId(),
+                subJobInfo.getJobVersion());
+        generationInfo.getRoutinesNeededWithSubjobPerJob(jobInfo.getJobId(), jobInfo.getJobVersion()).addAll(
+                subjobRoutineModules);
+
+        Set<String> subjobPigUDFModules = generationInfo.getPigudfNeededWithSubjobPerJob(subJobInfo.getJobId(),
+                subJobInfo.getJobVersion());
+        generationInfo.getPigudfNeededWithSubjobPerJob(jobInfo.getJobId(), jobInfo.getJobVersion()).addAll(
+                subjobPigUDFModules);
     }
 
     /**
