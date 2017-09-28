@@ -135,7 +135,7 @@ public class ConfigModuleDialog extends TitleAreaDialog implements IConfigModule
 
     @Override
     protected Control createDialogArea(Composite parent) {
-        Composite container = new Composite(parent, SWT.BORDER);
+        Composite container = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout();
         layout.marginTop = 10;
         layout.marginLeft = 20;
@@ -209,18 +209,8 @@ public class ConfigModuleDialog extends TitleAreaDialog implements IConfigModule
         // layoutChildernComp(parent);
     }
 
-    private void layoutChildernComp(Composite parent) {
-        for (Control control : parent.getChildren()) {
-            if (control instanceof Composite) {
-                Composite childComp = (Composite) control;
-                childComp.layout();
-                layoutChildernComp(childComp);
-            }
-        }
-    }
-
     private void createPlatformGroup(Composite container) {
-        Composite composite = new Composite(container, SWT.BORDER);
+        Composite composite = new Composite(container, SWT.NONE);
         GridLayout layout = new GridLayout();
         layout.numColumns = 2;
         composite.setLayout(layout);
@@ -286,7 +276,7 @@ public class ConfigModuleDialog extends TitleAreaDialog implements IConfigModule
     }
 
     private void createRepositoryGroup(Composite container) {
-        Composite composite = new Composite(container, SWT.BORDER);
+        Composite composite = new Composite(container, SWT.NONE);
         GridLayout layout = new GridLayout();
         composite.setLayout(layout);
         GridData data = new GridData(GridData.FILL_BOTH);
