@@ -2933,11 +2933,7 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
         boolean exist = false;
         org.talend.core.model.properties.Project emfProject = getRepositoryContext().getProject().getEmfProject();
         Resource projectResource = emfProject.eResource();
-        if (projectResource.getContents() == null) {
-            emfProject = ProxyRepositoryFactory.getInstance().getEmfProjectContent(emfProject.getTechnicalLabel());
-            projectResource = emfProject.eResource();
-            getRepositoryContext().getProject().setEmfProject(emfProject);
-        }
+
         Collection<User> users = EcoreUtil.getObjectsByType(projectResource.getContents(), PropertiesPackage.eINSTANCE.getUser());
         for (User emfUser : users) {
             if (emfUser.getLogin().equals(getRepositoryContext().getUser().getLogin())) {
@@ -3128,6 +3124,7 @@ public class LocalRepositoryFactory extends AbstractEMFRepositoryFactory impleme
         if (project.getEmfProject().eResource() == null) {
             IProject iProject = ResourceUtils.getProject(getRepositoryContext().getProject());
             project.setEmfProject(xmiResourceManager.loadProject(iProject));
+            getRepositoryContext().getProject().setEmfProject(project.getEmfProject());
         }
 
         super.logOnProject(project);
