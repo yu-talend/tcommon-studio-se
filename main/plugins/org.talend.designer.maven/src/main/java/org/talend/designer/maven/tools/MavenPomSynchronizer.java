@@ -87,9 +87,7 @@ public class MavenPomSynchronizer {
         createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
-        if (runProcessService.isExportConfig()) {
-            buildAndInstallCodesProject(routineProject);
-        }
+        buildAndInstallCodesProject(routineProject, runProcessService.isExportConfig());
     }
 
     public void syncBeansPom(Property property, boolean overwrite) throws Exception {
@@ -100,9 +98,7 @@ public class MavenPomSynchronizer {
         createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
-        if (runProcessService.isExportConfig()) {
-            buildAndInstallCodesProject(beansProject);
-        }
+        buildAndInstallCodesProject(beansProject, runProcessService.isExportConfig());
     }
 
     public void syncPigUDFsPom(Property property, boolean overwrite) throws Exception {
@@ -113,17 +109,17 @@ public class MavenPomSynchronizer {
         createTemplatePom.setProperty(property);
         createTemplatePom.setOverwrite(overwrite);
         createTemplatePom.create(null);
-        if (runProcessService.isExportConfig()) {
-            buildAndInstallCodesProject(pigudfsProject);
-        }
+        buildAndInstallCodesProject(pigudfsProject, runProcessService.isExportConfig());
     }
 
-    private void buildAndInstallCodesProject(ITalendProcessJavaProject codeProject) throws Exception {
+    private void buildAndInstallCodesProject(ITalendProcessJavaProject codeProject, boolean isExportConfig) throws Exception {
         codeProject.buildModules(new NullProgressMonitor(), null, null);
-        Map<String, Object> argumentsMap = new HashMap<>();
-        argumentsMap.put(TalendProcessArgumentConstant.ARG_GOAL, TalendMavenConstants.GOAL_INSTALL);
-        argumentsMap.put(TalendProcessArgumentConstant.ARG_PROGRAM_ARGUMENTS, "-Dmaven.main.skip=true"); //$NON-NLS-1$
-        codeProject.buildModules(new NullProgressMonitor(), null, argumentsMap);
+        if (isExportConfig) {
+            Map<String, Object> argumentsMap = new HashMap<>();
+            argumentsMap.put(TalendProcessArgumentConstant.ARG_GOAL, TalendMavenConstants.GOAL_INSTALL);
+            argumentsMap.put(TalendProcessArgumentConstant.ARG_PROGRAM_ARGUMENTS, "-Dmaven.main.skip=true"); //$NON-NLS-1$
+            codeProject.buildModules(new NullProgressMonitor(), null, argumentsMap);
+        }
     }
     
     /**
