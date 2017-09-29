@@ -2050,7 +2050,7 @@ public final class ProxyRepositoryFactory implements IProxyRepositoryFactory {
                 }
                 sb.append(technicalLabel);
             }
-            throw new BusinessException(" Can't access project {" + sb.toString() + "} by current user.");
+            throw new BusinessException(Messages.getString("ProxyRepositoryFactory.errorCanNotAccessProject", sb.toString()));
         }
 
         Map<String, List<ProjectReference>> projectRefMap = new HashMap<String, List<ProjectReference>>();
