@@ -45,7 +45,10 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 import org.eclipse.aether.util.graph.selector.AndDependencySelector;
 import org.eclipse.aether.util.graph.selector.OptionalDependencySelector;
 import org.eclipse.aether.util.graph.selector.ScopeDependencySelector;
+import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.Version;
+import org.eclipse.aether.version.VersionConstraint;
+import org.eclipse.aether.version.VersionScheme;
 import org.eclipse.core.runtime.CoreException;
 import org.talend.designer.maven.aether.IDynamicMonitor;
 import org.talend.designer.maven.aether.node.DependencyNode;
@@ -54,7 +57,7 @@ import org.talend.designer.maven.aether.selector.DynamicDependencySelector;
 import org.talend.designer.maven.aether.selector.DynamicExclusionDependencySelector;
 
 /**
- * DOC cmeng  class global comment. Detailled comment
+ * DOC cmeng class global comment. Detailled comment
  */
 public class DynamicDistributionAetherUtils {
 
@@ -103,8 +106,7 @@ public class DynamicDistributionAetherUtils {
             dependency = dependency.setExclusions(newExclusions);
         }
 
-        RemoteRepository central = new RemoteRepository.Builder("central", "default",
-                remoteUrl).build();
+        RemoteRepository central = new RemoteRepository.Builder("central", "default", remoteUrl).build();
 
         CollectRequest collectRequest = new CollectRequest();
         collectRequest.setRoot(dependency);
@@ -127,8 +129,7 @@ public class DynamicDistributionAetherUtils {
     }
 
     public static List<String> versionRange(String remoteUrl, String localPath, String groupId, String artifactId,
-            String baseVersion, String topVersion, IDynamicMonitor monitor)
-            throws Exception {
+            String baseVersion, String topVersion, IDynamicMonitor monitor) throws Exception {
         RepositorySystem repSystem = newRepositorySystem();
         RepositorySystemSession repSysSession = newSession(repSystem, localPath, monitor);
 
@@ -138,16 +139,15 @@ public class DynamicDistributionAetherUtils {
         }
         String range = ":[" + base + ",";
         if (topVersion != null && !topVersion.isEmpty()) {
-            // :[0,)
-            range = range + topVersion + "]";
+            // :[0,1)
+            range = range + topVersion + ")";
         } else {
-            // :[0,1]
+            // :[0,)
             range = range + ")";
         }
 
         Artifact artifact = new DefaultArtifact(groupId + ":" + artifactId + range); //$NON-NLS-1$
-        RemoteRepository central = new RemoteRepository.Builder("central", "default",
-                remoteUrl).build();
+        RemoteRepository central = new RemoteRepository.Builder("central", "default", remoteUrl).build();
 
         VersionRangeRequest verRangeRequest = new VersionRangeRequest();
         verRangeRequest.addRepository(central);
@@ -197,7 +197,7 @@ public class DynamicDistributionAetherUtils {
     // getAllArtifact(dn, list);
     // }
     // }
-    
+
     private static RepositorySystem newRepositorySystem() {
         DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
         locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
@@ -279,4 +279,21 @@ public class DynamicDistributionAetherUtils {
             }
         }
     }
+
+    public static List<String> filterVersions(List<String> versions, String versionRange) throws Exception {
+        List<String> filteredVersions = new ArrayList<>();
+        VersionScheme versionScheme = new GenericVersionScheme();
+
+        VersionConstraint versionConstraint = versionScheme.parseVersionConstraint(versionRange);
+
+        for (String versionString : versions) {
+            Version version = versionScheme.parseVersion(versionString);
+            if (versionConstraint.containsVersion(version)) {
+                filteredVersions.add(versionString);
+            }
+        }
+
+        return filteredVersions;
+    }
+
 }
