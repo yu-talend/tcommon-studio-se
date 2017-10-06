@@ -281,9 +281,9 @@ public final class ElementParameterParser {
     
     /**
      * To check if the {@link IElement} contains the parameter
-     * @param element
-     * @param param
-     * @return
+     * @param element the {@link IElement} to be checked
+     * @param param the name of parameter to be verified
+     * @return a boolean value, <code>true</code> or <code>false</code>
      */
     public static boolean exist(final IElement element, final String param) {
     	List<? extends IElementParameter> params = element.getElementParametersWithChildrens();
