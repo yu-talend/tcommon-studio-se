@@ -6,10 +6,8 @@ package routines.system;
  * @author Administrator
  *
  */
-public abstract class Constant {
+public class Constant {
 
-    private static final String version_studio = org.talend.commons.utils.VersionUtils.getDisplayVersion();
-    
     /**
      * the default pattern for date parse and format
      */
@@ -18,10 +16,14 @@ public abstract class Constant {
     /**
      * the default user agent string for AWS and Azure components
      */
-    public static final String TALEND_USER_AGENT = "APN/1.0 Talend/" + version_studio + " Studio/" + version_studio;
+    public static String getUserAgent(String version_studio) {
+        return  "APN/1.0 Talend/" + version_studio + " Studio/" + version_studio;
+    }
     
     /**
      * the default user agent string for GCS components
      */
-    public static final String TALEND_USER_AGENT_GCS = "Studio/" + version_studio + " (GPN:Talend) DataIntegration/" + version_studio + " Jets3t/0.9.1";
+    public static String getUserAgentGCS(String version_studio) {
+        return "Studio/" + version_studio + " (GPN:Talend) DataIntegration/" + version_studio + " Jets3t/0.9.1";
+    }
 }
