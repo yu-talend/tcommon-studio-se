@@ -16,14 +16,14 @@ public class Constant {
     /**
      * the default user agent string for AWS and Azure components
      */
-    public static String getUserAgent(String version_studio) {
-        return  "APN/1.0 Talend/" + version_studio + " Studio/" + version_studio;
+    public static String getUserAgent(String studioVersion) {
+        return  "APN/1.0 Talend/" + studioVersion + " Studio/" + studioVersion;
     }
     
     /**
      * the default user agent string for GCS components
      */
-    public static String getUserAgentGCS(String version_studio) {
-        return "Studio/" + version_studio + " (GPN:Talend) DataIntegration/" + version_studio + " Jets3t/0.9.1";
+    public static String getUserAgentGCS(String studioVersion) {
+        return "Studio/" + studioVersion + " (GPN:Talend) DataIntegration/" + studioVersion + " Jets3t/0.9.1";
     }
 }
